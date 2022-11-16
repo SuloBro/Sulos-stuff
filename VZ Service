@@ -1,5 +1,5 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("VZ Service", "DarkTheme")
+local Window = Library.CreateLib("VZ Service | Free Version |", "DarkTheme")
 
     -- MAIN
     local Main = Window:NewTab("Main")
@@ -339,3 +339,73 @@ HoodSection:NewToggle("Fake Macro", "Click CTRL and press this", function(state)
         game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
     end
 end)
+
+-- Ninja Legends
+local Ninja = Window:NewTab("Ninja Legends")
+local NinjaSection = Ninja:NewSection("Ninja Legends Script | Best Free Script |")
+
+NinjaSection:NewToggle("Auto Swing", "Make your player autoswing", function(v)
+    getgenv().autoswing = v
+    while true do
+        if not getgenv().autoswing then return end
+        for _,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+            if v:FindFirstChild("ninjitsuGain") then
+                game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
+                break
+            end
+        end
+        local A_1 = "swingKatana"
+        local Event = game:GetService("Players").LocalPlayer.ninjaEvent
+        Event:FireServer(A_1)
+        wait(0.1)
+    end
+end)
+
+NinjaSection:NewToggle("Auto Sell", "Makes your player autosell", function(v)
+    getgenv().autosell = v
+    while true do
+        if getgenv().autoswing == false then return end
+        game:GetService("Workspace").sellAreaCircles["sellAreaCircle16"].circleInner.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+        wait(0.1)
+        game:GetService("Workspace").sellAreaCircles["sellAreaCircle16"].circleInner.CFrame = CFrame.new(0,0,0)
+        wait(0.1)
+    end
+end)
+
+NinjaSection:NewButton("Unlock all islands", "Unlocks all islands", function()
+    local oldcframe = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+    for _,v in pairs(game:GetService("Workspace").islandUnlockParts:GetChildren()) do
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+        wait(0.1)
+    end
+    wait(0.1)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = oldcframe
+end)
+
+NinjaSection:NewToggle("Auto buy all swords", "Auto buys all swords", function(v)
+    getgenv().buyswords = v
+    while true do
+        if not getgenv().buyswords then return end
+        local A_1 = "buyAllSwords"
+        local A_2 = "Inner Peace Island"
+        local Event = game:GetService("Players").LocalPlayer.ninjaEvent
+        Event:FireServer(A_1, A_2)
+        wait(0.5)
+    end
+end)
+
+NinjaSection:NewToggle("Auto buy all belts", "Auto buys all belts", function(v)
+    getgenv().buybelts = v
+    while true do
+        if not getgenv().buybelts then return end
+        local A_1 = "buyAllBelts"
+        local A_2 = "Inner Peace Island"
+        local Event = game:GetService("Players").LocalPlayer.ninjaEvent
+        Event:FireServer(A_1, A_2)
+        wait(0.5)
+    end
+end)
+
+-- CommingSoon
+local FXGComming = Window:NewTab("Comming Soon")
+local FXGCommingSection = FXGComming:NewSection("| Most POPULAR Scripts |")
