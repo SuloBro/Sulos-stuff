@@ -50,6 +50,33 @@ end
 end
     end)
 
+    MainSection:NewButton("Destruction Simulator", "Regular Script", function(state)
+        loadstring(game:HttpGet("https://pastebin.com/raw/BZ0FKGvv"))()
+    end)
+
+    MainSection:NewButton("Destruction Simulator 10+ Levels", "Dont spam it too much", function(state)
+        loadstring(game:HttpGet("https://pastebin.com/raw/EnMqnDZX"))()
+    end)
+
+    MainSection:NewButton("Sky Wars GUI", "Regular script", function(state)
+        loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/DohmBoyOG/Script-Dump/main/OPSkywarsGUI_NolixXDohmScripts_Public.lua"))()
+    end)
+
+    MainSection:NewButton("Shindo Life GUI", "Regular script", function(state)
+     local ui_options = { main_color = Color3.fromRGB(50, 20, 10), min_size = Vector2.new(400, 300), toggle_key = Enum.KeyCode.RightShift, can_resize = true, } do local imgui = game:GetService("CoreGui"):FindFirstChild("imgui") if imgui then imgui:Destroy() end end local imgui = Instance.new("ScreenGui") local Prefabs = Instance.new("Frame") local Label = Instance.new("TextLabel") local Window = Instance.new("ImageLabel") local Resizer = Instance.new("Frame") local Bar = Instance.new("Frame") local Toggle = Instance.new("ImageButton") local Base = Instance.new("ImageLabel") local Top = Instance.new("ImageLabel") local Tabs = Instance.new("Frame") local Title = Instance.new("TextLabel") local TabSelection = Instance.new("ImageLabel") local TabButtons = Instance.new("Frame") local UIListLayout = Instance.new("UIListLayout") local Frame = Instance.new("Frame") local Tab = Instance.new("Frame") local UIListLayout_2 = Instance.new("UIListLayout") local TextBox = Instance.new("TextBox") local TextBox_Roundify_4px = Instance.new("ImageLabel") local Slider = Instance.new("ImageLabel") local Title_2 = Instance.new("TextLabel") local Indicator = Instance.new("ImageLabel") local Value = Instance.new("TextLabel") local TextLabel = Instance.new("TextLabel") local TextLabel_2 = Instance.new("TextLabel") local Circle = Instance.new("ImageLabel") local UIListLayout_3 = Instance.new("UIListLayout") local Dropdown = Instance.new("TextButton") local Indicator_2 = Instance.new("ImageLabel") local Box = Instance.new("ImageButton") local Objects = Instance.new("ScrollingFrame") local UIListLayout_4 = Instance.new("UIListLayout") local TextButton_Roundify_4px = Instance.new("ImageLabel") local TabButton = Instance.new("TextButton") local TextButton_Roundify_4px_2 = Instance.new("ImageLabel") local Folder = Instance.new("ImageLabel") local Button = Instance.new("TextButton") local TextButton_Roundify_4px_3 = Instance.new("ImageLabel") local Toggle_2 = Instance.new("ImageLabel") local Objects_2 = Instance.new("Frame") local UIListLayout_5 = Instance.new("UIListLayout") local HorizontalAlignment = Instance.new("Frame") local UIListLayout_6 = Instance.new("UIListLayout") local Console = Instance.new("ImageLabel") local ScrollingFrame = Instance.new("ScrollingFrame") local Source = Instance.new("TextBox") local Comments = Instance.new("TextLabel") local Globals = Instance.new("TextLabel") local Keywords = Instance.new("TextLabel") local RemoteHighlight = Instance.new("TextLabel") local Strings = Instance.new("TextLabel") local Tokens = Instance.new("TextLabel") local Numbers = Instance.new("TextLabel") local Info = Instance.new("TextLabel") local Lines = Instance.new("TextLabel") local ColorPicker = Instance.new("ImageLabel") local Palette = Instance.new("ImageLabel") local Indicator_3 = Instance.new("ImageLabel") local Sample = Instance.new("ImageLabel") local Saturation = Instance.new("ImageLabel") local Indicator_4 = Instance.new("Frame") local Switch = Instance.new("TextButton") local TextButton_Roundify_4px_4 = Instance.new("ImageLabel") local Title_3 = Instance.new("TextLabel") local Button_2 = Instance.new("TextButton") local TextButton_Roundify_4px_5 = Instance.new("ImageLabel") local DropdownButton = Instance.new("TextButton") local Keybind = Instance.new("ImageLabel") local Title_4 = Instance.new("TextLabel") local Input = Instance.new("TextButton") local Input_Roundify_4px = Instance.new("ImageLabel") local Windows = Instance.new("Frame") imgui.Name = "imgui" imgui.Parent = game:GetService("CoreGui") Prefabs.Name = "Prefabs" Prefabs.Parent = imgui Prefabs.BackgroundColor3 = Color3.new(1, 1, 1) Prefabs.Size = UDim2.new(0, 100, 0, 100) Prefabs.Visible = false
+    end)
+
+    MainSection:NewButton("Mad City", "Regular script", function(state)
+        loadstring(game:HttpGet("https://gist.githubusercontent.com/TurkOyuncu99/811e25ec8cfcdaa9ae7026353288783c/raw/4b073a5c1a0a4e2ed7e2304c2e769eb440a371a9/h", true))()
+       end)
+
+       MainSection:NewButton("Ninja Tycoon", "Regular script", function(state)
+        loadstring(game:HttpGet'https://pastebin.com/raw/TFfWqiXK')()
+       end)
+
+
+
+
     --LOCAL PLAYER
     local Player = Window:NewTab("Player")
     local PlayerSection = Player:NewSection("Player Scripts")
@@ -87,7 +114,7 @@ end
         Fly(true)
     end)
 
-   --Premium
+   --PLS DONATE
    local Tab = Window:NewTab("PLS Donate")
    local TabSection = Tab:NewSection("Pls Donate Scripts")
 
@@ -408,7 +435,7 @@ NinjaSection:NewButton("Unlock all islands", "Unlocks all islands", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = oldcframe
 end)
 
-NinjaSection:NewToggle("Auto buy all swords", "Auto buys all swords", function(v)
+NinjaSection:NewButton("Auto buy all swords", "Auto buys all swords", function(v)
     getgenv().buyswords = v
     while true do
         if not getgenv().buyswords then return end
@@ -420,7 +447,7 @@ NinjaSection:NewToggle("Auto buy all swords", "Auto buys all swords", function(v
     end
 end)
 
-NinjaSection:NewToggle("Auto buy all belts", "Auto buys all belts", function(v)
+NinjaSection:NewButton("Auto buy all belts", "Auto buys all belts", function(v)
     getgenv().buybelts = v
     while true do
         if not getgenv().buybelts then return end
@@ -448,7 +475,9 @@ FXGCommingSection:NewButton("Auto buy all belts [NINJA LEGENDS]", "Ninja Legends
     end
 end)
 
-local FXGCommingSection = FXGComming:NewSection("No Selection")
+FXGCommingSection:NewButton("Sky Wars GUI", "Regular script", function(state)
+    loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/DohmBoyOG/Script-Dump/main/OPSkywarsGUI_NolixXDohmScripts_Public.lua"))()
+end)
 
 local FXGCommingSection = FXGComming:NewSection("No Selection")
 
@@ -467,7 +496,6 @@ local FXGCommingSection = FXGComming:NewSection("No Selection")
 local FXGCommingSection = FXGComming:NewSection("No Selection")
 
 local FXGCommingSection = FXGComming:NewSection("No Selection")
-
 
 
 
