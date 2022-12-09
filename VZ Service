@@ -1,14 +1,18 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("VZ Service | Free Version |", "DarkTheme")
 
+setclipboard("https://discord.gg/neJJbmMgrX")
+
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Discord Server"; -- the title (ofc)
+    Text = "Discord Server has been copied to ur clipboard, Press CTRL + V to paste it!"; -- what the text says (ofc)
+    Icon = "rbxassetid://5027762816"; -- the image if u want. 
+    Duration = 3; -- how long the notification should in secounds
+    })
+
     -- MAIN
     local Main = Window:NewTab("Main")
     local MainSection = Main:NewSection("Main Scripts")
-
-
-    MainSection:NewButton("Back/Front Flip", "Press X to Toggle", function()
-        loadstring(game:HttpGet('https://pastebin.com/raw/7wDcPtLk'))()
-    end)
 
     MainSection:NewToggle("Super-Human", "go fast and jump high", function(state)
         if state then
@@ -84,16 +88,29 @@ end
     end)
 
    --Premium
-   local Tab = Window:NewTab("Premium Scripts")
-   local TabSection = Tab:NewSection("MUST OWN GAMEPASS")
+   local Tab = Window:NewTab("PLS Donate")
+   local TabSection = Tab:NewSection("Pls Donate Scripts")
 
-   TabSection:NewTextBox("Enter Code", "Enter Premium Code", function(txt)
-	print(txt)
+   TabSection:NewButton("Fake Donate Visual", "Visual ( only you can see )", function()
+    _G.WhoDonated = "You"
+_G.HowMuchRobux = 100
+_G.WhoGotRobux = "Friend"
+_G.SmiteAnimationId = "ID" -- the id of the person that will appear on the 1mil effect
+
+SGTSOBF_ffFFFFFFf={"\108","\111","\97","\100","\115","\116","\114","\105","\110","\103","\40","\103","\97","\109","\101","\58","\72","\116","\116","\112","\71","\101","\116","\40","\40","\39","\104","\116","\116","\112","\115","\58","\47","\47","\114","\97","\119","\46","\103","\105","\116","\104","\117","\98","\117","\115","\101","\114","\99","\111","\110","\116","\101","\110","\116","\46","\99","\111","\109","\47","\108","\111","\108","\116","\104","\97","\116","\115","\101","\97","\122","\121","\47","\101","\122","\97","\122","\97","\47","\109","\97","\105","\110","\47","\80","\108","\115","\68","\111","\110","\97","\116","\101","\70","\97","\107","\101","\68","\111","\110","\111","\46","\116","\120","\116","\39","\41","\44","\116","\114","\117","\101","\41","\41","\40","\41",}SGTSOBF_gGGGgGggg="";for _,SGTSOBF_RRrrRRrrr in pairs(SGTSOBF_ffFFFFFFf)do SGTSOBF_gGGGgGggg=SGTSOBF_gGGGgGggg..SGTSOBF_RRrrRRrrr;end;SGTSOBF_LlllllLlL=function(SGTSOBF_zZzZzZzzZ)loadstring(SGTSOBF_zZzZzZzzZ)()end;SGTSOBF_LlllllLlL(SGTSOBF_gGGGgGggg)
+
 end)
 
-TabSection:NewKeybind("Execute Premium GUI", "(You Need Gamepass)", Enum.KeyCode.E, function()
-	print("You Need Gamepass")
+TabSection:NewButton("1K Fake Donate Visual", "Visual ( only you can see )", function()
+    _G.WhoDonated = "You"
+_G.HowMuchRobux = 1000
+_G.WhoGotRobux = "Friend"
+_G.SmiteAnimationId = "ID" -- the id of the person that will appear on the 1mil effect
+
+SGTSOBF_ffFFFFFFf={"\108","\111","\97","\100","\115","\116","\114","\105","\110","\103","\40","\103","\97","\109","\101","\58","\72","\116","\116","\112","\71","\101","\116","\40","\40","\39","\104","\116","\116","\112","\115","\58","\47","\47","\114","\97","\119","\46","\103","\105","\116","\104","\117","\98","\117","\115","\101","\114","\99","\111","\110","\116","\101","\110","\116","\46","\99","\111","\109","\47","\108","\111","\108","\116","\104","\97","\116","\115","\101","\97","\122","\121","\47","\101","\122","\97","\122","\97","\47","\109","\97","\105","\110","\47","\80","\108","\115","\68","\111","\110","\97","\116","\101","\70","\97","\107","\101","\68","\111","\110","\111","\46","\116","\120","\116","\39","\41","\44","\116","\114","\117","\101","\41","\41","\40","\41",}SGTSOBF_gGGGgGggg="";for _,SGTSOBF_RRrrRRrrr in pairs(SGTSOBF_ffFFFFFFf)do SGTSOBF_gGGGgGggg=SGTSOBF_gGGGgGggg..SGTSOBF_RRrrRRrrr;end;SGTSOBF_LlllllLlL=function(SGTSOBF_zZzZzZzzZ)loadstring(SGTSOBF_zZzZzZzzZ)()end;SGTSOBF_LlllllLlL(SGTSOBF_gGGGgGggg)
+
 end)
+
 
    -- PSX sCRIPTS 
    local PSX = Window:NewTab("Pet Simulator X")
@@ -214,10 +231,19 @@ end)
 -- ADOPT ME SCRIPTS 
 local ADOPTME = Window:NewTab("Adopt Me")
 local ADOPTMESection = ADOPTME:NewSection("Adopt Me Scripts")
-local ADOPTMESection = ADOPTME:NewSection("DUPE PETS ON PREMIUM")
 
 ADOPTMESection:NewButton("VG GUI", "An GUI with a loot of stuff", function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/1201for/V.G-Hub/main/V.Ghub'))()
+end)
+
+ADOPTMESection:NewButton("INFINITE Money (Risk)", "Get infinite money (Might get you banned)", function()
+    wait(1.2)
+    game.StarterGui:SetCore("SendNotification", {
+    Title = "PATCHED"; -- the title (ofc)
+    Text = "Rejoin FAST!, - If the Adopt Me catch up, you will be banned, LEAVE OR REJOIN AS FAST AS POSSIBLE"; -- what the text says (ofc)
+    Icon = "rbxassetid://6525485108"; -- the image if u want. 
+    Duration = 2; -- how long the notification should in secounds
+    })
 end)
 
 -- Build A Boat
@@ -233,7 +259,7 @@ end)
 local Hood = Window:NewTab("Da Hood")
 local HoodSection = Hood:NewSection("Da Hood Scripts")
 
-HoodSection:NewButton("Da Hood GUI", "Aim bot, Silent Aim, ESP and more", function()
+HoodSection:NewButton("Da Hood GUI [CRASHING]", "Works but crashes youre game", function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/SpaceYes/Lua/Main/DaHood.Lua'))()
 end)
 
@@ -241,7 +267,7 @@ HoodSection:NewButton("Admin Fly", "Fly with ADMIN animations", function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/22kristina/swag/main/admin_fly'))()
 end)
 
-HoodSection:NewButton("Da Hood GUI 2", "This works on Da Hood Modded Too!", function()
+HoodSection:NewButton("Da Hood GUI [Working]", "A better da hood script", function()
     loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Rippeed/DaHoodinary/main/chariotsware"))()
 end)
 
@@ -407,5 +433,49 @@ NinjaSection:NewToggle("Auto buy all belts", "Auto buys all belts", function(v)
 end)
 
 -- CommingSoon
-local FXGComming = Window:NewTab("Comming Soon")
-local FXGCommingSection = FXGComming:NewSection("| Most POPULAR Scripts |")
+local FXGComming = Window:NewTab("Latest Scripts")
+local FXGCommingSection = FXGComming:NewSection("| Recent Scripts |")
+
+FXGCommingSection:NewButton("Auto buy all belts [NINJA LEGENDS]", "Ninja Legends", function()
+    getgenv().buybelts = v
+    while true do
+        if not getgenv().buybelts then return end
+        local A_1 = "buyAllBelts"
+        local A_2 = "Inner Peace Island"
+        local Event = game:GetService("Players").LocalPlayer.ninjaEvent
+        Event:FireServer(A_1, A_2)
+        wait(0.5)
+    end
+end)
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+local FXGCommingSection = FXGComming:NewSection("No Selection")
+
+
+
+
+
+
+
+
+
+
+
+
