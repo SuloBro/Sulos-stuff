@@ -1,9 +1,9 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("VZ Service | PREMIUM |", "BloodTheme")
+local Window = Library.CreateLib("VZ Service | PREMIUM |", "Ocean")
 
 game.StarterGui:SetCore("SendNotification", {
     Title = "Thank You!"; -- the title (ofc)
-    Text = "Thank you for purchasing the PREMIUM version"; -- what the text says (ofc)
+    Text = "Enjoy all the scripts, this GUI is PAID, if you got it for FREE, we are banning you in every game!"; -- what the text says (ofc)
     Icon = "rbxassetid://5027762816"; -- the image if u want. 
     Duration = 1; -- how long the notification should in secounds
     })
@@ -15,18 +15,18 @@ game.StarterGui:SetCore("SendNotification", {
     MainSection:NewButton("INFO [MUST READ]", "Read this first", function()
         wait(1.2)
         game.StarterGui:SetCore("SendNotification", {
-        Title = "HEY!"; -- the title (ofc)
+        Title = "DID YOU KNOW?"; -- the title (ofc)
         Text = "More scripts are being added into this, so please be patient!"; -- what the text says (ofc)
         Icon = "rbxassetid://6525485108"; -- the image if u want. 
         Duration = 2; -- how long the notification should in secounds
         })
     end)
 
-    MainSection:NewToggle("MAD CITY", "Mad City GUI", function(state)
+    MainSection:NewButton("MAD CITY", "Mad City GUI", function(state)
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Deni210/madcity/main/Ruby%20Hub%20v1.3", true))()
     end)
 
-    MainSection:NewToggle("IMPOSSIBLE GLASS", "see on which parts to jump on", function(state)
+    MainSection:NewButton("IMPOSSIBLE GLASS", "see on which parts to jump on", function(state)
         while true and task.wait() do
             for i,v in pairs(game:GetService("Workspace")["Glass Bridge"].GlassPane:GetDescendants()) do           
             if v.Name == 'TouchInterest' then           
@@ -36,14 +36,14 @@ game.StarterGui:SetCore("SendNotification", {
             end
     end)
 
-    MainSection:NewToggle("IMPOSSIBLE GLASS (INSTANT FINISH)", "Finish Obby, Get 10K", function(state)
+    MainSection:NewButton("IMPOSSIBLE GLASS (INSTANT FINISH)", "Finish Obby, Get 10K", function(state)
         local Finish = game:GetService("Workspace")["Glass Bridge"].Finish:FindFirstChild("TouchInterest", true).Parent
         local pRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
         firetouchinterest(pRoot, Finish, 0)
         firetouchinterest(pRoot, Finish, 1)
     end)
 
-    MainSection:NewToggle("IMPOSSIBLE GLASS (GET GAMEPASSES)", "Gamepass Unlocker", function(state)
+    MainSection:NewButton("IMPOSSIBLE GLASS (GET GAMEPASSES)", "Gamepass Unlocker", function(state)
         for i, v in pairs(game:GetService("Workspace").Pads:GetDescendants()) do -- remove gamepass spinners
             if v:IsA("Model") then
             v.Parent = game.Lighting
@@ -54,23 +54,23 @@ game.StarterGui:SetCore("SendNotification", {
             game:GetService("Players").LocalPlayer.PlayerGui.Gamepass.Enabled = false -- remove gamepass gui
     end)
 
-    MainSection:NewToggle("MINING SIMULATOR", "OP GUI", function(state)
+    MainSection:NewButton("MINING SIMULATOR", "OP GUI", function(state)
         loadstring(game:HttpGet("https://system-exodus.com/scripts/MiningSimulator/MiningSimulator2.lua", true))()
     end)
 
-    MainSection:NewToggle("Bee Swarm Simulaotr", "OP GUI", function(state)
+    MainSection:NewButton("Bee Swarm Simulaotr", "OP GUI", function(state)
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Historia00012/HISTORIAHUB/main/BSS%20FREE"))()
     end)
 
-    MainSection:NewToggle("Adopt Me GUI", "OP GUI", function(state)
+    MainSection:NewButton("Adopt Me GUI", "OP GUI", function(state)
         loadstring(game:HttpGet('https://raw.githubusercontent.com/1201for/V.G-Hub/main/V.Ghub'))()
     end)
 
-    MainSection:NewToggle("Adopt Me Premium Version", "Premium Talks", function(state)
+    MainSection:NewButton("Adopt Me Premium Version", "Premium Talks", function(state)
         loadstring(game:HttpGet("https://pastebin.com/raw/Z3iAXASr", true))()
     end)
 
-    MainSection:NewToggle("Animal Simulator INSTANT LEVEL", "Instant Level", function(state)
+    MainSection:NewButton("Animal Simulator INSTANT LEVEL [PATCHED]", "Instant Level", function(state)
         while true do
             local args = {          
             [1] = workspace.Eggs.Egg7           
@@ -86,21 +86,54 @@ game.StarterGui:SetCore("SendNotification", {
             end
     end)
 
+    MainSection:NewToggle("Animal Simulator Coin Pick up [WORKING]", "Get Coins", function(state)
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Zeaxy/Roblox-Script/main/Animal%20Simulator%20%5BRevamped%5D.lua"))()
+    end)
+
     -- Dupez
-    local Dupez = Window:NewTab("DUPE SCRIPTS")
-    local DupezSection = Dupez:NewSection("Adopt me Script is PATCHED")
-    local DupezSection = Dupez:NewSection("PSX Script is PATCHED")
-    local DupezSection = Dupez:NewSection("MM2 Script is PATCHED")
-    local DupezSection = Dupez:NewSection("DAHOOD Script is PATCHED")
-    local DupezSection = Dupez:NewSection("Mining Simulator Script is PATCHED")
+    local Dupez = Window:NewTab("The BEST Scripts")
+    local DupezSection = Dupez:NewSection("MoneyMaker#0699")
 
+    DupezSection:NewButton("Make pet NEON", "Equip Pet", function()
+        while true do
+            wait()
+         local clientData = require(game.ReplicatedStorage.ClientModules.Core.ClientData)
+         local playerData = clientData.get_data()[tostring(game.Players.LocalPlayer)]
+         for i,v in pairs(playerData.inventory.pets) do
+         v.properties.neon = true
+         end
+         end
+    end)
 
-    DupezSection:NewButton("Fix Patched Scripts", "Fixed all the patched Scripts", function()
-        wait(1.2)
-        game.StarterGui:SetCore("SendNotification", {
-        Title = "Erorr"; -- the title (ofc)
-        Text = "Cannot Reload the DUPE scripts, They are OUTDATED, Mostlikely if this shows they'll be gone for ever"; -- what the text says (ofc)
-        Icon = "rbxassetid://6525485108"; -- the image if u want. 
-        Duration = 2; -- how long the notification should in secounds
-        })
+    DupezSection:NewButton("Make pet MEGA NEON", "Equip Pet", function()
+        while true do
+            wait()
+         local clientData = require(game.ReplicatedStorage.ClientModules.Core.ClientData)
+         local playerData = clientData.get_data()[tostring(game.Players.LocalPlayer)]
+         for i,v in pairs(playerData.inventory.pets) do
+         v.properties.mega_neon = true
+         end
+         end
+    end)
+
+    DupezSection:NewButton("Make pet FLYABLE", "Equip Pet", function()
+        while true do
+            wait()
+         local clientData = require(game.ReplicatedStorage.ClientModules.Core.ClientData)
+         local playerData = clientData.get_data()[tostring(game.Players.LocalPlayer)]
+         for i,v in pairs(playerData.inventory.pets) do
+         v.properties.flyable = true
+         end
+         end
+    end)
+
+    DupezSection:NewButton("Make pet RIDEABLE", "Equip Pet", function()
+        while true do
+            wait()
+         local clientData = require(game.ReplicatedStorage.ClientModules.Core.ClientData)
+         local playerData = clientData.get_data()[tostring(game.Players.LocalPlayer)]
+         for i,v in pairs(playerData.inventory.pets) do
+         v.properties.rideable = true
+         end
+         end
     end)
