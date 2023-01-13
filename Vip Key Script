@@ -1,0 +1,424 @@
+-- Gui to Lua
+-- Version: 3.2
+
+-- Instances:
+
+local ScreenGui = Instance.new("ScreenGui")
+local VZServiceHub = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local Frame = Instance.new("Frame")
+local UICorner_2 = Instance.new("UICorner")
+local TextButton = Instance.new("TextButton")
+local UICorner_3 = Instance.new("UICorner")
+local UIGradient = Instance.new("UIGradient")
+local UIGradient_2 = Instance.new("UIGradient")
+local KeyEnter = Instance.new("Frame")
+local UICorner_4 = Instance.new("UICorner")
+local Title = Instance.new("TextLabel")
+local UIGradient_3 = Instance.new("UIGradient")
+local Question = Instance.new("TextLabel")
+local InputBox = Instance.new("TextBox")
+local UICorner_5 = Instance.new("UICorner")
+local Frame_2 = Instance.new("Frame")
+local UICorner_6 = Instance.new("UICorner")
+local RedeemButton = Instance.new("TextButton")
+local UICorner_7 = Instance.new("UICorner")
+local UIGradient_4 = Instance.new("UIGradient")
+local UIGradient_5 = Instance.new("UIGradient")
+local Title_2 = Instance.new("TextLabel")
+local UIGradient_6 = Instance.new("UIGradient")
+local Question_2 = Instance.new("TextLabel")
+local UIGradient_7 = Instance.new("UIGradient")
+local INFO = Instance.new("TextLabel")
+local NoPurchase = Instance.new("TextButton")
+local UICorner_8 = Instance.new("UICorner")
+local UIGradient_8 = Instance.new("UIGradient")
+local Frame_3 = Instance.new("Frame")
+local UICorner_9 = Instance.new("UICorner")
+local TextButton_2 = Instance.new("TextButton")
+local UICorner_10 = Instance.new("UICorner")
+local UIGradient_9 = Instance.new("UIGradient")
+local UIGradient_10 = Instance.new("UIGradient")
+local ServerFrame = Instance.new("Frame")
+local UICorner_11 = Instance.new("UICorner")
+local Title_3 = Instance.new("TextLabel")
+local UIGradient_11 = Instance.new("UIGradient")
+local Title_4 = Instance.new("TextLabel")
+local UIGradient_12 = Instance.new("UIGradient")
+local Title_5 = Instance.new("TextLabel")
+local UIGradient_13 = Instance.new("UIGradient")
+
+--Properties:
+
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+VZServiceHub.Name = "VZServiceHub"
+VZServiceHub.Parent = ScreenGui
+VZServiceHub.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+VZServiceHub.Position = UDim2.new(0.241666675, 0, 0.25000003, 0)
+VZServiceHub.Size = UDim2.new(0.516666651, 0, 0.498798072, 0)
+
+UICorner.Parent = VZServiceHub
+
+Frame.Parent = VZServiceHub
+Frame.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+Frame.Position = UDim2.new(0.0192980021, 0, 0.799054742, 0)
+Frame.Size = UDim2.new(0.24486804, 0, 0.146987945, 0)
+
+UICorner_2.Parent = Frame
+
+TextButton.Parent = Frame
+TextButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextButton.Position = UDim2.new(0, 0, -0.131147534, 0)
+TextButton.Size = UDim2.new(1, 0, 1.00000012, 0)
+TextButton.Font = Enum.Font.FredokaOne
+TextButton.Text = "Yes"
+TextButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextButton.TextScaled = true
+TextButton.TextSize = 14.000
+TextButton.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+TextButton.TextStrokeTransparency = 0.000
+TextButton.TextWrapped = true
+
+UICorner_3.Parent = TextButton
+
+UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 255, 21)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(240, 255, 78))}
+UIGradient.Rotation = 90
+UIGradient.Parent = TextButton
+
+UIGradient_2.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 255, 21)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(240, 255, 78))}
+UIGradient_2.Rotation = 90
+UIGradient_2.Parent = Frame
+
+KeyEnter.Name = "KeyEnter"
+KeyEnter.Parent = Frame
+KeyEnter.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+KeyEnter.Position = UDim2.new(0.439271331, 0, 1.49590158, 0)
+KeyEnter.Size = UDim2.new(3.23522878, 0, 3.08896065, 0)
+KeyEnter.Visible = false
+
+UICorner_4.Parent = KeyEnter
+
+Title.Name = "Title"
+Title.Parent = KeyEnter
+Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1.000
+Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Title.Size = UDim2.new(1.00000012, 0, 0.130120486, 0)
+Title.Font = Enum.Font.FredokaOne
+Title.Text = "VZ Service HUB"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.TextSize = 14.000
+Title.TextWrapped = true
+
+UIGradient_3.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 14, 163)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 255, 200))}
+UIGradient_3.Rotation = 90
+UIGradient_3.Parent = Title
+
+Question.Name = "Question"
+Question.Parent = KeyEnter
+Question.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Question.BackgroundTransparency = 1.000
+Question.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Question.Position = UDim2.new(-4.4747182e-08, 0, 0.146987945, 0)
+Question.Size = UDim2.new(1.00000012, 0, 0.10361445, 0)
+Question.Font = Enum.Font.FredokaOne
+Question.Text = "Enter the KEY given to you"
+Question.TextColor3 = Color3.fromRGB(255, 255, 255)
+Question.TextScaled = true
+Question.TextSize = 45.000
+Question.TextWrapped = true
+
+InputBox.Name = "InputBox"
+InputBox.Parent = KeyEnter
+InputBox.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+InputBox.Position = UDim2.new(0.27393043, 0, 0.392725885, 0)
+InputBox.Size = UDim2.new(0.451615006, 0, 0.212284237, 0)
+InputBox.Font = Enum.Font.FredokaOne
+InputBox.PlaceholderText = "Enter Key"
+InputBox.Text = ""
+InputBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+InputBox.TextScaled = true
+InputBox.TextSize = 14.000
+InputBox.TextWrapped = true
+
+UICorner_5.Parent = InputBox
+
+Frame_2.Parent = KeyEnter
+Frame_2.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+Frame_2.Position = UDim2.new(0.345436037, 0, 0.732013643, 0)
+Frame_2.Size = UDim2.new(0.309097141, 0, 0.217591375, 0)
+
+UICorner_6.Parent = Frame_2
+
+RedeemButton.Name = "RedeemButton"
+RedeemButton.Parent = Frame_2
+RedeemButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+RedeemButton.Position = UDim2.new(0, 0, -0.131147414, 0)
+RedeemButton.Size = UDim2.new(1, 0, 0.975609779, 0)
+RedeemButton.Font = Enum.Font.FredokaOne
+RedeemButton.Text = "Check"
+RedeemButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+RedeemButton.TextScaled = true
+RedeemButton.TextSize = 14.000
+RedeemButton.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+RedeemButton.TextStrokeTransparency = 0.000
+RedeemButton.TextWrapped = true
+
+UICorner_7.Parent = RedeemButton
+
+UIGradient_4.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 115, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(12, 255, 219))}
+UIGradient_4.Rotation = 90
+UIGradient_4.Parent = RedeemButton
+
+UIGradient_5.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 115, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(12, 255, 219))}
+UIGradient_5.Rotation = 90
+UIGradient_5.Parent = Frame_2
+
+Title_2.Name = "Title"
+Title_2.Parent = VZServiceHub
+Title_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title_2.BackgroundTransparency = 1.000
+Title_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Title_2.Size = UDim2.new(1.00000012, 0, 0.130120486, 0)
+Title_2.Font = Enum.Font.FredokaOne
+Title_2.Text = "VZ Service HUB"
+Title_2.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title_2.TextScaled = true
+Title_2.TextSize = 14.000
+Title_2.TextWrapped = true
+
+UIGradient_6.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 14, 163)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 255, 200))}
+UIGradient_6.Rotation = 90
+UIGradient_6.Parent = Title_2
+
+Question_2.Name = "Question"
+Question_2.Parent = VZServiceHub
+Question_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Question_2.BackgroundTransparency = 1.000
+Question_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Question_2.Position = UDim2.new(-4.4747182e-08, 0, 0.146987945, 0)
+Question_2.Size = UDim2.new(1.00000012, 0, 0.103614457, 0)
+Question_2.Font = Enum.Font.FredokaOne
+Question_2.Text = "Do you have VZ Service VIP Key?"
+Question_2.TextColor3 = Color3.fromRGB(255, 255, 255)
+Question_2.TextScaled = true
+Question_2.TextSize = 45.000
+Question_2.TextWrapped = true
+
+UIGradient_7.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(38, 78, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 255, 200))}
+UIGradient_7.Rotation = 90
+UIGradient_7.Parent = Question_2
+
+INFO.Name = "INFO"
+INFO.Parent = VZServiceHub
+INFO.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+INFO.BackgroundTransparency = 1.000
+INFO.BorderColor3 = Color3.fromRGB(0, 0, 0)
+INFO.Position = UDim2.new(-4.4747182e-08, 0, 0.250602424, 0)
+INFO.Size = UDim2.new(1.00000012, 0, 0.175903559, 0)
+INFO.Font = Enum.Font.FredokaOne
+INFO.Text = "INFO: You need an VIP Key to enter to the UPDATED Gui, this GUI is still on beta so only VIP Users can get to test it"
+INFO.TextColor3 = Color3.fromRGB(255, 255, 255)
+INFO.TextScaled = true
+INFO.TextSize = 35.000
+INFO.TextStrokeColor3 = Color3.fromRGB(230, 42, 255)
+INFO.TextStrokeTransparency = 0.000
+INFO.TextWrapped = true
+
+NoPurchase.Name = "NoPurchase"
+NoPurchase.Parent = VZServiceHub
+NoPurchase.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+NoPurchase.Position = UDim2.new(0.95244956, 0, -0.0501948595, 0)
+NoPurchase.Size = UDim2.new(0.0689149573, 0, 0.113253012, 0)
+NoPurchase.Font = Enum.Font.FredokaOne
+NoPurchase.Text = "X"
+NoPurchase.TextColor3 = Color3.fromRGB(0, 0, 0)
+NoPurchase.TextScaled = true
+NoPurchase.TextSize = 14.000
+NoPurchase.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+NoPurchase.TextStrokeTransparency = 0.000
+NoPurchase.TextWrapped = true
+
+UICorner_8.Parent = NoPurchase
+
+UIGradient_8.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 4)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 133, 135))}
+UIGradient_8.Rotation = 90
+UIGradient_8.Parent = NoPurchase
+
+Frame_3.Parent = VZServiceHub
+Frame_3.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+Frame_3.Position = UDim2.new(0.728975415, 0, 0.799054742, 0)
+Frame_3.Size = UDim2.new(0.24486804, 0, 0.146987945, 0)
+
+UICorner_9.Parent = Frame_3
+
+TextButton_2.Parent = Frame_3
+TextButton_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextButton_2.Position = UDim2.new(0, 0, -0.131147534, 0)
+TextButton_2.Size = UDim2.new(1, 0, 1.00000012, 0)
+TextButton_2.Font = Enum.Font.FredokaOne
+TextButton_2.Text = "Discord Server"
+TextButton_2.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextButton_2.TextScaled = true
+TextButton_2.TextSize = 14.000
+TextButton_2.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+TextButton_2.TextStrokeTransparency = 0.000
+TextButton_2.TextWrapped = true
+
+UICorner_10.Parent = TextButton_2
+
+UIGradient_9.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 1, 200)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 187, 255))}
+UIGradient_9.Rotation = 90
+UIGradient_9.Parent = TextButton_2
+
+UIGradient_10.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 1, 200)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 187, 255))}
+UIGradient_10.Rotation = 90
+UIGradient_10.Parent = Frame_3
+
+ServerFrame.Name = "ServerFrame"
+ServerFrame.Parent = Frame_3
+ServerFrame.BackgroundColor3 = Color3.fromRGB(2, 175, 255)
+ServerFrame.Position = UDim2.new(-2.55474091, 0, 1.56147492, 0)
+ServerFrame.Size = UDim2.new(3.23522878, 0, 3.08896065, 0)
+ServerFrame.Visible = false
+
+UICorner_11.Parent = ServerFrame
+
+Title_3.Name = "Title"
+Title_3.Parent = ServerFrame
+Title_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title_3.BackgroundTransparency = 1.000
+Title_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Title_3.Position = UDim2.new(-0.00185093761, 0, 0, 0)
+Title_3.Size = UDim2.new(1.00000012, 0, 0.305254757, 0)
+Title_3.Font = Enum.Font.FredokaOne
+Title_3.Text = "https://discord.gg/neJJbmMgrX"
+Title_3.TextColor3 = Color3.fromRGB(31, 31, 31)
+Title_3.TextScaled = true
+Title_3.TextSize = 14.000
+Title_3.TextWrapped = true
+
+UIGradient_11.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 14, 163)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 255, 200))}
+UIGradient_11.Rotation = 90
+UIGradient_11.Parent = Title_3
+
+Title_4.Name = "Title"
+Title_4.Parent = ServerFrame
+Title_4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title_4.BackgroundTransparency = 1.000
+Title_4.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Title_4.Position = UDim2.new(-0.00185093761, 0, 0.827908516, 0)
+Title_4.Size = UDim2.new(1.00000012, 0, 0.16727002, 0)
+Title_4.Font = Enum.Font.FredokaOne
+Title_4.Text = "MoneyMaker#0699"
+Title_4.TextColor3 = Color3.fromRGB(31, 31, 31)
+Title_4.TextScaled = true
+Title_4.TextSize = 14.000
+Title_4.TextWrapped = true
+
+UIGradient_12.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 14, 163)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 255, 200))}
+UIGradient_12.Rotation = 90
+UIGradient_12.Parent = Title_4
+
+Title_5.Name = "Title"
+Title_5.Parent = ServerFrame
+Title_5.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title_5.BackgroundTransparency = 1.000
+Title_5.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Title_5.Position = UDim2.new(-5.64614311e-08, 0, 0.684616685, 0)
+Title_5.Size = UDim2.new(0.159699962, 0, 0.310561866, 0)
+Title_5.Font = Enum.Font.FredokaOne
+Title_5.Text = "300R$ FOR VIP"
+Title_5.TextColor3 = Color3.fromRGB(31, 31, 31)
+Title_5.TextScaled = true
+Title_5.TextSize = 14.000
+Title_5.TextWrapped = true
+
+UIGradient_13.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 14, 163)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 255, 200))}
+UIGradient_13.Rotation = 90
+UIGradient_13.Parent = Title_5
+
+-- Scripts:
+
+local function WODK_fake_script() -- TextButton.LocalScript 
+	local script = Instance.new('LocalScript', TextButton)
+
+	script.Parent.MouseButton1Down:Connect(function()
+		script.Parent:TweenPosition(UDim2.new(0, 0, 0, 0),"In","Sine", 0.04)
+	end)
+	
+	script.Parent.MouseButton1Up:Connect(function()
+		script.Parent:TweenPosition(UDim2.new(0, 0, -0.131, 0),"In","Sine", 0.04)
+	end)
+	
+	script.Parent.MouseButton1Click:Connect(function()
+		script.Parent.Sound:Play()
+	end)
+end
+coroutine.wrap(WODK_fake_script)()
+local function RDUYT_fake_script() -- TextButton.Open/Close 
+	local script = Instance.new('LocalScript', TextButton)
+
+	--You dont need to delete this text.
+	--PUT INSIDE a BUTTON in StarterGui
+	--Make sure to make a frame for the menu to pop up then go to properties > Visible [Off]
+	script.Parent.MouseButton1Click:Connect (function()
+		script.Parent.Parent.KeyEnter.Visible = not script.Parent.Parent.KeyEnter.Visible
+	end)
+end
+coroutine.wrap(RDUYT_fake_script)()
+local function ARHWJQR_fake_script() -- RedeemButton.LocalScript 
+	local script = Instance.new('LocalScript', RedeemButton)
+
+	script.Parent.MouseButton1Down:Connect(function()
+		script.Parent:TweenPosition(UDim2.new(0, 0, 0, 0),"In","Sine", 0.04)
+	end)
+	
+	script.Parent.MouseButton1Up:Connect(function()
+		script.Parent:TweenPosition(UDim2.new(0, 0, -0.131, 0),"In","Sine", 0.04)
+	end)
+	
+	script.Parent.MouseButton1Click:Connect(function()
+		script.Parent.Sound:Play()
+	end)
+end
+coroutine.wrap(ARHWJQR_fake_script)()
+local function YRZOHF_fake_script() -- NoPurchase.Close 
+	local script = Instance.new('LocalScript', NoPurchase)
+
+	script.Parent.MouseButton1Click:Connect(function()
+		script.Parent.Parent.Visible = false
+	end)
+	
+end
+coroutine.wrap(YRZOHF_fake_script)()
+local function OPJC_fake_script() -- TextButton_2.LocalScript 
+	local script = Instance.new('LocalScript', TextButton_2)
+
+	script.Parent.MouseButton1Down:Connect(function()
+		script.Parent:TweenPosition(UDim2.new(0, 0, 0, 0),"In","Sine", 0.04)
+	end)
+	
+	script.Parent.MouseButton1Up:Connect(function()
+		script.Parent:TweenPosition(UDim2.new(0, 0, -0.131, 0),"In","Sine", 0.04)
+	end)
+	
+	script.Parent.MouseButton1Click:Connect(function()
+		script.Parent.Sound:Play()
+	end)
+end
+coroutine.wrap(OPJC_fake_script)()
+local function SABBV_fake_script() -- TextButton_2.Open/Close 
+	local script = Instance.new('LocalScript', TextButton_2)
+
+	--You dont need to delete this text.
+	--PUT INSIDE a BUTTON in StarterGui
+	--Make sure to make a frame for the menu to pop up then go to properties > Visible [Off]
+	script.Parent.MouseButton1Click:Connect (function()
+		script.Parent.Parent.ServerFrame.Visible = not script.Parent.Parent.ServerFrame.Visible
+	end)
+end
+coroutine.wrap(SABBV_fake_script)()
