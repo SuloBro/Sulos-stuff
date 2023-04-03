@@ -1,11 +1,318 @@
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({Name = "VZ Service 🔥", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+local Window = OrionLib:MakeWindow({Name = "VZ HUB - UPDATED 🔥", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest", IntroText = "VZ HUB", IntroIcon = "rbxassetid://11322089611"})
+
+
+_G.Key = "VZ-PREMIUM-CHECK-18421452"
+_G.KeyInput = "string"
+
+function MakeScriptHub()
+	local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+	local Player = game.Players.LocalPlayer
+	local Window = OrionLib:MakeWindow({Name = "VZ HUB [PREMIUM]", HidePremium = false, SaveConfig = true, IntroText = "VZ HUB [PREMIUM]", IntroIcon = "rbxassetid://9995533191"})
+	
+	OrionLib:MakeNotification({
+		Name = "Hello "..Player.Name..", Have an amazing Day",
+		Content = "Subscribe to Youtube if you havent already ;)",
+		Image = "rbxassetid://11713333947",
+		Time = 15
+	})
+	
+	
+	local Tab = Window:MakeTab({
+		Name = "IMPOSSIBLE GLASS",
+		Icon = "rbxassetid://5986141361",
+		PremiumOnly = false
+	})
+	
+	local Section = Tab:AddSection({
+		Name = "VZ - HUB Premium"
+	})
+	
+	
+	Tab:AddButton({
+		Name = "Admin Commands",
+		Callback = function()
+			loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
+		  end    
+	})
+	
+	Tab:AddButton({
+		Name = "IMPOSSIBLE GLASS [View all Kill Parts]",
+		Callback = function()
+			while true and task.wait() do
+				for i,v in pairs(game:GetService("Workspace")["Glass Bridge"].GlassPane:GetDescendants()) do           
+				if v.Name == 'TouchInterest' then           
+				v.Parent.Transparency = 1           
+				end            
+				end          
+				end
+		  end    
+	})
+	
+	Tab:AddButton({
+		Name = "IMPOSSIBLE GLASS [Instant Finish]",
+		Callback = function()
+			local Finish = game:GetService("Workspace")["Glass Bridge"].Finish:FindFirstChild("TouchInterest", true).Parent
+			local pRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
+			firetouchinterest(pRoot, Finish, 0)
+			firetouchinterest(pRoot, Finish, 1)
+		  end    
+	})
+	
+	Tab:AddButton({
+		Name = "IMPOSSIBLE GLASS [Steal Gamepasses (Get Gamepasses)]",
+		Callback = function()
+			for i, v in pairs(game:GetService("Workspace").Pads:GetDescendants()) do -- remove gamepass spinners
+				if v:IsA("Model") then
+				v.Parent = game.Lighting
+				end
+				end          
+				game:GetService("Workspace")["Become Squid Front Man"].Parent = game.Lighting -- remove become front man gamepass
+				game:GetService("Workspace")["Become Squid Game Guard"].Parent = game.Lighting -- remove become guard gamepass         
+				game:GetService("Players").LocalPlayer.PlayerGui.Gamepass.Enabled = false -- remove gamepass gui
+		  end    
+	})
+	
+	Tab:AddButton({
+		Name = "IMPOSSIBLE GLASS [Steal Gamepasses (Get Gamepasses)]",
+		Callback = function()
+			for i, v in pairs(game:GetService("Workspace").Pads:GetDescendants()) do -- remove gamepass spinners
+				if v:IsA("Model") then
+				v.Parent = game.Lighting
+				end
+				end          
+				game:GetService("Workspace")["Become Squid Front Man"].Parent = game.Lighting -- remove become front man gamepass
+				game:GetService("Workspace")["Become Squid Game Guard"].Parent = game.Lighting -- remove become guard gamepass         
+				game:GetService("Players").LocalPlayer.PlayerGui.Gamepass.Enabled = false -- remove gamepass gui
+		  end    
+	})
+	
+	
+	
+	local Tab2 = Window:MakeTab({
+		Name = "Build a Boat",
+		Icon = "rbxassetid://5986141361",
+		PremiumOnly = false
+	})
+	
+	local Section = Tab2:AddSection({
+		Name = "VZ - HUB Premium"
+	})
+	
+	Tab2:AddButton({
+		Name = "Infinite Blocks",
+		Callback = function()
+			game.Players.LocalPlayer.Data.Cannon.Value=9999999;game.Players.LocalPlayer.Data.TNT.Value=9999999;game.Players.LocalPlayer.Data.WoodRod.Value=9999999;game.Players.LocalPlayer.Data.Throne.Value=9999999;game.Players.LocalPlayer.Data.Step.Value=9999999;game.Players.LocalPlayer.Data.Truss.Value=9999999;game.Players.LocalPlayer.Data.Wedge.Value=9999999;game.Players.LocalPlayer.Data.CornerWedge.Value=9999999;game.Players.LocalPlayer.Data.Seat.Value=9999999;game.Players.LocalPlayer.Data.Mast.Value=9999999;game.Players.LocalPlayer.Data.Flag.Value=9999999;game.Players.LocalPlayer.Data.Window.Value=9999999;game.Players.LocalPlayer.Data.StoneBlock.Value=9999999;game.Players.LocalPlayer.Data.StoneRod.Value=9999999;game.Players.LocalPlayer.Data.RustedRod.Value=9999999;game.Players.LocalPlayer.Data.RustedBlock.Value=9999999;game.Players.LocalPlayer.Data.MetalRod.Value=9999999;game.Players.LocalPlayer.Data.ConcreteRod.Value=9999999;game.Players.LocalPlayer.Data.MetalBlock.Value=9999999;game.Players.LocalPlayer.Data.MarbleRod.Value=9999999;game.Players.LocalPlayer.Data.TitaniumRod.Value=9999999;game.Players.LocalPlayer.Data.ConcreteBlock.Value=9999999;game.Players.LocalPlayer.Data.MarbleBlock.Value=9999999;game.Players.LocalPlayer.Data.TitaniumBlock.Value=9999999;game.Players.LocalPlayer.Data.Wheel.Value=9999999;game.Players.LocalPlayer.Data.Chair.Value=9999999;game.Players.LocalPlayer.Data.Torch.Value=9999999;game.Players.LocalPlayer.Data.YellowChest.Value=9999999;game.Players.LocalPlayer.Data.LifePreserver.Value=9999;game.Players.LocalPlayer.Data['Steel I-Beam'].Value=9999
+		  end    
+	})
+	
+	Tab2:AddButton({
+		Name = "Auto Build",
+		Callback = function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/max2007killer/auto-build-not-limit/main/autobuild.txt"))()
+		  end    
+	})
+	
+	Tab2:AddButton({
+		Name = "Admin Commands",
+		Callback = function()
+			loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
+		  end    
+	})
+	
+	
+	local Tab3 = Window:MakeTab({
+		Name = "Da Hood",
+		Icon = "rbxassetid://5986141361",
+		PremiumOnly = false
+	})
+	
+	local Section = Tab3:AddSection({
+		Name = "VZ - HUB Premium"
+	})
+	
+	Tab3:AddButton({
+		Name = "Faded Gui (Anti Lock, More)",
+		Callback = function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/NighterEpic/Faded/main/YesEpic", true))()
+		  end    
+	})
+	
+	Tab3:AddButton({
+		Name = "Lock Gui (Silent Aim, Lock, More)",
+		Callback = function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/bobobexz/sono-op/main/README.md", true))()
+		  end    
+	})
+	
+	
+	local Tab4 = Window:MakeTab({
+		Name = "Driving Empire (DE)",
+		Icon = "rbxassetid://5986141361",
+		PremiumOnly = false
+	})
+	
+	local Section = Tab4:AddSection({
+		Name = "VZ - HUB Premium"
+	})
+	
+	Tab4:AddButton({
+		Name = "Auto Farm, More (Gui)",
+		Callback = function()
+			_G.RedGUI = true
+	_G.Theme = "Dark" -- Must disable or remove _G.RedGUI to use
+	--Themes: Light, Dark, Mocha, Aqua and Jester
+	
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/CasperFlyModz/discord.gg-rips/main/DrivingEmpire.lua"))()
+		  end    
+	})
+	
+	local Tab5 = Window:MakeTab({
+		Name = "MineCraft Games",
+		Icon = "rbxassetid://5986141361",
+		PremiumOnly = false
+	})
+	
+	local Section = Tab5:AddSection({
+		Name = "VZ - HUB Premium"
+	})
+	
+	Tab5:AddButton({
+		Name = "Gui (Xray, Dupe, More)",
+		Callback = function()
+			loadstring(game:HttpGetAsync("https://hastebin.com/raw/owuyapulun",true))()
+		  end    
+	})
+	
+	local Tab6 = Window:MakeTab({
+		Name = "JailBreak",
+		Icon = "rbxassetid://5986141361",
+		PremiumOnly = false
+	})
+	
+	local Section = Tab6:AddSection({
+		Name = "VZ - HUB Premium"
+	})
+	
+	Tab6:AddButton({
+		Name = "Auto Farm Gui",
+		Callback = function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Vynixius/main/Jailbreak/Script.lua"))()
+		  end    
+	})
+	
+	local Tab7 = Window:MakeTab({
+		Name = "Treasure Chest",
+		Icon = "rbxassetid://5986141361",
+		PremiumOnly = false
+	})
+	
+	local Section = Tab7:AddSection({
+		Name = "VZ - HUB Premium"
+	})
+	
+	Tab7:AddButton({
+		Name = "TC Auto Farm +",
+		Callback = function()
+			getgenv().TreasureQuestAutofarm = {
+				Enabled = true;
+				Dungeon = "Ancient Jungle";
+				Difficulty = "Easy";
+				GameMode = "Classic";
+				EndlessSellFullInventory = true;
+				FailSafeRejoin = false; -- Tries to go back to lobby incase Character gets stuck somewhere...
+				FailSafeSeconds = 200;
+			 }
+			 
+			 getgenv().TreasureQuestAutoSell = {
+				Enabled = false;
+				AutoUpgradeGear = false;
+				KeepAbilities = false; -- this doesn't exist yet
+				KeepTiers = {
+					"Common";
+					"Rare";
+					"Legendary";
+					"Mythical";
+					"Ultimate";
+					"Unique";
+				}
+			 }
+			 
+			 loadstring(game:HttpGet("https://raw.githubusercontent.com/SlamminPig/rblxgames/main/Treasure%20Quest/TreasureQuestLoadstring"))()
+			 
+		  end    
+	})
+	
+	
+	local Tab7 = Window:MakeTab({
+		Name = "Adopt Me",
+		Icon = "rbxassetid://5986141361",
+		PremiumOnly = false
+	})
+	
+	local Section = Tab7:AddSection({
+		Name = "VZ - HUB Premium"
+	})
+	
+	local Section = Tab7:AddSection({
+		Name = "Dupes Section"
+	})
+	
+	Tab7:AddParagraph("⚠️WARNING:","Executing the script below, might remove all you're other pets USE AN ALT ACCOUNT FOR SAFETY!")
+	local Section = Tab7:AddSection({
+		Name = "⚠️ - 65% of being banned"
+	})
+	local Section = Tab7:AddSection({
+		Name = "⚠️⚠️ - 85% of being banned"
+	})
+	local Section = Tab7:AddSection({
+		Name = "⚠️⚠️⚠️ - 93% of being banned"
+	})
+	local Section = Tab7:AddSection({
+		Name = "⚠️⚠️⚠️⚠️ - 97% of being banned"
+	})
+	local Section = Tab7:AddSection({
+		Name = "❌ - Patched & Destroyed"
+	})
+	
+	Tab7:AddButton({
+		Name = "⚠️⚠️ Dupe Pets",
+		Callback = function()
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/lf4d7/daphie/main/ame.lua"))()
+		  end    
+	})
+	
+	Tab7:AddButton({
+		Name = "⚠️⚠️⚠️ Dupe Pets",
+		Callback = function()
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/lf4d7/daphie/main/ame.lua"))()
+		  end    
+	})
+end
+
+function CorrectKeyNotification()
+    OrionLib:MakeNotification({
+        Name = "Correct Key",
+        Content = "You have the right key. "..Player.Name..", Enjoy.",
+        Image = "rbxassetid://11713333947",
+        Time = 5
+    })
+end
+
+function IncorrectKeyNotification()
+    OrionLib:MakeNotification({
+        Name = "Incorrect Key",
+        Content = "Wrong Key.",
+        Image = "rbxassetid://11713333947",
+        Time = 5
+    })
+end
 
 OrionLib:MakeNotification({
 	Name = "Discord Server",
 	Content = "Discord Server has been copied, click CTRL + V to paste it!",
-	Image = "rbxassetid://11401835376",
-	Time = 5
+	Image = "rbxassetid://11713333947",
+	Time = 10
 })
 
 setclipboard("https://discord.gg/neJJbmMgrX")
@@ -342,6 +649,83 @@ if getgenv().loaded == true then
   	end    
 })
 
+Tab4:AddButton({
+	Name = "🔥 Pls Donate Beg Chat",
+	Callback = function()
+      -- if statements
+if getgenv().loaded == true then
+	return;
+ elseif game.PlaceId ~= 8737602449 then
+	return;
+ elseif not game:IsLoaded() then
+	game.IsLoaded:Wait()
+ end
+ 
+ -- settings
+ local settings = {
+	AutoChat_Time = 7,
+	AutoChat_Delay = 10,
+	AutoChat = true,
+	AntiAfk = true
+ }
+ 
+ -- table
+ local fortunes = {
+ "PLS ROBUX PLS.",
+ "Robux Pls.",
+ "if you give me robux ill give you nothing, fair trade!",
+ "Cant you give me robux?",
+ "PLEASE ROBUX PLEASE IM DYING OUT HERE.",
+ "ill spam E in chat if you donate",
+ "PLS ROBUX PLS. IM BEGGING PLSSSSSSSSSSSSSSS",
+ "PLZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ ROBUX",
+ "Ill do dishes & clean trash for ROBUX!",
+ "If you dont donate, i wont donate so donate please",
+ "I NEED ROBUX FOR MY LIFE SAVINGS",
+ "REBEX PLZ",
+ "I will legit eat you alive if you dont give me robux",
+ "DUDE JUST SPEND SOME ROBUX ON MY BOOTH!"
+ }
+ 
+ -- vars
+ local players = game:GetService('Players')
+ local lp = players.LocalPlayer
+ local character = lp.Character:GetChildren()
+ local money = lp.leaderstats.Raised
+ local chatrem = game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest
+ local vu = game:GetService("VirtualUser")
+ 
+ -- not mine anti afk
+ lp.Idled:connect(function()
+  if settings.AntiAfk then
+	vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+  wait(1)
+	vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+  end
+ end)
+ 
+ 
+ -- functions
+ function randomf()
+	if settings.AutoChat then
+		task.wait(settings.AutoChat_Delay)
+		chatrem:FireServer(tostring(fortunes[math.random(1,#fortunes)]), "All")
+	end
+ end
+ 
+ function chatspam()
+	while task.wait(settings.AutoChat_Time) do
+		chatrem:FireServer('giving out fortune cookies to everyone who donates.', "All")
+	end
+ end
+ 
+ task.spawn(chatspam)
+ money.Changed:Connect(randomf)
+ 
+ print('script loaded!')
+ getgenv().loaded = true
+  	end    
+})
 
 
 local Tab5 = Window:MakeTab({
@@ -557,6 +941,37 @@ Tab6:AddButton({
          end
   	end    
 })
+
+Tab6:AddButton({
+	Name = "🔥 Simple Auto Farm",
+	Callback = function()
+		local Gui = game.Players.LocalPlayer.PlayerGui.AilmentsMonitorApp -- Detect Task Gui
+		local Aliments = Gui.Ailments -- Detect Task Storage
+		local data = true -- Toggle the script
+		local Time = 50 -- Time to reset toggle
+		
+		local plr = game.Players.LocalPlayer -- Declare Player
+		local hum = plr.Character.HumanoidRootPart -- Declare the HumanoidRootPart
+		
+		-- Exemple of quest name
+		-- sleepy
+		-- dirt
+  	end    
+})
+
+Tab6:AddParagraph("⚠️WARNING:","Executing the script below, might remove all you're other pets USE AN ALT ACCOUNT FOR SAFETY!")
+local Section = Tab6:AddSection({
+	Name = "⚠️ - The Buttons that have this are bannable"
+})
+
+Tab6:AddButton({
+	Name = "⚠️ Get Every pet in the game",
+	Callback = function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/lf4d7/daphie/main/ame.lua"))()
+  	end    
+})
+
+
 
 
 local Tab7 = Window:MakeTab({
@@ -1087,6 +1502,40 @@ Tab14:AddButton({
 
 
 
+local PremiumTab = Window:MakeTab({
+	Name = "PREMIUM",
+	Icon = "rbxassetid://5986141361",
+	PremiumOnly = false
+})
+
+local Section = PremiumTab:AddSection({
+	Name = "VZ - HUB Premium"
+})
+
+
+PremiumTab:AddTextbox({
+	Name = "Enter Key",
+	Default = "",
+	TextDisappear = false,
+	Callback = function(Value)
+		_G.KeyInput = Value
+	end	  
+})
+
+PremiumTab:AddButton({
+Name = "Check Key",
+Callback = function()
+     if _G.KeyInput == _G.Key then
+      MakeScriptHub()
+      CorrectKeyNotification()
+     else
+        IncorrectKeyNotification()
+     end
+
+    end    
+})
+
+
 
 
 
@@ -1099,7 +1548,7 @@ Tab14:AddButton({
 
 local CreditzCreator = Window:MakeTab({
 	Name = "Info",
-	Icon = "rbxassetid://4871684504",
+	Icon = "rbxassetid://7059344100",
 	PremiumOnly = false
 })
 
@@ -1158,3 +1607,6 @@ local Section = CreditzCreator:AddSection({
 local Section = CreditzCreator:AddSection({
 	Name = "Better GUI'S are cooming soon"
 })
+
+
+OrionLib:Init()
