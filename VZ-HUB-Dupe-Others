@@ -1,5 +1,5 @@
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({Name = "VZ HUB - UPDATED 🔥", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest", IntroText = "VZ HUB", IntroIcon = "rbxassetid://11322089611"})
+local Window = OrionLib:MakeWindow({Name = "ILLUSIONS ", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest", IntroText = "Welcome Illusion User", IntroIcon = "rbxassetid://13526608850"})
 
 
 _G.Key = "VZ-PREMIUM-CHECK-18421452"
@@ -8,7 +8,7 @@ _G.KeyInput = "string"
 function MakeScriptHub()
 	local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 	local Player = game.Players.LocalPlayer
-	local Window = OrionLib:MakeWindow({Name = "VZ HUB [PREMIUM]", HidePremium = false, SaveConfig = true, IntroText = "VZ HUB [PREMIUM]", IntroIcon = "rbxassetid://9995533191"})
+	local Window = OrionLib:MakeWindow({Name =  "iLLUSION💎 [PREMIUM]", HidePremium = false, SaveConfig = true, IntroText = "iLLUSION 💎 [PREMIUM]", IntroIcon = "rbxassetid://13526614034"})
 	
 	OrionLib:MakeNotification({
 		Name = "Hello "..Player.Name..", Have an amazing Day",
@@ -25,7 +25,7 @@ function MakeScriptHub()
 	})
 	
 	local Section = Tab:AddSection({
-		Name = "VZ - HUB Premium"
+		Name = "VZ - HUB 💎 Premium"
 	})
 	
 	
@@ -266,10 +266,10 @@ function MakeScriptHub()
 		Name = "⚠️⚠️ - 85% of being banned"
 	})
 	local Section = Tab7:AddSection({
-		Name = "⚠️⚠️⚠️ - 93% of being banned"
+		Name = "⚠️⚠️⚠️ - 90% of being banned"
 	})
 	local Section = Tab7:AddSection({
-		Name = "⚠️⚠️⚠️⚠️ - 97% of being banned"
+		Name = "⚠️⚠️⚠️⚠️ - 99% of being banned"
 	})
 	local Section = Tab7:AddSection({
 		Name = "❌ - Patched & Destroyed"
@@ -497,6 +497,69 @@ Tab3:AddButton({
         loadstring(game:HttpGet(('https://pastebin.com/raw/djBfk8Li'),true))()
   	end    
 })
+
+local TabNewest = Window:MakeTab({
+	Name = "New Scripts!",
+	Icon = "rbxassetid://5205790785",
+	PremiumOnly = false
+})
+
+local Section = TabNewest:AddSection({
+	Name = "The Newest illusion's Scripts"
+})
+
+
+TabNewest:AddButton({
+	Name = "HitBox Expander Gui",
+	Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Vcsk/RobloxScripts/main/HitboxExpander.lua"))()
+  	end    
+})
+local Section = TabNewest:AddSection({
+	Name = "Works for some Gun Games."
+})
+TabNewest:AddButton({
+	Name = "Dress to impress Fvcker",
+	Callback = function()
+		pcall(function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/hellohellohell012321/DTI-GUI-V2/main/dti_gui_v2.lua",true))()
+			end)
+  	end    
+})
+
+local Section = TabNewest:AddSection({
+	Name = "Dress to impress most Rarest free script"
+})
+
+TabNewest:AddButton({
+	Name = "Streetz War 2",
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/KirawzWeb/Script/main/loader%20beta.lua",true))()
+  	end    
+})
+
+local Section = TabNewest:AddSection({
+	Name = "Auto farm, Infinite Money, One Punch Man..."
+})
+
+TabNewest:AddButton({
+	Name = "A Dusty Trip",
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/artemy133563/Utilities/main/ADustyTrip",true))()
+  	end    
+})
+
+local Section = TabNewest:AddSection({
+	Name = "Auto farm, Spawn Items, Tools Giver, Auto Build, Spawn Items..."
+})
+
+
+local Section = TabNewest:AddSection({
+	Name = "UPDATED ON 01.09.2024"
+})
+
+
+
 
 
 local Tab4 = Window:MakeTab({
@@ -1429,16 +1492,51 @@ Tab14:AddButton({
 })
 
 
+local Tab13 = Window:MakeTab({
+	Name = "AMP Dupe",
+	Icon = "rbxassetid://66359833",
+	PremiumOnly = false
+})
+
+local Section = Tab13:AddSection({
+	Name = "Shadow Dragon - Shadow019421"
+})
+
+local Section = Tab13:AddSection({
+	Name = "Bat Dragon - Bat202532"
+})
+
+local Section = Tab13:AddSection({
+	Name = "Giraffe - Girf20194601"
+})
 
 
+local Section = Tab13:AddSection({
+	Name = "Frost Dragon - FrostyLoad20On2094"
+})
+
+local Section = Tab13:AddSection({
+	Name = "Starter Egg - UnkownStarterPart.10.01"
+})
+
+local Section = Tab13:AddSection({
+	Name = "Others - Unselectable"
+})
 
 
+Tab13:AddTextbox({
+	Name = "Enter Code",
+	Default = "Not Working",
+	TextDisappear = false,
+	Callback = function(Value)
+	end	  
+})
 
-
-
-
-
-
+Tab13:AddButton({
+Name = "DUPE ! (Comming Soon)",
+Callback = function()
+    end    
+})
 
 
 
@@ -1504,7 +1602,7 @@ Tab14:AddButton({
 
 local PremiumTab = Window:MakeTab({
 	Name = "PREMIUM",
-	Icon = "rbxassetid://5986141361",
+	Icon = "rbxassetid://13526614034",
 	PremiumOnly = false
 })
 
@@ -1512,6 +1610,47 @@ local Section = PremiumTab:AddSection({
 	Name = "VZ - HUB Premium"
 })
 
+local Section = PremiumTab:AddSection({
+	Name = "Regular Premium - 200R$"
+})
+
+PremiumTab:AddButton({
+	Name = "Copy Link",
+	Callback = function()
+		setclipboard("https://www.roblox.com/catalog/11452467150/Premium-Script")
+
+        OrionLib:MakeNotification({
+            Name = "Link Copied",
+            Content = "Paste the link into a new web browser and Purchase !",
+            Image = "rbxassetid://11401835376",
+            Time = 5
+        })
+  	end    
+})
+
+local Section = PremiumTab:AddSection({
+	Name = "Expensive Premium - 500R$"
+})
+
+PremiumTab:AddButton({
+	Name = "Copy Link",
+	Callback = function()
+		setclipboard("https://www.roblox.com/catalog/11452422235/Premium-DUPE")
+
+        OrionLib:MakeNotification({
+            Name = "Link Copied",
+            Content = "Paste the link into a new web browser and Purchase !",
+            Image = "rbxassetid://11401835376",
+            Time = 5
+        })
+  	end    
+})
+
+PremiumTab:AddParagraph("Regular Premium:","you get the benefits and scripts of the PREMIUM version of the VZ Service HUB, much more & specialized scripts")
+PremiumTab:AddParagraph("Expensive Premium","All the Regular Premium benefits + Monthly DUPE Updates, working Dupe Updates, Fixing Dupe Updates + Specialized Group Rank.")
+local Section = PremiumTab:AddSection({
+	Name = "MoneyMaker#0699"
+})
 
 PremiumTab:AddTextbox({
 	Name = "Enter Key",
@@ -1574,16 +1713,16 @@ CreditzCreator:AddButton({
 })
 
 local Section = CreditzCreator:AddSection({
-	Name = "This is a remade script, the original one is still aviable"
+	Name = "THE HUB IS RENAMED FROM VZ TO ILLUSIONS"
 })
 local Section = CreditzCreator:AddSection({
-	Name = "This script has more quality than the other one"
+	Name = "More details will be added, leave feedback on the server"
 })
 local Section = CreditzCreator:AddSection({
-	Name = "Everything in this script was made by MoneyMaker#0699"
+	Name = "Everything in the script is created by @1sulo"
 })
 local Section = CreditzCreator:AddSection({
-	Name = "No more Personal Premium Page"
+	Name = "Add Discord / Join Server for more updates and info."
 })
 local Section = CreditzCreator:AddSection({
 	Name = "if you have premium you will be able to use the scripts in this one"
@@ -1594,18 +1733,18 @@ local Section = CreditzCreator:AddSection({
 CreditzCreator:AddParagraph("Would you like to know more:","This script is an Reused script, but with the exact same stuff as the original one, this script only has better graphics and a better quality, more stuff into it and easier for people to understand it better than the main one, this script will probally be used more in the next updates!")
 CreditzCreator:AddParagraph("Would you like to purchase Premium?","if you're interested in buying premium, heres the link: https://www.roblox.com/catalog/11452467150/Premium-Script by purchasing premium you will be able to get special scripts and better performanced scripts, in many popular games, as example adopt me DUPE and adopt me Neon Pets and way more scripts that have an special code into them.")
 local Section = CreditzCreator:AddSection({
-	Name = "MoneyMaker#0699"
+	Name = "@1sulo"
 })
 local Section = CreditzCreator:AddSection({
 	Name = "Join Discord Server and Subscribe on YOUTUBE to support!"
 })
 
 local Section = CreditzCreator:AddSection({
-	Name = "VZ Service is an unkown GUI to this day, how about we make it popular with youre help?"
+	Name = "The older name VZ Service is still on pinned on my memories."
 })
 
 local Section = CreditzCreator:AddSection({
-	Name = "Better GUI'S are cooming soon"
+	Name = "350 Subcribers for FREE DUPE scripts!"
 })
 
 
