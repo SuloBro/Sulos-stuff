@@ -28,6 +28,13 @@ function MakeScriptHub()
 		Name = "VZ - HUB 💎 Premium"
 	})
 	
+
+	Tab:AddButton({
+		Name = "FISCH INF STUFF WILD OP DUPE / COPIED",
+		Callback = function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua", true))()
+		  end    
+	})
 	
 	Tab:AddButton({
 		Name = "Admin Commands",
@@ -558,8 +565,16 @@ local Section = TabNewest:AddSection({
 	Name = "UPDATED ON 01.09.2024"
 })
 
+TabNewest:AddButton({
+	Name = "BLADE BALL AUTO PARRY",
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/FFJ1/Roblox-Exploits/main/scripts/Loader.lua"))()
+  	end    
+})
 
-
+local Section = TabNewest:AddSection({
+	Name = "STATUS: WORKING"
+})
 
 
 local Tab4 = Window:MakeTab({
@@ -1493,47 +1508,47 @@ Tab14:AddButton({
 
 
 local Tab13 = Window:MakeTab({
-	Name = "AMP Dupe",
+	Name = "AMP PET CLAIMER",
 	Icon = "rbxassetid://66359833",
 	PremiumOnly = false
 })
 
 local Section = Tab13:AddSection({
-	Name = "Shadow Dragon - Shadow019421"
+	Name = "This script requires gamepass."
 })
 
 local Section = Tab13:AddSection({
-	Name = "Bat Dragon - Bat202532"
+	Name = "01.09.2024"
 })
 
 local Section = Tab13:AddSection({
-	Name = "Giraffe - Girf20194601"
+	Name = "Status: Working only for some pets"
 })
 
 
 local Section = Tab13:AddSection({
-	Name = "Frost Dragon - FrostyLoad20On2094"
+	Name = "DONT CLAIM OLDER PETS SUCH AS SHADOW DRAGON!!"
 })
 
 local Section = Tab13:AddSection({
-	Name = "Starter Egg - UnkownStarterPart.10.01"
+	Name = "you can get any of the newest pets that is in game dont claim older ones"
 })
 
 local Section = Tab13:AddSection({
-	Name = "Others - Unselectable"
+	Name = "if u claim olders ones"
 })
 
 
 Tab13:AddTextbox({
-	Name = "Enter Code",
-	Default = "Not Working",
+	Name = "Pets Name",
+	Default = "Enter Pets Name",
 	TextDisappear = false,
 	Callback = function(Value)
 	end	  
 })
 
 Tab13:AddButton({
-Name = "DUPE ! (Comming Soon)",
+Name = "Claim Pet",
 Callback = function()
     end    
 })
