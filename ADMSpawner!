@@ -1,259 +1,959 @@
--- Adopt Me thing
+--[[
+   Sulo's ULTRA SMOOTH Aimbot Project - WHITELIST VERSION
+]]
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
 
--- Instances:
+-- WHITELIST SYSTEM - Add authorized users here
+local authorizedUsers = {
+    "ongdied",     -- Your username
+    "Player1",     -- Test user 1
+    "Player2",     -- Test user 2
+    -- Add more usernames here like: "username123",
+}
 
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local UICorner = Instance.new("UICorner")
-local TextLabel = Instance.new("TextLabel")
-local TextLabel_2 = Instance.new("TextLabel")
-local UIGradient = Instance.new("UIGradient")
-local TextBox = Instance.new("TextBox")
-local UICorner_2 = Instance.new("UICorner")
-local TextBox_2 = Instance.new("TextBox")
-local UICorner_3 = Instance.new("UICorner")
-local TextButton = Instance.new("TextButton")
-local UICorner_4 = Instance.new("UICorner")
-local Frame_2 = Instance.new("Frame")
-local UICorner_5 = Instance.new("UICorner")
-local TextLabel_3 = Instance.new("TextLabel")
-local TextLabel_4 = Instance.new("TextLabel")
-local TextLabel_5 = Instance.new("TextLabel")
-local TextLabel_6 = Instance.new("TextLabel")
-local TextLabel_7 = Instance.new("TextLabel")
-local TextLabel_8 = Instance.new("TextLabel")
-
---Properties:
-
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-Frame.BorderSizePixel = 0
-Frame.Position = UDim2.new(0.363851577, 0, 0.392251819, 0)
-Frame.Size = UDim2.new(0.271507502, 0, 0.215496361, 0)
-
-UICorner.Parent = Frame
-
-TextLabel.Parent = Frame
-TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundTransparency = 1.000
-TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel.BorderSizePixel = 0
-TextLabel.Size = UDim2.new(1, 0, 0.196629211, 0)
-TextLabel.Font = Enum.Font.FredokaOne
-TextLabel.Text = "ADM Pet Spawner"
-TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.TextScaled = true
-TextLabel.TextSize = 14.000
-TextLabel.TextWrapped = true
-
-TextLabel_2.Parent = Frame
-TextLabel_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_2.BackgroundTransparency = 1.000
-TextLabel_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel_2.BorderSizePixel = 0
-TextLabel_2.Position = UDim2.new(0, 0, 0.157303378, 0)
-TextLabel_2.Size = UDim2.new(1, 0, 0.10674157, 0)
-TextLabel_2.Font = Enum.Font.FredokaOne
-TextLabel_2.Text = "gg.pKQVm2P6B7"
-TextLabel_2.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_2.TextScaled = true
-TextLabel_2.TextSize = 14.000
-TextLabel_2.TextWrapped = true
-
-UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 187, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 34, 255))}
-UIGradient.Rotation = 84
-UIGradient.Parent = TextLabel_2
-
-TextBox.Parent = Frame
-TextBox.BackgroundColor3 = Color3.fromRGB(122, 122, 122)
-TextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextBox.BorderSizePixel = 0
-TextBox.Position = UDim2.new(0.209302321, 0, 0.26404494, 0)
-TextBox.Size = UDim2.new(0.581395328, 0, 0.280898869, 0)
-TextBox.Font = Enum.Font.FredokaOne
-TextBox.MultiLine = true
-TextBox.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
-TextBox.PlaceholderText = "Enter Pets Name"
-TextBox.Text = ""
-TextBox.TextColor3 = Color3.fromRGB(194, 194, 194)
-TextBox.TextScaled = true
-TextBox.TextSize = 14.000
-TextBox.TextWrapped = true
-
-UICorner_2.Parent = TextBox
-
-TextBox_2.Parent = Frame
-TextBox_2.BackgroundColor3 = Color3.fromRGB(122, 122, 122)
-TextBox_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextBox_2.BorderSizePixel = 0
-TextBox_2.Position = UDim2.new(0.232558146, 0, 0.578651667, 0)
-TextBox_2.Size = UDim2.new(0.531976759, 0, 0.174157307, 0)
-TextBox_2.Font = Enum.Font.FredokaOne
-TextBox_2.MultiLine = true
-TextBox_2.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
-TextBox_2.PlaceholderText = "Model ( NFR, MFR , NoPot)"
-TextBox_2.Text = ""
-TextBox_2.TextColor3 = Color3.fromRGB(194, 194, 194)
-TextBox_2.TextScaled = true
-TextBox_2.TextSize = 14.000
-TextBox_2.TextWrapped = true
-
-UICorner_3.Parent = TextBox_2
-
-TextButton.Parent = Frame
-TextButton.BackgroundColor3 = Color3.fromRGB(3, 176, 0)
-TextButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextButton.BorderSizePixel = 0
-TextButton.Position = UDim2.new(0.279069781, 0, 0.797752798, 0)
-TextButton.Size = UDim2.new(0.441860467, 0, 0.16853933, 0)
-TextButton.Font = Enum.Font.FredokaOne
-TextButton.Text = "Execute"
-TextButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextButton.TextScaled = true
-TextButton.TextSize = 14.000
-TextButton.TextWrapped = true
-
-UICorner_4.Parent = TextButton
-
-Frame_2.Parent = Frame
-Frame_2.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
-Frame_2.BorderSizePixel = 0
-Frame_2.Position = UDim2.new(1.02119768, 0, -0.00100742292, 0)
-Frame_2.Size = UDim2.new(0.530696809, 0, 0.798759699, 0)
-
-UICorner_5.Parent = Frame_2
-
-TextLabel_3.Parent = Frame_2
-TextLabel_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_3.BackgroundTransparency = 1.000
-TextLabel_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel_3.BorderSizePixel = 0
-TextLabel_3.Size = UDim2.new(1, 0, 0.196629211, 0)
-TextLabel_3.Font = Enum.Font.FredokaOne
-TextLabel_3.Text = "Settings"
-TextLabel_3.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_3.TextScaled = true
-TextLabel_3.TextSize = 14.000
-TextLabel_3.TextWrapped = true
-
-TextLabel_4.Parent = Frame_2
-TextLabel_4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_4.BackgroundTransparency = 1.000
-TextLabel_4.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel_4.BorderSizePixel = 0
-TextLabel_4.Position = UDim2.new(-0.0438209437, 0, 0.942472637, 0)
-TextLabel_4.Size = UDim2.new(1.1424191, 0, 0.219295666, 0)
-TextLabel_4.Font = Enum.Font.FredokaOne
-TextLabel_4.Text = "Get 1x Pet each execute when safe mode is on"
-TextLabel_4.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_4.TextScaled = true
-TextLabel_4.TextSize = 14.000
-TextLabel_4.TextWrapped = true
-
-TextLabel_5.Parent = Frame_2
-TextLabel_5.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_5.BackgroundTransparency = 1.000
-TextLabel_5.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel_5.BorderSizePixel = 0
-TextLabel_5.Position = UDim2.new(-1.00298951e-06, 0, 0.246168166, 0)
-TextLabel_5.Size = UDim2.new(0.72852844, 0, 0.196629196, 0)
-TextLabel_5.Font = Enum.Font.FredokaOne
-TextLabel_5.Text = "Full Grown"
-TextLabel_5.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_5.TextScaled = true
-TextLabel_5.TextSize = 14.000
-TextLabel_5.TextWrapped = true
-
-TextLabel_6.Parent = Frame_2
-TextLabel_6.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_6.BackgroundTransparency = 1.000
-TextLabel_6.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel_6.BorderSizePixel = 0
-TextLabel_6.Position = UDim2.new(-1.00298951e-06, 0, 0.485302955, 0)
-TextLabel_6.Size = UDim2.new(0.72852844, 0, 0.196629196, 0)
-TextLabel_6.Font = Enum.Font.FredokaOne
-TextLabel_6.Text = "Random Name"
-TextLabel_6.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_6.TextScaled = true
-TextLabel_6.TextSize = 14.000
-TextLabel_6.TextWrapped = true
-
-TextLabel_7.Parent = Frame_2
-TextLabel_7.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_7.BackgroundTransparency = 1.000
-TextLabel_7.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel_7.BorderSizePixel = 0
-TextLabel_7.Position = UDim2.new(-1.00298951e-06, 0, 0.724437714, 0)
-TextLabel_7.Size = UDim2.new(0.72852844, 0, 0.196629196, 0)
-TextLabel_7.Font = Enum.Font.FredokaOne
-TextLabel_7.Text = "Safe Mode"
-TextLabel_7.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_7.TextScaled = true
-TextLabel_7.TextSize = 14.000
-TextLabel_7.TextWrapped = true
-
-TextLabel_8.Parent = Frame
-TextLabel_8.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_8.BackgroundTransparency = 1.000
-TextLabel_8.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TextLabel_8.BorderSizePixel = 0
-TextLabel_8.Position = UDim2.new(-0.154069766, 0, -0.112359554, 0)
-TextLabel_8.Size = UDim2.new(0.386627913, 0, 0.195621789, 0)
-TextLabel_8.Font = Enum.Font.FredokaOne
-TextLabel_8.Text = "25$"
-TextLabel_8.TextColor3 = Color3.fromRGB(255, 204, 0)
-TextLabel_8.TextScaled = true
-TextLabel_8.TextSize = 14.000
-TextLabel_8.TextWrapped = true
-
--- Scripts:
-
-local function BTCI_fake_script() -- Frame.DragScript 
-	local script = Instance.new('LocalScript', Frame)
-
-	--Not made by me, check out this video: https://www.youtube.com/watch?v=z25nyNBG7Js&t=22s
-	--Put this inside of your Frame and configure the speed if you would like.
-	--Enjoy! Credits go to: https://www.youtube.com/watch?v=z25nyNBG7Js&t=22s
-	
-	local UIS = game:GetService('UserInputService')
-	local frame = script.Parent
-	local dragToggle = nil
-	local dragSpeed = 0.25
-	local dragStart = nil
-	local startPos = nil
-	
-	local function updateInput(input)
-		local delta = input.Position - dragStart
-		local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-		game:GetService('TweenService'):Create(frame, TweenInfo.new(dragSpeed), {Position = position}):Play()
-	end
-	
-	frame.InputBegan:Connect(function(input)
-		if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then 
-			dragToggle = true
-			dragStart = input.Position
-			startPos = frame.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragToggle = false
-				end
-			end)
-		end
-	end)
-	
-	UIS.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			if dragToggle then
-				updateInput(input)
-			end
-		end
-	end)
-	
+-- Check if current player is authorized
+local function isAuthorized()
+    local playerName = LocalPlayer.Name
+    for _, authorizedUser in pairs(authorizedUsers) do
+        if playerName == authorizedUser then
+            return true
+        end
+    end
+    return false
 end
-coroutine.wrap(BTCI_fake_script)()
+
+-- If not authorized, show access denied screen
+if not isAuthorized() then
+    local gui = Instance.new("ScreenGui")
+    gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    gui.Name = "AccessDeniedGUI"
+    gui.ResetOnSpawn = false
+    
+    -- Dark overlay
+    local overlay = Instance.new("Frame")
+    overlay.Size = UDim2.new(1, 0, 1, 0)
+    overlay.Position = UDim2.new(0, 0, 0, 0)
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    overlay.BackgroundTransparency = 0.3
+    overlay.BorderSizePixel = 0
+    overlay.Parent = gui
+    
+    -- Access denied box
+    local accessBox = Instance.new("Frame")
+    accessBox.Size = UDim2.new(0, 500, 0, 300)
+    accessBox.Position = UDim2.new(0.5, -250, 0.5, -150)
+    accessBox.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    accessBox.BackgroundTransparency = 0.1
+    accessBox.BorderSizePixel = 0
+    accessBox.Parent = gui
+    
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 20)
+    boxCorner.Parent = accessBox
+    
+    -- Animated gradient
+    local boxGradient = Instance.new("UIGradient")
+    boxGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 10, 40)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 20, 60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 10, 40))
+    })
+    boxGradient.Rotation = 45
+    boxGradient.Parent = accessBox
+    
+    -- Glowing border
+    local boxStroke = Instance.new("UIStroke")
+    boxStroke.Thickness = 3
+    boxStroke.Color = Color3.fromRGB(255, 50, 100)
+    boxStroke.Transparency = 0.3
+    boxStroke.Parent = accessBox
+    
+    -- Access denied title
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -40, 0, 60)
+    titleLabel.Position = UDim2.new(0, 20, 0, 30)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.TextColor3 = Color3.fromRGB(255, 100, 150)
+    titleLabel.TextScaled = true
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Text = "🚫 ACCESS DENIED"
+    titleLabel.Parent = accessBox
+    
+    -- Title glow effect
+    local titleStroke = Instance.new("UIStroke")
+    titleStroke.Thickness = 2
+    titleStroke.Color = Color3.fromRGB(255, 50, 100)
+    titleStroke.Transparency = 0.5
+    titleStroke.Parent = titleLabel
+    
+    -- Message
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Size = UDim2.new(1, -40, 0, 80)
+    messageLabel.Position = UDim2.new(0, 20, 0, 110)
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+    messageLabel.TextScaled = true
+    messageLabel.Font = Enum.Font.Gotham
+    messageLabel.Text = "You must buy this script.\nContact @1sulo on discord"
+    messageLabel.TextWrapped = true
+    messageLabel.Parent = accessBox
+    
+    -- User info
+    local userLabel = Instance.new("TextLabel")
+    userLabel.Size = UDim2.new(1, -40, 0, 40)
+    userLabel.Position = UDim2.new(0, 20, 0, 210)
+    userLabel.BackgroundTransparency = 1
+    userLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    userLabel.TextScaled = true
+    userLabel.Font = Enum.Font.GothamBold
+    userLabel.Text = "Current User: " .. LocalPlayer.Name
+    userLabel.Parent = accessBox
+    
+    -- Close button (doesn't actually work, just for show)
+    local closeButton = Instance.new("TextButton")
+    closeButton.Size = UDim2.new(0, 120, 0, 40)
+    closeButton.Position = UDim2.new(0.5, -60, 1, -60)
+    closeButton.BackgroundColor3 = Color3.fromRGB(100, 30, 50)
+    closeButton.BorderSizePixel = 0
+    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeButton.TextScaled = true
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.Text = "CLOSE"
+    closeButton.Parent = accessBox
+    
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 8)
+    closeCorner.Parent = closeButton
+    
+    -- Animate entrance
+    accessBox.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(accessBox, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 500, 0, 300)
+    }):Play()
+    
+    -- Animate border glow
+    task.spawn(function()
+        while accessBox.Parent do
+            TweenService:Create(boxStroke, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.1}):Play()
+            task.wait(1)
+            TweenService:Create(boxStroke, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.5}):Play()
+            task.wait(1)
+        end
+    end)
+    
+    -- Close button functionality (just destroys the GUI but script won't work)
+    closeButton.MouseButton1Click:Connect(function()
+        TweenService:Create(accessBox, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0)
+        }):Play()
+        task.wait(0.3)
+        gui:Destroy()
+    end)
+    
+    -- Stop script execution here
+    return
+end
+
+-- REST OF THE SCRIPT (only runs if authorized)
+local AimPart = "Head"
+local AimbotEnabled = false
+local LockedTarget = nil
+local toggle = nil
+
+-- Main GUI Setup
+local gui = Instance.new("ScreenGui")
+gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+gui.Name = "SuloAimbotGUI"
+
+-- ULTRA SMOOTH Loading Screen with Rain and Spinner
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Size = UDim2.new(1, 0, 1, 0)
+loadingFrame.Position = UDim2.new(0, 0, 0, 0)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 10)
+loadingFrame.BackgroundTransparency = 0.1
+loadingFrame.BorderSizePixel = 0
+loadingFrame.Parent = gui
+
+-- DRAMATIC Animated background gradient
+local bgGradient = Instance.new("UIGradient")
+bgGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 0, 40)),
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(40, 20, 80)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(60, 0, 120)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 40, 160))
+})
+bgGradient.Rotation = 0
+bgGradient.Parent = loadingFrame
+
+-- RAIN ANIMATION - Multiple rain drops
+local rainDrops = {}
+for i = 1, 15 do
+    local drop = Instance.new("Frame")
+    drop.Size = UDim2.new(0, 2, 0, math.random(10, 25))
+    drop.Position = UDim2.new(math.random() * 1.2 - 0.1, 0, -0.1, 0)
+    drop.BackgroundColor3 = Color3.fromRGB(150, 200, 255)
+    drop.BackgroundTransparency = 0.3
+    drop.BorderSizePixel = 0
+    drop.Parent = loadingFrame
+    
+    local dropCorner = Instance.new("UICorner")
+    dropCorner.CornerRadius = UDim.new(1, 0)
+    dropCorner.Parent = drop
+    
+    -- Glow effect for rain
+    local dropGlow = Instance.new("UIStroke")
+    dropGlow.Thickness = 1
+    dropGlow.Color = Color3.fromRGB(100, 180, 255)
+    dropGlow.Transparency = 0.2
+    dropGlow.Parent = drop
+    
+    table.insert(rainDrops, drop)
+end
+
+-- ANIMATE THE RAIN DROPS
+task.spawn(function()
+    while loadingFrame and loadingFrame.Parent do
+        for _, drop in pairs(rainDrops) do
+            if drop and drop.Parent then
+                local startY = -0.1
+                local endY = 1.1
+                drop.Position = UDim2.new(drop.Position.X.Scale, 0, startY, 0)
+                
+                local fallTween = TweenService:Create(drop, TweenInfo.new(math.random(2, 4), Enum.EasingStyle.Linear), {
+                    Position = UDim2.new(drop.Position.X.Scale, 0, endY, 0)
+                })
+                fallTween:Play()
+                
+                task.wait(math.random() * 0.5) -- Stagger the drops
+            end
+        end
+        task.wait(1) -- Reset cycle
+    end
+end)
+
+-- SWOOSH IMAGE (FIXED - was missing in original)
+local swooshImage = Instance.new("ImageLabel")
+swooshImage.Size = UDim2.new(0, 50, 0, 50)
+swooshImage.Position = UDim2.new(0.5, -500, 0.5, -100)
+swooshImage.BackgroundTransparency = 1
+swooshImage.Image = "rbxassetid://8560915132" -- Generic loading icon
+swooshImage.ImageColor3 = Color3.fromRGB(255, 255, 255)
+swooshImage.ImageTransparency = 1
+swooshImage.Parent = loadingFrame
+
+-- TYPEWRITER Title with RAINBOW stroke and GLOW
+local loadingTitle = Instance.new("TextLabel")
+loadingTitle.Size = UDim2.new(0, 800, 0, 120)
+loadingTitle.Position = UDim2.new(0.5, -400, 0.35, -60)
+loadingTitle.BackgroundTransparency = 1
+loadingTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+loadingTitle.TextScaled = true
+loadingTitle.Font = Enum.Font.GothamBold
+loadingTitle.Text = ""
+loadingTitle.Parent = loadingFrame
+
+-- RAINBOW ANIMATED STROKE with WHITE base
+local titleStroke = Instance.new("UIStroke")
+titleStroke.Thickness = 5
+titleStroke.Transparency = 0
+titleStroke.Color = Color3.fromRGB(255, 255, 255)
+titleStroke.Parent = loadingTitle
+
+-- EXTRA GLOW for title
+local titleGlow = Instance.new("UIStroke")
+titleGlow.Thickness = 8
+titleGlow.Color = Color3.fromRGB(255, 255, 255)
+titleGlow.Transparency = 0.7
+titleGlow.Parent = loadingTitle
+
+local strokeGradient = Instance.new("UIGradient")
+strokeGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 127)),
+    ColorSequenceKeypoint.new(0.15, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 127, 0)),
+    ColorSequenceKeypoint.new(0.45, Color3.fromRGB(255, 255, 0)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 0)),
+    ColorSequenceKeypoint.new(0.75, Color3.fromRGB(0, 0, 255)),
+    ColorSequenceKeypoint.new(0.9, Color3.fromRGB(148, 0, 211)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 127))
+})
+strokeGradient.Rotation = 0
+strokeGradient.Parent = titleStroke
+
+-- SMOOTH SPINNING LOADING CIRCLE WITH COOL GRADIENT
+local spinnerFrame = Instance.new("Frame")
+spinnerFrame.Size = UDim2.new(0, 120, 0, 120)
+spinnerFrame.Position = UDim2.new(0.5, -60, 0.6, -60)
+spinnerFrame.BackgroundTransparency = 1
+spinnerFrame.Parent = loadingFrame
+
+local spinner = Instance.new("ImageLabel")
+spinner.Size = UDim2.new(1, 0, 1, 0)
+spinner.Position = UDim2.new(0, 0, 0, 0)
+spinner.BackgroundTransparency = 1
+spinner.Image = "rbxassetid://113504263498657"
+spinner.ImageColor3 = Color3.fromRGB(255, 255, 255)
+spinner.ImageTransparency = 0
+spinner.Parent = spinnerFrame
+
+-- SMOOTH TRANSPARENCY GRADIENT on spinner
+local spinnerGradient = Instance.new("UIGradient")
+spinnerGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.1),    -- Mostly visible
+    NumberSequenceKeypoint.new(0.25, 0.3), -- Slightly transparent
+    NumberSequenceKeypoint.new(0.5, 0.8),  -- Very transparent
+    NumberSequenceKeypoint.new(0.75, 0.3), -- Slightly transparent  
+    NumberSequenceKeypoint.new(1, 0.1)     -- Mostly visible
+})
+spinnerGradient.Rotation = 0
+spinnerGradient.Parent = spinner
+
+-- COLOR GRADIENT for spinner
+local spinnerColorGradient = Instance.new("UIGradient")
+spinnerColorGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 255)), -- Magenta
+    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(100, 255, 255)), -- Cyan
+    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(100, 255, 100)), -- Green
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(255, 255, 100)), -- Yellow
+    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 100, 100)), -- Red
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 255))    -- Magenta
+})
+spinnerColorGradient.Rotation = 0
+spinnerColorGradient.Parent = spinner
+
+-- SPINNING ANIMATION with smooth rotation
+task.spawn(function()
+    while spinner and spinner.Parent do
+        -- Smooth continuous rotation
+        TweenService:Create(spinner, TweenInfo.new(2, Enum.EasingStyle.Linear), {
+            Rotation = 360
+        }):Play()
+        task.wait(2)
+        if spinner and spinner.Parent then
+            spinner.Rotation = 0
+        end
+    end
+end)
+
+-- ROTATE TRANSPARENCY GRADIENT for cool effect
+task.spawn(function()
+    while spinner and spinner.Parent and spinnerGradient and spinnerGradient.Parent do
+        for rotation = 0, 360, 2 do
+            if spinner and spinner.Parent and spinnerGradient and spinnerGradient.Parent then
+                spinnerGradient.Rotation = rotation
+                task.wait(0.03) -- Smooth transparency rotation
+            else
+                break
+            end
+        end
+    end
+end)
+
+-- ROTATE COLOR GRADIENT too
+task.spawn(function()
+    while spinner and spinner.Parent and spinnerColorGradient and spinnerColorGradient.Parent do
+        for rotation = 0, 360, 1 do
+            if spinner and spinner.Parent and spinnerColorGradient and spinnerColorGradient.Parent then
+                spinnerColorGradient.Rotation = rotation
+                task.wait(0.05) -- Smooth color rotation
+            else
+                break
+            end
+        end
+    end
+end)
+
+-- GLOW for spinner
+local spinnerGlow = Instance.new("UIStroke")
+spinnerGlow.Thickness = 4
+spinnerGlow.Color = Color3.fromRGB(255, 200, 100)
+spinnerGlow.Transparency = 0.3
+spinnerGlow.Parent = spinnerFrame
+
+-- PULSING GLOW for spinner
+task.spawn(function()
+    while spinnerFrame and spinnerFrame.Parent and spinnerGlow and spinnerGlow.Parent do
+        TweenService:Create(spinnerGlow, TweenInfo.new(1, Enum.EasingStyle.Sine), {
+            Transparency = 0.1,
+            Thickness = 6
+        }):Play()
+        task.wait(1)
+        if spinnerGlow and spinnerGlow.Parent then
+            TweenService:Create(spinnerGlow, TweenInfo.new(1, Enum.EasingStyle.Sine), {
+                Transparency = 0.5,
+                Thickness = 4
+            }):Play()
+        end
+        task.wait(1)
+    end
+end)
+
+-- Subtitle with GLOW
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(0, 500, 0, 50)
+subtitle.Position = UDim2.new(0.5, -250, 0.75, 0)
+subtitle.BackgroundTransparency = 1
+subtitle.TextColor3 = Color3.fromRGB(180, 180, 255)
+subtitle.TextScaled = true
+subtitle.Font = Enum.Font.GothamBold
+subtitle.Text = "INITIALIZING..."
+subtitle.TextTransparency = 1
+subtitle.Parent = loadingFrame
+
+-- GLOW for subtitle
+local subtitleGlow = Instance.new("UIStroke")
+subtitleGlow.Thickness = 2
+subtitleGlow.Color = Color3.fromRGB(180, 180, 255)
+subtitleGlow.Transparency = 0.5
+subtitleGlow.Parent = subtitle
+
+-- DRAMATIC Loading animation
+local function startLoading()
+    -- DRAMATIC background gradient rotation
+    task.spawn(function()
+        while loadingFrame and loadingFrame.Parent do
+            TweenService:Create(bgGradient, TweenInfo.new(4, Enum.EasingStyle.Sine), {Rotation = 360}):Play()
+            task.wait(4)
+            if bgGradient and bgGradient.Parent then
+                bgGradient.Rotation = 0
+            end
+        end
+    end)
+    
+    -- SMOOTH RAINBOW stroke animation
+    task.spawn(function()
+        while loadingFrame and loadingFrame.Parent and strokeGradient and strokeGradient.Parent do
+            for rotation = 0, 360, 3 do
+                if loadingFrame and loadingFrame.Parent and strokeGradient and strokeGradient.Parent then
+                    strokeGradient.Rotation = rotation
+                    task.wait(0.02)
+                else
+                    break
+                end
+            end
+        end
+    end)
+    
+    -- DRAMATIC swoosh entrance
+    TweenService:Create(swooshImage, TweenInfo.new(2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0.5, -125, 0.5, -100),
+        ImageTransparency = 0,
+        Size = UDim2.new(0, 250, 0, 250)
+    }):Play()
+    
+    task.wait(0.5)
+    
+    -- TYPEWRITER EFFECT for "Sulo's Work"
+    local fullText = "Sulo's Work"
+    for i = 1, #fullText do
+        if loadingTitle and loadingTitle.Parent then
+            loadingTitle.Text = string.sub(fullText, 1, i)
+            task.wait(0.15)
+        end
+    end
+    
+    task.wait(0.5)
+    
+    -- Fade in subtitle
+    if subtitle and subtitle.Parent then
+        TweenService:Create(subtitle, TweenInfo.new(0.8, Enum.EasingStyle.Quart), {
+            TextTransparency = 0
+        }):Play()
+    end
+    
+    task.wait(1)
+    if subtitle and subtitle.Parent then
+        subtitle.Text = "LOADING INSANE AIMBOT..."
+        task.wait(0.8)
+        subtitle.Text = "READY TO DOMINATE!"
+    end
+    
+    task.wait(1.2)
+    
+    -- DRAMATIC fade out with PROPER UIStroke cleanup
+    
+    -- Fade title with its strokes
+    if loadingTitle and loadingTitle.Parent then
+        TweenService:Create(loadingTitle, TweenInfo.new(1.2), {TextTransparency = 1}):Play()
+        if titleStroke and titleStroke.Parent then
+            TweenService:Create(titleStroke, TweenInfo.new(1.2), {Transparency = 1}):Play()
+        end
+        if titleGlow and titleGlow.Parent then
+            TweenService:Create(titleGlow, TweenInfo.new(1.2), {Transparency = 1}):Play()
+        end
+    end
+    
+    -- Fade subtitle with its stroke
+    if subtitle and subtitle.Parent then
+        TweenService:Create(subtitle, TweenInfo.new(1.2), {TextTransparency = 1}):Play()
+        if subtitleGlow and subtitleGlow.Parent then
+            TweenService:Create(subtitleGlow, TweenInfo.new(1.2), {Transparency = 1}):Play()
+        end
+    end
+    
+    -- Fade swoosh image
+    if swooshImage and swooshImage.Parent then
+        TweenService:Create(swooshImage, TweenInfo.new(1.2), {ImageTransparency = 1}):Play()
+    end
+    
+    -- Fade spinner with its glow
+    if spinner and spinner.Parent then
+        TweenService:Create(spinner, TweenInfo.new(1.2), {ImageTransparency = 1}):Play()
+    end
+    if spinnerGlow and spinnerGlow.Parent then
+        TweenService:Create(spinnerGlow, TweenInfo.new(1.2), {Transparency = 1}):Play()
+    end
+    
+    -- Fade background
+    if loadingFrame and loadingFrame.Parent then
+        TweenService:Create(loadingFrame, TweenInfo.new(1.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 1}):Play()
+    end
+    
+    -- Fade rain drops
+    for _, drop in pairs(rainDrops) do
+        if drop and drop.Parent then
+            TweenService:Create(drop, TweenInfo.new(1.2), {BackgroundTransparency = 1}):Play()
+            -- Fade rain drop glow too
+            local dropGlow = drop:FindFirstChildOfClass("UIStroke")
+            if dropGlow then
+                TweenService:Create(dropGlow, TweenInfo.new(1.2), {Transparency = 1}):Play()
+            end
+        end
+    end
+    
+    task.wait(1.2)
+    
+    -- Properly destroy the loading frame
+    if loadingFrame and loadingFrame.Parent then
+        loadingFrame:Destroy()
+    end
+end
+
+-- Start loading immediately
+task.spawn(startLoading)
+
+-- FIXED STACKING NOTIFICATION SYSTEM
+local activeNotifications = {}
+local notificationContainer = Instance.new("Frame")
+notificationContainer.Size = UDim2.new(0, 320, 1, 0)
+notificationContainer.Position = UDim2.new(1, -320, 0, 0)
+notificationContainer.BackgroundTransparency = 1
+notificationContainer.Parent = gui
+
+local function createNotification(text, color, duration)
+    -- Clean up any destroyed notifications first
+    for i = #activeNotifications, 1, -1 do
+        if not activeNotifications[i] or not activeNotifications[i].Parent then
+            table.remove(activeNotifications, i)
+        end
+    end
+    
+    -- Remove oldest if we have 2 or more
+    while #activeNotifications >= 2 do
+        local oldest = activeNotifications[1]
+        table.remove(activeNotifications, 1)
+        
+        if oldest and oldest.Parent then
+            TweenService:Create(oldest, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                Size = UDim2.new(0, 0, 0, 0),
+                Position = UDim2.new(0.5, -150, oldest.Position.Y.Scale, oldest.Position.Y.Offset)
+            }):Play()
+            
+            game:GetService("Debris"):AddItem(oldest, 0.5)
+        end
+        
+        -- Reposition remaining notifications
+        for i, notif in pairs(activeNotifications) do
+            local newY = 80 + ((i-1) * 70)
+            TweenService:Create(notif, TweenInfo.new(0.2), {
+                Position = UDim2.new(0, 0, 0, newY)
+            }):Play()
+        end
+        
+        task.wait(0.1) -- Small delay to prevent overlapping
+    end
+    
+    -- Calculate new position
+    local yPosition = 80 + (#activeNotifications * 70)
+    
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0, 0, 0, 0)
+    notif.Position = UDim2.new(0, 0, 0, yPosition)
+    notif.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    notif.BackgroundTransparency = 0.2
+    notif.BorderSizePixel = 0
+    notif.Parent = notificationContainer
+    
+    -- Add to active notifications IMMEDIATELY
+    table.insert(activeNotifications, notif)
+    
+    local notifCorner = Instance.new("UICorner")
+    notifCorner.CornerRadius = UDim.new(0, 15)
+    notifCorner.Parent = notif
+    
+    -- GOLDEN Animated gradient
+    local notifGradient = Instance.new("UIGradient")
+    notifGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)), -- Gold
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)), -- White
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0)) -- Gold
+    })
+    notifGradient.Rotation = 0
+    notifGradient.Parent = notif
+    
+    -- GLOW EFFECT for notifications
+    local notifGlow = Instance.new("UIStroke")
+    notifGlow.Thickness = 3
+    notifGlow.Color = Color3.fromRGB(255, 215, 0)
+    notifGlow.Transparency = 0.4
+    notifGlow.Parent = notif
+    
+    -- Text
+    local notifText = Instance.new("TextLabel")
+    notifText.Size = UDim2.new(1, -20, 1, -20)
+    notifText.Position = UDim2.new(0, 10, 0, 10)
+    notifText.BackgroundTransparency = 1
+    notifText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notifText.TextScaled = true
+    notifText.Font = Enum.Font.GothamBold
+    notifText.Text = text
+    notifText.TextStrokeTransparency = 0.5
+    notifText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    notifText.Parent = notif
+    
+    -- GOLDEN Gradient animation with GLOW pulsing
+    task.spawn(function()
+        while notif and notif.Parent do
+            for rotation = 0, 360, 4 do
+                if notif and notif.Parent and notifGradient then
+                    notifGradient.Rotation = rotation
+                    task.wait(0.025) -- Smooth golden rotation
+                else
+                    break
+                end
+            end
+        end
+    end)
+    
+    -- PULSING GLOW for notifications
+    task.spawn(function()
+        while notif and notif.Parent do
+            TweenService:Create(notifGlow, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.1}):Play()
+            task.wait(1)
+            if notifGlow and notifGlow.Parent then
+                TweenService:Create(notifGlow, TweenInfo.new(1, Enum.EasingStyle.Sine), {Transparency = 0.6}):Play()
+            end
+            task.wait(1)
+        end
+    end)
+    
+    -- Pop in animation
+    TweenService:Create(notif, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(1, 0, 0, 60)
+    }):Play()
+    
+    -- Auto remove
+    task.spawn(function()
+        task.wait(duration)
+        
+        -- Remove from active notifications
+        for i, activeNotif in pairs(activeNotifications) do
+            if activeNotif == notif then
+                table.remove(activeNotifications, i)
+                break
+            end
+        end
+        
+        -- Reposition remaining notifications
+        for i, activeNotif in pairs(activeNotifications) do
+            local newY = 80 + ((i-1) * 70)
+            TweenService:Create(activeNotif, TweenInfo.new(0.3), {
+                Position = UDim2.new(0, 0, 0, newY)
+            }):Play()
+        end
+        
+        -- Remove this notification
+        if notif and notif.Parent then
+            TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                Size = UDim2.new(0, 0, 0, 0)
+            }):Play()
+            
+            game:GetService("Debris"):AddItem(notif, 0.5)
+        end
+    end)
+end
+
+-- ENHANCED HIT NOTIFICATION - Shows when actively tracking
+local function showHitNotification()
+    local hitNotif = Instance.new("TextLabel")
+    hitNotif.Size = UDim2.new(0, 80, 0, 25)
+    hitNotif.Position = UDim2.new(0, 15, 1, -60)
+    hitNotif.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+    hitNotif.BackgroundTransparency = 0.6
+    hitNotif.BorderSizePixel = 0
+    hitNotif.TextColor3 = Color3.fromRGB(255, 255, 255)
+    hitNotif.TextScaled = true
+    hitNotif.Font = Enum.Font.GothamBold
+    hitNotif.Text = "● TRACKING"
+    hitNotif.TextTransparency = 0.2
+    hitNotif.Parent = gui
+    
+    local hitCorner = Instance.new("UICorner")
+    hitCorner.CornerRadius = UDim.new(0, 10)
+    hitCorner.Parent = hitNotif
+    
+    -- Glowing effect
+    local hitStroke = Instance.new("UIStroke")
+    hitStroke.Thickness = 2
+    hitStroke.Color = Color3.fromRGB(0, 255, 100)
+    hitStroke.Transparency = 0.3
+    hitStroke.Parent = hitNotif
+    
+    -- Quick pulse animation
+    TweenService:Create(hitNotif, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+        Size = UDim2.new(0, 120, 0, 35)
+    }):Play()
+    
+    task.spawn(function()
+        task.wait(0.4) -- Show for less time
+        TweenService:Create(hitNotif, TweenInfo.new(0.3), {
+            TextTransparency = 1,
+            BackgroundTransparency = 1
+        }):Play()
+        TweenService:Create(hitStroke, TweenInfo.new(0.3), {
+            Transparency = 1
+        }):Play()
+        
+        task.wait(0.3)
+        hitNotif:Destroy()
+    end)
+end
+
+-- Get target function
+local function getNewTarget()
+    if LockedTarget then return LockedTarget end
+    
+    local closest = nil
+    local shortest = math.huge
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(AimPart) then
+            local targetPart = player.Character[AimPart]
+            local pos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+            
+            if onScreen then
+                local distance = (Vector2.new(pos.X, pos.Y) - Camera.ViewportSize / 2).Magnitude
+                if distance < shortest then
+                    shortest = distance
+                    closest = player
+                end
+            end
+        end
+    end
+    
+    return closest
+end
+
+-- Enhanced toggle function
+local function toggleAimbot()
+    AimbotEnabled = not AimbotEnabled
+    
+    if AimbotEnabled then
+        if not LockedTarget then
+            LockedTarget = getNewTarget()
+            if LockedTarget then
+                task.spawn(function()
+                    createNotification("🎯 LOCKED: " .. LockedTarget.DisplayName, Color3.fromRGB(255, 100, 100), 3)
+                end)
+                toggle.Text = "🔒 LOCKED"
+            else
+                AimbotEnabled = false
+                task.spawn(function()
+                    createNotification("❌ NO TARGET FOUND", Color3.fromRGB(255, 200, 100), 2)
+                end)
+                toggle.Text = "❌ NO TARGET"
+            end
+        else
+            toggle.Text = "🔒 LOCKED"
+        end
+    else
+        LockedTarget = nil
+        task.spawn(function()
+            createNotification("⭕ AIMBOT DISABLED", Color3.fromRGB(100, 100, 255), 2)
+        end)
+        toggle.Text = "⭕ INACTIVE"
+    end
+    
+    -- Smooth button animation
+    TweenService:Create(toggle, TweenInfo.new(0.1, Enum.EasingStyle.Back), {
+        Size = UDim2.new(0, 145, 0, 55)
+    }):Play()
+    
+    task.spawn(function()
+        task.wait(0.1)
+        TweenService:Create(toggle, TweenInfo.new(0.1, Enum.EasingStyle.Back), {
+            Size = UDim2.new(0, 140, 0, 50)
+        }):Play()
+    end)
+end
+
+-- Wait for loading to complete (5 seconds total)
+task.wait(5)
+
+-- Controls
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.X then
+        toggleAimbot()
+    end
+end)
+
+-- ULTRA INSANE AIMBOT - EVEN MORE OP
+local lastTargetPosition = nil
+local lastHitTime = 0
+local trackingFrames = 0
+
+RunService.Heartbeat:Connect(function()
+    if AimbotEnabled and LockedTarget then
+        if not LockedTarget.Character or not LockedTarget.Character:FindFirstChild(AimPart) then
+            LockedTarget = nil
+            AimbotEnabled = false
+            task.spawn(function()
+                createNotification("❌ TARGET LOST", Color3.fromRGB(255, 150, 100), 2)
+            end)
+            if toggle then
+                toggle.Text = "❌ TARGET LOST"
+            end
+            trackingFrames = 0
+            return
+        end
+        
+        local targetPart = LockedTarget.Character[AimPart]
+        local targetPosition = targetPart.Position
+        local targetVelocity = Vector3.new(0, 0, 0)
+        
+        -- ADVANCED PREDICTION SYSTEM
+        if lastTargetPosition then
+            targetVelocity = (targetPosition - lastTargetPosition) / RunService.Heartbeat:Wait()
+            targetPosition = targetPosition + (targetVelocity * 0.15)
+        end
+        lastTargetPosition = targetPart.Position
+        
+        -- PERFECT HIT REGISTRATION with multiple offsets
+        local offsets = {
+            Vector3.new(0, 0.1, 0),
+            Vector3.new(0, 0.2, 0),
+            Vector3.new(0, -0.1, 0)
+        }
+        
+        local bestOffset = offsets[1]
+        if targetVelocity.Magnitude > 10 then
+            bestOffset = offsets[2]
+        elseif targetVelocity.Y < -5 then
+            bestOffset = offsets[3]
+        end
+        
+        local finalTarget = targetPosition + bestOffset
+        
+        -- INSTANT PERFECT LOCK
+        Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, finalTarget)
+        
+        -- Count tracking frames
+        trackingFrames = trackingFrames + 1
+        
+        -- Show tracking notification every 30 frames (about every 0.5 seconds)
+        if trackingFrames % 30 == 0 and tick() - lastHitTime > 0.5 then
+            lastHitTime = tick()
+            task.spawn(showHitNotification)
+        end
+        
+    else
+        lastTargetPosition = nil
+        trackingFrames = 0
+    end
+end)
+
+-- GOLDEN GRADIENT BUTTON with GLOW
+toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0, 140, 0, 50)
+toggle.Position = UDim2.new(0, 20, 0, 20)
+toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+toggle.BackgroundTransparency = 0.2
+toggle.BorderSizePixel = 0
+toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggle.Text = "⭕ INACTIVE"
+toggle.TextScaled = true
+toggle.Font = Enum.Font.GothamBold
+toggle.TextStrokeTransparency = 0.5
+toggle.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+toggle.Active = true
+toggle.Draggable = true
+toggle.Parent = gui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 12)
+toggleCorner.Parent = toggle
+
+-- GOLDEN ANIMATED GRADIENT for button
+local toggleGradient = Instance.new("UIGradient")
+toggleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)), -- Gold
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 255, 255)), -- White
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(255, 215, 0)), -- Gold
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 235, 100)) -- Light Gold
+})
+toggleGradient.Rotation = 0
+toggleGradient.Parent = toggle
+
+-- GLOW EFFECT for button
+local toggleGlow = Instance.new("UIStroke")
+toggleGlow.Thickness = 4
+toggleGlow.Color = Color3.fromRGB(255, 215, 0)
+toggleGlow.Transparency = 0.3
+toggleGlow.Parent = toggle
+
+-- EXTRA OUTER GLOW
+local toggleOuterGlow = Instance.new("UIStroke")
+toggleOuterGlow.Thickness = 7
+toggleOuterGlow.Color = Color3.fromRGB(255, 255, 200)
+toggleOuterGlow.Transparency = 0.7
+toggleOuterGlow.Parent = toggle
+
+-- Rotate GOLDEN gradient continuously with PULSING GLOW
+task.spawn(function()
+    while toggle and toggle.Parent do
+        -- Rotate gradient
+        for rotation = 0, 360, 3 do
+            if toggle and toggle.Parent and toggleGradient then
+                toggleGradient.Rotation = rotation
+                task.wait(0.02) -- Smooth golden rotation
+            else
+                break
+            end
+        end
+    end
+end)
+
+-- PULSING GLOW animation
+task.spawn(function()
+    while toggle and toggle.Parent do
+        TweenService:Create(toggleGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Transparency = 0.1}):Play()
+        TweenService:Create(toggleOuterGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Transparency = 0.4}):Play()
+        task.wait(1.5)
+        if toggleGlow and toggleGlow.Parent then
+            TweenService:Create(toggleGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Transparency = 0.5}):Play()
+            TweenService:Create(toggleOuterGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Transparency = 0.8}):Play()
+        end
+        task.wait(1.5)
+    end
+end)
+
+toggle.MouseButton1Click:Connect(function()
+    toggleAimbot()
+end)
