@@ -957,3 +957,253 @@ end)
 toggle.MouseButton1Click:Connect(function()
     toggleAimbot()
 end)
+
+-- ANTI-LOCK SYSTEM - Prevents other hackers from locking onto you
+local AntiLockEnabled = false
+local antiLockButton = nil
+local fakeHeads = {}
+local originalHeadProperties = {}
+
+-- Create Anti-Lock Button
+antiLockButton = Instance.new("TextButton")
+antiLockButton.Size = UDim2.new(0, 140, 0, 50)
+antiLockButton.Position = UDim2.new(0, 20, 0, 80) -- Below main button
+antiLockButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+antiLockButton.BackgroundTransparency = 0.2
+antiLockButton.BorderSizePixel = 0
+antiLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+antiLockButton.Text = "🛡️ ANTI-LOCK OFF"
+antiLockButton.TextScaled = true
+antiLockButton.Font = Enum.Font.GothamBold
+antiLockButton.TextStrokeTransparency = 0.5
+antiLockButton.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+antiLockButton.Active = true
+antiLockButton.Draggable = true
+antiLockButton.Parent = gui
+
+local antiLockCorner = Instance.new("UICorner")
+antiLockCorner.CornerRadius = UDim.new(0, 12)
+antiLockCorner.Parent = antiLockButton
+
+-- PURPLE/BLUE ANIMATED GRADIENT for anti-lock button
+local antiLockGradient = Instance.new("UIGradient")
+antiLockGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(138, 43, 226)), -- Blue Violet
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(75, 0, 130)), -- Indigo
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(138, 43, 226)), -- Blue Violet
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(147, 112, 219)) -- Medium Slate Blue
+})
+antiLockGradient.Rotation = 0
+antiLockGradient.Parent = antiLockButton
+
+-- GLOW EFFECT for anti-lock button
+local antiLockGlow = Instance.new("UIStroke")
+antiLockGlow.Thickness = 4
+antiLockGlow.Color = Color3.fromRGB(138, 43, 226)
+antiLockGlow.Transparency = 0.3
+antiLockGlow.Parent = antiLockButton
+
+-- EXTRA OUTER GLOW for anti-lock
+local antiLockOuterGlow = Instance.new("UIStroke")
+antiLockOuterGlow.Thickness = 7
+antiLockOuterGlow.Color = Color3.fromRGB(147, 112, 219)
+antiLockOuterGlow.Transparency = 0.7
+antiLockOuterGlow.Parent = antiLockButton
+
+-- Rotate PURPLE gradient continuously
+task.spawn(function()
+    while antiLockButton and antiLockButton.Parent do
+        for rotation = 0, 360, 3 do
+            if antiLockButton and antiLockButton.Parent and antiLockGradient then
+                antiLockGradient.Rotation = rotation
+                task.wait(0.02)
+            else
+                break
+            end
+        end
+    end
+end)
+
+-- PULSING GLOW animation for anti-lock
+task.spawn(function()
+    while antiLockButton and antiLockButton.Parent do
+        TweenService:Create(antiLockGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Transparency = 0.1}):Play()
+        TweenService:Create(antiLockOuterGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Transparency = 0.4}):Play()
+        task.wait(1.5)
+        if antiLockGlow and antiLockGlow.Parent then
+            TweenService:Create(antiLockGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Transparency = 0.5}):Play()
+            TweenService:Create(antiLockOuterGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {Transparency = 0.8}):Play()
+        end
+        task.wait(1.5)
+    end
+end)
+
+-- ANTI-LOCK FUNCTIONS - NO TELEPORTING VERSION
+local function createFakeHeads()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Head") then return end
+    
+    local realHead = LocalPlayer.Character.Head
+    
+    -- Store original properties
+    originalHeadProperties = {
+        CanCollide = realHead.CanCollide,
+        Transparency = realHead.Transparency,
+        Size = realHead.Size
+    }
+    
+    -- Make real head smaller and less detectable
+    realHead.Size = Vector3.new(0.1, 0.1, 0.1)
+    realHead.Transparency = 0.95
+    realHead.CanCollide = false
+    
+    -- Create multiple fake heads around the player
+    local positions = {
+        Vector3.new(3, 0, 0),    -- Right
+        Vector3.new(-3, 0, 0),   -- Left  
+        Vector3.new(0, 3, 0),    -- Up
+        Vector3.new(0, -2, 0),   -- Down
+        Vector3.new(2, 2, 2),    -- Diagonal
+        Vector3.new(-2, 2, -2),  -- Diagonal
+        Vector3.new(2.5, -1, 1), -- Random
+        Vector3.new(-2.5, 1, -1) -- Random
+    }
+    
+    for i, offset in pairs(positions) do
+        local fakeHead = Instance.new("Part")
+        fakeHead.Name = "Head" .. i -- Same name as real head to confuse aimbots
+        fakeHead.Size = Vector3.new(2, 1, 1) -- Normal head size
+        fakeHead.Material = Enum.Material.Neon
+        fakeHead.BrickColor = BrickColor.new("Bright red")
+        fakeHead.Transparency = 0.3
+        fakeHead.CanCollide = false
+        fakeHead.Anchored = true -- ANCHORED to prevent physics issues
+        fakeHead.Parent = workspace
+        
+        -- Add fake face to make it look more real
+        local face = Instance.new("Decal")
+        face.Texture = "rbxasset://textures/face.png"
+        face.Face = Enum.NormalId.Front
+        face.Parent = fakeHead
+        
+        -- Position fake head relative to real head
+        fakeHead.CFrame = realHead.CFrame * CFrame.new(offset)
+        
+        -- Store the offset for this fake head
+        fakeHead:SetAttribute("Offset", offset)
+        
+        table.insert(fakeHeads, fakeHead)
+    end
+end
+
+-- Update fake head positions continuously (no teleporting!)
+task.spawn(function()
+    while true do
+        if AntiLockEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+            local realHead = LocalPlayer.Character.Head
+            
+            for _, fakeHead in pairs(fakeHeads) do
+                if fakeHead and fakeHead.Parent then
+                    local offset = fakeHead:GetAttribute("Offset")
+                    if offset then
+                        -- Smoothly move fake heads with random variation
+                        local randomVariation = Vector3.new(
+                            math.sin(tick() * 2 + fakeHead:GetDebugId()) * 0.5,
+                            math.cos(tick() * 1.5 + fakeHead:GetDebugId()) * 0.3,
+                            math.sin(tick() * 1.8 + fakeHead:GetDebugId()) * 0.4
+                        )
+                        
+                        local targetCFrame = realHead.CFrame * CFrame.new(offset + randomVariation)
+                        
+                        -- Smooth interpolation instead of instant teleport
+                        fakeHead.CFrame = fakeHead.CFrame:Lerp(targetCFrame, 0.1)
+                    end
+                end
+            end
+        end
+        
+        task.wait(0.1) -- Update every 0.1 seconds for smooth movement
+    end
+end)
+
+local function removeFakeHeads()
+    -- Remove all fake heads
+    for _, fakeHead in pairs(fakeHeads) do
+        if fakeHead and fakeHead.Parent then
+            fakeHead:Destroy()
+        end
+    end
+    fakeHeads = {}
+    
+    -- Restore real head properties
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+        local realHead = LocalPlayer.Character.Head
+        realHead.Size = originalHeadProperties.Size or Vector3.new(2, 1, 1)
+        realHead.Transparency = originalHeadProperties.Transparency or 0
+        realHead.CanCollide = originalHeadProperties.CanCollide or false
+    end
+end
+
+local function toggleAntiLock()
+    AntiLockEnabled = not AntiLockEnabled
+    
+    if AntiLockEnabled then
+        createFakeHeads()
+        antiLockButton.Text = "🛡️ ANTI-LOCK ON"
+        task.spawn(function()
+            createNotification("🛡️ ANTI-LOCK ENABLED", Color3.fromRGB(138, 43, 226), 3)
+            createNotification("⚡ HACKERS CAN'T LOCK YOU!", Color3.fromRGB(147, 112, 219), 3)
+        end)
+        
+        -- Change button colors to indicate active state
+        antiLockGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 255, 50)), -- Bright Green
+            ColorSequenceKeypoint.new(0.3, Color3.fromRGB(0, 200, 0)), -- Green
+            ColorSequenceKeypoint.new(0.6, Color3.fromRGB(50, 255, 50)), -- Bright Green
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 255, 100)) -- Light Green
+        })
+        antiLockGlow.Color = Color3.fromRGB(50, 255, 50)
+        antiLockOuterGlow.Color = Color3.fromRGB(100, 255, 100)
+    else
+        removeFakeHeads()
+        antiLockButton.Text = "🛡️ ANTI-LOCK OFF"
+        task.spawn(function()
+            createNotification("🛡️ ANTI-LOCK DISABLED", Color3.fromRGB(255, 100, 100), 2)
+        end)
+        
+        -- Change button colors back to purple
+        antiLockGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(138, 43, 226)),
+            ColorSequenceKeypoint.new(0.3, Color3.fromRGB(75, 0, 130)),
+            ColorSequenceKeypoint.new(0.6, Color3.fromRGB(138, 43, 226)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(147, 112, 219))
+        })
+        antiLockGlow.Color = Color3.fromRGB(138, 43, 226)
+        antiLockOuterGlow.Color = Color3.fromRGB(147, 112, 219)
+    end
+    
+    -- Button animation
+    TweenService:Create(antiLockButton, TweenInfo.new(0.1, Enum.EasingStyle.Back), {
+        Size = UDim2.new(0, 145, 0, 55)
+    }):Play()
+    
+    task.spawn(function()
+        task.wait(0.1)
+        TweenService:Create(antiLockButton, TweenInfo.new(0.1, Enum.EasingStyle.Back), {
+            Size = UDim2.new(0, 140, 0, 50)
+        }):Play()
+    end)
+end
+
+antiLockButton.MouseButton1Click:Connect(function()
+    toggleAntiLock()
+end)
+
+-- Clean up fake heads when character respawns
+Players.LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(2) -- Wait for character to fully load
+    if AntiLockEnabled then
+        removeFakeHeads()
+        task.wait(1)
+        createFakeHeads()
+    end
+end)
