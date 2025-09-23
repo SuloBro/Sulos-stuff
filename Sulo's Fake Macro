@@ -1,0 +1,727 @@
+-- Sulo's Fake Macro - FIXED BEAUTIFUL EDITION WITH SOUNDS
+-- Dont copy this please atleast give credit, before i terminate your account.
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Configuration
+local SPEED_BOOST = 300
+local DEFAULT_SPEED = 16
+local DONATE_LINK = "https://www.roblox.com/game-pass/1486250230/Support-Me"
+
+-- Sound IDs
+local SOUND_IDS = {
+    buttonClick = "rbxassetid://9042321568",
+    notification = "rbxassetid://98777702363840",
+    characterRespawn = "rbxassetid://140273873013760"
+}
+
+-- Variables
+local speedLocked = false
+local connections = {}
+local currentHumanoid = nil
+local gui = nil
+local mainFrame = nil
+local statusLabel = nil
+local statusStroke = nil
+local rainDrops = {}
+
+-- Sound system
+local function createSound(soundId, volume, pitch)
+    volume = volume or 0.5
+    pitch = pitch or 1
+    
+    local sound = Instance.new("Sound")
+    sound.SoundId = soundId
+    sound.Volume = volume
+    sound.Pitch = pitch
+    sound.Parent = SoundService
+    
+    return sound
+end
+
+local function playSound(soundId, volume, pitch)
+    local sound = createSound(soundId, volume, pitch)
+    sound:Play()
+    
+    sound.Ended:Connect(function()
+        sound:Destroy()
+    end)
+    
+    -- Backup destroy in case sound doesn't end properly
+    spawn(function()
+        wait(10)
+        if sound.Parent then
+            sound:Destroy()
+        end
+    end)
+end
+
+-- Clean notification system that actually works (now with sound)
+local function createNotification(title, message, color, duration, soundType)
+    duration = duration or 3
+    soundType = soundType or "notification"
+    
+    -- Play notification sound
+    if soundType == "respawn" then
+        playSound(SOUND_IDS.characterRespawn, 0.6, 1)
+    else
+        playSound(SOUND_IDS.notification, 0.4, 1)
+    end
+    
+    local notification = Instance.new("Frame")
+    notification.Size = UDim2.new(0, 300, 0, 70)
+    notification.Position = UDim2.new(1, 20, 0, 100) -- Start off screen
+    notification.BackgroundColor3 = color or Color3.fromRGB(50, 50, 70)
+    notification.BorderSizePixel = 0
+    notification.Parent = gui
+    notification.ZIndex = 1
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = notification
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = 1
+    stroke.Transparency = 0.7
+    stroke.Parent = notification
+    
+    -- Title text
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 25)
+    titleLabel.Position = UDim2.new(0, 10, 0, 5)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Color3.new(1, 1, 1)
+    titleLabel.TextTransparency = 0
+    titleLabel.TextSize = 14
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 1
+    titleLabel.Parent = notification
+    
+    -- Message text
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Size = UDim2.new(1, -20, 0, 35)
+    messageLabel.Position = UDim2.new(0, 10, 0, 25)
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.Text = message
+    messageLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+    messageLabel.TextTransparency = 0
+    messageLabel.TextSize = 11
+    messageLabel.Font = Enum.Font.Gotham
+    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
+    messageLabel.TextYAlignment = Enum.TextYAlignment.Top
+    messageLabel.TextWrapped = true
+    messageLabel.ZIndex = 1
+    messageLabel.Parent = notification
+    
+    -- Slide in animation
+    local slideIn = TweenService:Create(notification,
+        TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+        {Position = UDim2.new(1, -320, 0, 100)}
+    )
+    slideIn:Play()
+    
+    -- Auto dismiss
+    spawn(function()
+        wait(duration)
+        
+        local slideOut = TweenService:Create(notification,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
+            {Position = UDim2.new(1, 20, 0, 100), BackgroundTransparency = 1}
+        )
+        
+        local fadeText = TweenService:Create(titleLabel,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad),
+            {TextTransparency = 1}
+        )
+        
+        local fadeMessage = TweenService:Create(messageLabel,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad),
+            {TextTransparency = 1}
+        )
+        
+        slideOut:Play()
+        fadeText:Play()
+        fadeMessage:Play()
+        
+        slideOut.Completed:Connect(function()
+            notification:Destroy()
+        end)
+    end)
+    
+    return notification
+end
+
+-- Rain effect system (restored)
+local function createRainDrop(parent)
+    local drop = Instance.new("Frame")
+    drop.Size = UDim2.new(0, 2, 0, math.random(10, 20))
+    drop.Position = UDim2.new(0, math.random(0, parent.AbsoluteSize.X), 0, -25)
+    drop.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+    drop.BackgroundTransparency = 0.2
+    drop.BorderSizePixel = 0
+    drop.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = drop
+    
+    -- Make it fall
+    local fallTween = TweenService:Create(drop,
+        TweenInfo.new(math.random(15, 25) / 10, Enum.EasingStyle.Linear),
+        {Position = UDim2.new(0, drop.Position.X.Offset, 0, parent.AbsoluteSize.Y + 25)}
+    )
+    
+    fallTween:Play()
+    fallTween.Completed:Connect(function()
+        drop:Destroy()
+    end)
+end
+
+-- Welcome screen (simplified and working)
+local function createWelcomeScreen()
+    local welcomeGui = Instance.new("ScreenGui")
+    welcomeGui.Name = "SuloWelcome"
+    welcomeGui.Parent = playerGui
+    
+    local background = Instance.new("Frame")
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    background.BackgroundTransparency = 0.3
+    background.Parent = welcomeGui
+    
+    local welcomeFrame = Instance.new("Frame")
+    welcomeFrame.Size = UDim2.new(0, 400, 0, 200)
+    welcomeFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+    welcomeFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    welcomeFrame.BorderSizePixel = 0
+    welcomeFrame.Parent = background
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 15)
+    corner.Parent = welcomeFrame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(100, 150, 255)
+    stroke.Thickness = 2
+    stroke.Parent = welcomeFrame
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 0, 40)
+    title.Position = UDim2.new(0, 10, 0, 20)
+    title.BackgroundTransparency = 1
+    title.Text = "⚡ SULO'S FAKE MACRO ⚡"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.TextSize = 24
+    title.Font = Enum.Font.GothamBold
+    title.Parent = welcomeFrame
+    
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Size = UDim2.new(1, -20, 0, 30)
+    subtitle.Position = UDim2.new(0, 10, 0, 60)
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = "Welcome back, " .. player.Name .. "!"
+    subtitle.TextColor3 = Color3.fromRGB(200, 200, 255)
+    subtitle.TextSize = 16
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.Parent = welcomeFrame
+    
+    local loading = Instance.new("TextLabel")
+    loading.Size = UDim2.new(1, -20, 0, 25)
+    loading.Position = UDim2.new(0, 10, 0, 100)
+    loading.BackgroundTransparency = 1
+    loading.Text = "Loading Sulo's Stuff..."
+    loading.TextColor3 = Color3.fromRGB(150, 150, 200)
+    loading.TextSize = 14
+    loading.Font = Enum.Font.Gotham
+    loading.Parent = welcomeFrame
+    
+    local instruction = Instance.new("TextLabel")
+    instruction.Size = UDim2.new(1, -20, 0, 40)
+    instruction.Position = UDim2.new(0, 10, 0, 130)
+    instruction.BackgroundTransparency = 1
+    instruction.Text = "Press C to activate speed boost\nDrag the GUI to move it around"
+    instruction.TextColor3 = Color3.fromRGB(180, 180, 200)
+    instruction.TextSize = 12
+    instruction.Font = Enum.Font.Gotham
+    instruction.Parent = welcomeFrame
+    
+    -- Loading sequence
+    spawn(function()
+        local messages = {
+            "Loading Sulo's Stuff...",
+            "Enabling anti-detection...",
+            "Disabling walkspeed anticheats...",
+            "Sulo's Stuff! 🚀"
+        }
+        
+        for _, msg in ipairs(messages) do
+            loading.Text = msg
+            wait(0.8)
+        end
+        
+        wait(1)
+        
+        local fadeOut = TweenService:Create(background,
+            TweenInfo.new(0.5, Enum.EasingStyle.Quad),
+            {BackgroundTransparency = 1}
+        )
+        fadeOut:Play()
+        
+        fadeOut.Completed:Connect(function()
+            welcomeGui:Destroy()
+        end)
+    end)
+end
+
+-- Main GUI (fixed and working properly)
+local function createMainGUI()
+    gui = Instance.new("ScreenGui")
+    gui.Name = "SuloMainGUI"
+    gui.ResetOnSpawn = false
+    gui.Parent = playerGui
+    
+    -- Main frame
+    mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 320, 0, 140)
+    mainFrame.Position = UDim2.new(0, 50, 0, 50)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Active = true
+    mainFrame.Parent = gui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 15)
+    corner.Parent = mainFrame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(80, 120, 255)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.3
+    stroke.Parent = mainFrame
+    
+    -- Background gradient
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 30))
+    }
+    gradient.Rotation = 45
+    gradient.Parent = mainFrame
+    
+    -- Rain container (this stays with the frame)
+    local rainContainer = Instance.new("Frame")
+    rainContainer.Size = UDim2.new(1, 0, 1, 0)
+    rainContainer.BackgroundTransparency = 1
+    rainContainer.ClipsDescendants = true
+    rainContainer.Parent = mainFrame
+    
+    -- Start rain effect
+    spawn(function()
+        while gui.Parent do
+            if rainContainer.Parent and math.random() < 0.4 then
+                createRainDrop(rainContainer)
+            end
+            wait(0.15)
+        end
+    end)
+    
+    -- Drag handle
+    local dragHandle = Instance.new("Frame")
+    dragHandle.Size = UDim2.new(0, 40, 0, 4)
+    dragHandle.Position = UDim2.new(0.5, -20, 0, 8)
+    dragHandle.BackgroundColor3 = Color3.fromRGB(150, 150, 200)
+    dragHandle.BackgroundTransparency = 0.5
+    dragHandle.BorderSizePixel = 0
+    dragHandle.Parent = mainFrame
+    
+    local dragCorner = Instance.new("UICorner")
+    dragCorner.CornerRadius = UDim.new(1, 0)
+    dragCorner.Parent = dragHandle
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 0, 25)
+    title.Position = UDim2.new(0, 10, 0, 20)
+    title.BackgroundTransparency = 1
+    title.Text = "⚡ SULO'S FAKE MACRO"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.TextSize = 16
+    title.Font = Enum.Font.GothamBold
+    title.Parent = mainFrame
+    
+    -- Status label
+    statusLabel = Instance.new("TextLabel")
+    statusLabel.Size = UDim2.new(1, -20, 0, 20)
+    statusLabel.Position = UDim2.new(0, 10, 0, 50)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Text = "🔓 Status: Ready"
+    statusLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
+    statusLabel.TextSize = 13
+    statusLabel.Font = Enum.Font.GothamSemibold
+    statusLabel.Parent = mainFrame
+    
+    statusStroke = Instance.new("UIStroke")
+    statusStroke.Color = Color3.fromRGB(255, 100, 100)
+    statusStroke.Thickness = 1
+    statusStroke.Transparency = 0.6
+    statusStroke.Parent = statusLabel
+    
+    -- Instruction
+    local instruction = Instance.new("TextLabel")
+    instruction.Size = UDim2.new(1, -20, 0, 15)
+    instruction.Position = UDim2.new(0, 10, 0, 75)
+    instruction.BackgroundTransparency = 1
+    instruction.Text = "• Press C to toggle • Drag to move"
+    instruction.TextColor3 = Color3.fromRGB(180, 180, 220)
+    instruction.TextSize = 10
+    instruction.Font = Enum.Font.Gotham
+    instruction.Parent = mainFrame
+    
+    -- Support creator section (integrated but separate frame)
+    local supportFrame = Instance.new("Frame")
+    supportFrame.Size = UDim2.new(1, -20, 0, 35)
+    supportFrame.Position = UDim2.new(0, 10, 0, 95)
+    supportFrame.BackgroundColor3 = Color3.fromRGB(20, 30, 20)
+    supportFrame.BorderSizePixel = 0
+    supportFrame.Parent = mainFrame
+    
+    local supportCorner = Instance.new("UICorner")
+    supportCorner.CornerRadius = UDim.new(0, 8)
+    supportCorner.Parent = supportFrame
+    
+    local supportStroke = Instance.new("UIStroke")
+    supportStroke.Color = Color3.fromRGB(100, 255, 100)
+    supportStroke.Thickness = 1
+    supportStroke.Transparency = 0.5
+    supportStroke.Parent = supportFrame
+    
+    local supportText = Instance.new("TextLabel")
+    supportText.Size = UDim2.new(1, -80, 1, 0)
+    supportText.Position = UDim2.new(0, 10, 0, 0)
+    supportText.BackgroundTransparency = 1
+    supportText.Text = "💖 Support Sulo for better stuff pls!"
+    supportText.TextColor3 = Color3.fromRGB(100, 255, 100)
+    supportText.TextSize = 11
+    supportText.Font = Enum.Font.Gotham
+    supportText.TextXAlignment = Enum.TextXAlignment.Left
+    supportText.Parent = supportFrame
+    
+    local supportButton = Instance.new("TextButton")
+    supportButton.Size = UDim2.new(0, 60, 0, 25)
+    supportButton.Position = UDim2.new(1, -70, 0, 5)
+    supportButton.BackgroundColor3 = Color3.fromRGB(30, 150, 30)
+    supportButton.BorderSizePixel = 0
+    supportButton.Text = "💎 DONATE"
+    supportButton.TextColor3 = Color3.new(1, 1, 1)
+    supportButton.TextSize = 10
+    supportButton.Font = Enum.Font.GothamBold
+    supportButton.Parent = supportFrame
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 6)
+    buttonCorner.Parent = supportButton
+    
+    -- Support button functionality (with sound)
+    supportButton.MouseButton1Click:Connect(function()
+        -- Play button click sound
+        playSound(SOUND_IDS.buttonClick, 0.7, 1)
+        
+        setclipboard(DONATE_LINK)
+        
+        -- Button animation
+        local scaleUp = TweenService:Create(supportButton,
+            TweenInfo.new(0.1, Enum.EasingStyle.Back),
+            {Size = UDim2.new(0, 65, 0, 28)}
+        )
+        scaleUp:Play()
+        
+        scaleUp.Completed:Connect(function()
+            local scaleDown = TweenService:Create(supportButton,
+                TweenInfo.new(0.2, Enum.EasingStyle.Back),
+                {Size = UDim2.new(0, 60, 0, 25)}
+            )
+            scaleDown:Play()
+        end)
+        
+        createNotification(
+            "💖 Gamepass link Copied Suscsesfully!",
+            "💖 Gamepass link copied to clipboard. Paste it in you're browser and buy the support Gamepass    ⚠ NOT A HACK! ⚠",
+            Color3.fromRGB(50, 200, 50),
+            3,
+            "notification"
+        )
+    end)
+    
+    -- Button hover sound effect
+    supportButton.MouseEnter:Connect(function()
+        playSound(SOUND_IDS.buttonClick, 0.3, 1.5) -- Softer, higher pitch for hover
+    end)
+    
+    -- Fixed drag functionality
+    local dragStart = nil
+    local startPos = nil
+    local dragging = false
+    
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            
+            -- Visual feedback - make drag handle green
+            local dragGreen = TweenService:Create(dragHandle,
+                TweenInfo.new(0.1, Enum.EasingStyle.Quad),
+                {BackgroundColor3 = Color3.fromRGB(100, 255, 100), BackgroundTransparency = 0.2}
+            )
+            dragGreen:Play()
+            
+            local scaleUp = TweenService:Create(mainFrame,
+                TweenInfo.new(0.1, Enum.EasingStyle.Quad),
+                {Size = UDim2.new(0, 325, 0, 145)}
+            )
+            scaleUp:Play()
+            
+            local connection
+            connection = UserInputService.InputChanged:Connect(function(moveInput)
+                if moveInput.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+                    local delta = moveInput.Position - dragStart
+                    mainFrame.Position = UDim2.new(
+                        startPos.X.Scale,
+                        startPos.X.Offset + delta.X,
+                        startPos.Y.Scale,
+                        startPos.Y.Offset + delta.Y
+                    )
+                end
+            end)
+            
+            local endConnection
+            endConnection = UserInputService.InputEnded:Connect(function(endInput)
+                if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                    connection:Disconnect()
+                    endConnection:Disconnect()
+                    
+                    -- Return drag handle to normal color
+                    local dragNormal = TweenService:Create(dragHandle,
+                        TweenInfo.new(0.2, Enum.EasingStyle.Quad),
+                        {BackgroundColor3 = Color3.fromRGB(150, 150, 200), BackgroundTransparency = 0.5}
+                    )
+                    dragNormal:Play()
+                    
+                    local scaleDown = TweenService:Create(mainFrame,
+                        TweenInfo.new(0.2, Enum.EasingStyle.Quad),
+                        {Size = UDim2.new(0, 320, 0, 140)}
+                    )
+                    scaleDown:Play()
+                end
+            end)
+        end
+    end)
+end
+
+-- Speed control functions (same as before but cleaner)
+local function setSpeedUltimate(humanoid, targetSpeed)
+    if not humanoid or not humanoid.Parent then return end
+    
+    pcall(function() humanoid.WalkSpeed = targetSpeed end)
+    
+    local character = humanoid.Parent
+    if character then
+        pcall(function()
+            character:SetAttribute("WalkSpeed", targetSpeed)
+            character:SetAttribute("Speed", targetSpeed)
+        end)
+        
+        for _, child in pairs(character:GetChildren()) do
+            pcall(function()
+                if child.Name:lower():find("speed") and (child:IsA("NumberValue") or child:IsA("IntValue")) then
+                    child.Value = targetSpeed
+                end
+            end)
+        end
+    end
+    
+    pcall(function()
+        for _, remote in pairs(ReplicatedStorage:GetChildren()) do
+            if remote:IsA("RemoteEvent") and remote.Name:lower():find("speed") then
+                remote:FireServer(targetSpeed)
+            end
+        end
+    end)
+end
+
+local function getCurrentHumanoid()
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        return player.Character.Humanoid
+    end
+    return nil
+end
+
+local function startSpeedEnforcement()
+    local humanoid = getCurrentHumanoid()
+    if not humanoid then return end
+    
+    currentHumanoid = humanoid
+    
+    for _, connection in pairs(connections) do
+        if connection then connection:Disconnect() end
+    end
+    connections = {}
+    
+    connections[#connections + 1] = RunService.Heartbeat:Connect(function()
+        if speedLocked and currentHumanoid and currentHumanoid.Parent then
+            setSpeedUltimate(currentHumanoid, SPEED_BOOST)
+        end
+    end)
+    
+    connections[#connections + 1] = currentHumanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+        if speedLocked and currentHumanoid and currentHumanoid.Parent then
+            if currentHumanoid.WalkSpeed ~= SPEED_BOOST then
+                setSpeedUltimate(currentHumanoid, SPEED_BOOST)
+            end
+        end
+    end)
+end
+
+local function stopSpeedEnforcement()
+    for _, connection in pairs(connections) do
+        if connection then connection:Disconnect() end
+    end
+    connections = {}
+end
+
+local function updateStatus()
+    if not statusLabel then return end
+    
+    if speedLocked then
+        statusLabel.Text = "🔒 Status: Fake Macro ACTIVE ⚡"
+        
+        local colorTween = TweenService:Create(statusLabel,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad),
+            {TextColor3 = Color3.fromRGB(100, 255, 150)}
+        )
+        colorTween:Play()
+        
+        if statusStroke then
+            local strokeTween = TweenService:Create(statusStroke,
+                TweenInfo.new(0.3, Enum.EasingStyle.Quad),
+                {Color = Color3.fromRGB(50, 255, 100)}
+            )
+            strokeTween:Play()
+        end
+        
+    else
+        statusLabel.Text = "🔓 Status: Ready"
+        
+        local colorTween = TweenService:Create(statusLabel,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad),
+            {TextColor3 = Color3.fromRGB(255, 120, 120)}
+        )
+        colorTween:Play()
+        
+        if statusStroke then
+            local strokeTween = TweenService:Create(statusStroke,
+                TweenInfo.new(0.3, Enum.EasingStyle.Quad),
+                {Color = Color3.fromRGB(255, 100, 100)}
+            )
+            strokeTween:Play()
+        end
+    end
+end
+
+local function toggleSpeed()
+    speedLocked = not speedLocked
+    
+    if speedLocked then
+        createNotification(
+            "✅ Fake Macro Activated!",
+            "SUPER speed enabled! Press C again to disable.",
+            Color3.fromRGB(100, 50, 200),
+            3,
+            "notification"
+        )
+        
+        startSpeedEnforcement()
+        
+    else
+        createNotification(
+            "❌ Fake Macro Deactivated!",
+            "Walkspeed will be changed instantly!",
+            Color3.fromRGB(50, 100, 200),
+            2,
+            "notification"
+        )
+        
+        stopSpeedEnforcement()
+        
+        local humanoid = getCurrentHumanoid()
+        if humanoid then
+            setSpeedUltimate(humanoid, DEFAULT_SPEED)
+        end
+    end
+    
+    updateStatus()
+end
+
+-- Input handling
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.C then
+        toggleSpeed()
+    end
+end)
+
+-- Handle respawning (with special respawn sound)
+player.CharacterAdded:Connect(function(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    wait(1)
+    
+    if speedLocked then
+        createNotification(
+            "🔄 Character Respawned",
+            "Macro restored automatically.",
+            Color3.fromRGB(50, 150, 200),
+            2,
+            "respawn" -- Special sound for respawn
+        )
+        startSpeedEnforcement()
+    end
+    
+    updateStatus()
+end)
+
+-- Initialize everything
+print("🚀 Initializing Sulo's Fixed Fake Macro...")
+
+createWelcomeScreen()
+
+spawn(function()
+    wait(4)
+    createMainGUI()
+    updateStatus()
+    
+    wait(0.5)
+    createNotification(
+        "✅ Macro Loaded Successfully!",
+        "All systems ready. Press C to activate speed boost.",
+        Color3.fromRGB(50, 200, 50),
+        3,
+        "notification"
+    )
+    
+    print("✅ Loaded everything for you bro - Sulo!")
+    print("⚡ Press C to toggle speed boost")
+    print("💖 an little donation would really give me motivation for better stuff")
+end)
