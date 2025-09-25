@@ -11,7 +11,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local authorizedUsers = {
     "ongdied",     -- Your username
-    "lol",     -- Test user 1
+    "beybladegabe1",     -- Test user 1
     "Player2",     -- Test user 2
     -- Add more usernames here like: "username123",
 }
