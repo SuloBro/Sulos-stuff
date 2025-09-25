@@ -1,0 +1,1790 @@
+-- SULO'S HITBOX EXPANDER - ENHANCED WITH NPC SUPPORT
+-- Modern GUI with tabbed sections, NPC hitbox system, and smoother animations
+
+-- Wait for proper initialization
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Configuration
+local GAMEPASS_ID = 95989323
+local DONATE_LINK = "https://www.roblox.com/game-pass/95989323/Stitch-Sticker"
+local DISCORD_LINK = "https://discord.gg/pKQVm2P6B7"
+
+-- Variables
+local hitboxEnabled = false
+local npcHitboxEnabled = false
+local noCollisionEnabled = false
+local npcNoCollisionEnabled = false
+local hitbox_original_properties = {}
+local npc_original_properties = {}
+local hitboxSize = 21
+local npcHitboxSize = 15
+local hitboxTransparency = 6
+local npcHitboxTransparency = 5
+local teamCheck = "FFA"
+local connections = {}
+local statusConnection = nil
+local npcStatusConnection = nil
+local gui = nil
+local mainFrame = nil
+local systemInitialized = false
+local npcSystemInitialized = false
+
+local defaultBodyParts = {
+    "UpperTorso",
+    "Head", 
+    "HumanoidRootPart"
+}
+
+local npcBodyParts = {
+    "Head",
+    "Right Arm", -- R6 compatibility
+    "RightUpperArm", -- R15 compatibility
+    "HumanoidRootPart"
+}
+
+local trackedNPCs = {}
+
+-- Create notification system
+local NotificationGui = Instance.new("ScreenGui")
+NotificationGui.Name = "HitboxNotifications"
+NotificationGui.Parent = playerGui
+
+-- Enhanced notification system with smoother animations
+local function showNotification(message, color, duration)
+    duration = duration or 3
+    
+    local notification = Instance.new("Frame")
+    notification.Size = UDim2.new(0, 320, 0, 70)
+    notification.Position = UDim2.new(1, 10, 0.85, 0)
+    notification.BackgroundColor3 = color or Color3.fromRGB(40, 40, 60)
+    notification.BackgroundTransparency = 0.05
+    notification.BorderSizePixel = 0
+    notification.Parent = NotificationGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 15)
+    corner.Parent = notification
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 80)),
+        ColorSequenceKeypoint.new(1, color or Color3.fromRGB(40, 40, 60))
+    }
+    gradient.Rotation = 45
+    gradient.Parent = notification
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = 1
+    stroke.Transparency = 0.7
+    stroke.Parent = notification
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = message
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 14
+    label.Font = Enum.Font.GothamBold
+    label.TextWrapped = true
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = notification
+    
+    -- Smoother slide-in animation
+    local slideIn = TweenService:Create(notification,
+        TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+        {Position = UDim2.new(1, -330, 0.85, 0)}
+    )
+    slideIn:Play()
+    
+    spawn(function()
+        wait(duration)
+        if notification and notification.Parent then
+            local slideOut = TweenService:Create(notification,
+                TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
+                {Position = UDim2.new(1, 10, 0.85, 0), BackgroundTransparency = 1}
+            )
+            slideOut:Play()
+            
+            slideOut.Completed:Connect(function()
+                if notification then
+                    notification:Destroy()
+                end
+            end)
+        end
+    end)
+end
+
+-- Utility Functions with error handling for Players
+local function savedPart(player, part)
+    if not player or not part then return end
+    
+    if not hitbox_original_properties[player] then
+        hitbox_original_properties[player] = {}
+    end
+    
+    if not hitbox_original_properties[player][part.Name] then
+        hitbox_original_properties[player][part.Name] = {
+            CanCollide = part.CanCollide,
+            Transparency = part.Transparency,
+            Size = part.Size
+        }
+    end
+end
+
+local function restoredPart(player)
+    if not player or not hitbox_original_properties[player] then return end
+    
+    for partName, properties in pairs(hitbox_original_properties[player]) do
+        local part = player.Character and player.Character:FindFirstChild(partName)
+        if part and part:IsA("BasePart") and properties then
+            pcall(function()
+                part.CanCollide = properties.CanCollide
+                part.Transparency = properties.Transparency
+                part.Size = properties.Size
+            end)
+        end
+    end
+end
+
+-- NPC Utility Functions
+local function savedNPCPart(npc, part)
+    if not npc or not part then return end
+    
+    if not npc_original_properties[npc] then
+        npc_original_properties[npc] = {}
+    end
+    
+    if not npc_original_properties[npc][part.Name] then
+        npc_original_properties[npc][part.Name] = {
+            CanCollide = part.CanCollide,
+            Transparency = part.Transparency,
+            Size = part.Size
+        }
+    end
+end
+
+local function restoredNPCPart(npc)
+    if not npc or not npc_original_properties[npc] then return end
+    
+    for partName, properties in pairs(npc_original_properties[npc]) do
+        local part = npc:FindFirstChild(partName)
+        if part and part:IsA("BasePart") and properties then
+            pcall(function()
+                part.CanCollide = properties.CanCollide
+                part.Transparency = properties.Transparency
+                part.Size = properties.Size
+            end)
+        end
+    end
+end
+
+local function findClosestPart(character, partName)
+    if not character then return nil end
+    
+    local characterParts = character:GetChildren()
+    for _, part in ipairs(characterParts) do
+        if part:IsA("BasePart") and part.Name:lower():match(partName:lower()) then
+            return part
+        end
+    end
+    return nil
+end
+
+-- NPC Detection Functions
+local function isNPC(model)
+    if not model or model:IsA("Player") then return false end
+    
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return false end
+    
+    -- Check if it's not a player character
+    local isPlayerCharacter = false
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character == model then
+            isPlayerCharacter = true
+            break
+        end
+    end
+    
+    if isPlayerCharacter then return false end
+    
+    -- Must have at least a head or arm to be considered valid NPC
+    local hasValidPart = false
+    for _, partName in pairs(npcBodyParts) do
+        if model:FindFirstChild(partName) or findClosestPart(model, partName) then
+            hasValidPart = true
+            break
+        end
+    end
+    
+    return hasValidPart
+end
+
+local function scanForNPCs()
+    local newNPCs = {}
+    
+    local function scanDescendants(parent)
+        for _, child in pairs(parent:GetDescendants()) do
+            if child:IsA("Model") and isNPC(child) and not trackedNPCs[child] then
+                newNPCs[child] = true
+            end
+        end
+    end
+    
+    scanDescendants(Workspace)
+    
+    -- Add new NPCs to tracking
+    for npc in pairs(newNPCs) do
+        trackedNPCs[npc] = true
+    end
+    
+    -- Clean up removed NPCs
+    for npc in pairs(trackedNPCs) do
+        if not npc or not npc.Parent or not npc:IsDescendantOf(Workspace) then
+            restoredNPCPart(npc)
+            npc_original_properties[npc] = nil
+            trackedNPCs[npc] = nil
+        end
+    end
+end
+
+-- Hitbox Functions for Players
+local function extendHitbox(player)
+    if not player or not player.Character then return end
+    
+    for _, partName in ipairs(defaultBodyParts) do
+        local part = player.Character:FindFirstChild(partName) or findClosestPart(player.Character, partName)
+        if part and part:IsA("BasePart") then
+            pcall(function()
+                savedPart(player, part)
+                part.CanCollide = not noCollisionEnabled
+                part.Transparency = hitboxTransparency / 10
+                part.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+            end)
+        end
+    end
+end
+
+-- Hitbox Functions for NPCs
+local function extendNPCHitbox(npc)
+    if not npc or not isNPC(npc) then return end
+    
+    for _, partName in ipairs(npcBodyParts) do
+        local part = npc:FindFirstChild(partName) or findClosestPart(npc, partName)
+        if part and part:IsA("BasePart") then
+            pcall(function()
+                savedNPCPart(npc, part)
+                part.CanCollide = not npcNoCollisionEnabled
+                part.Transparency = npcHitboxTransparency / 10
+                part.Size = Vector3.new(npcHitboxSize, npcHitboxSize, npcHitboxSize)
+            end)
+        end
+    end
+end
+
+local function isEnemy(player)
+    if teamCheck == "FFA" or teamCheck == "Everyone" then
+        return true
+    end
+    
+    if not LocalPlayer.Team or not player.Team then
+        return true
+    end
+    
+    return player.Team ~= LocalPlayer.Team
+end
+
+local function shouldExtendHitbox(player)
+    return player ~= LocalPlayer and isEnemy(player)
+end
+
+local function updateHitboxes()
+    if not systemInitialized or not hitboxEnabled then return end
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            if shouldExtendHitbox(player) then
+                extendHitbox(player)
+            else
+                restoredPart(player)
+            end
+        end
+    end
+end
+
+local function updateNPCHitboxes()
+    if not npcSystemInitialized or not npcHitboxEnabled then return end
+    
+    scanForNPCs()
+    
+    for npc in pairs(trackedNPCs) do
+        if npc and npc.Parent and isNPC(npc) then
+            extendNPCHitbox(npc)
+        end
+    end
+end
+
+-- Event Handlers
+local function onCharacterAdded(character)
+    task.wait(0.1)
+    if hitboxEnabled and systemInitialized then
+        updateHitboxes()
+    end
+end
+
+local function onPlayerAdded(player)
+    if player == LocalPlayer then return end
+    
+    player.CharacterAdded:Connect(onCharacterAdded)
+    player.CharacterRemoving:Connect(function()
+        restoredPart(player)
+        hitbox_original_properties[player] = nil
+    end)
+end
+
+local function checkForDeadPlayers()
+    for player, properties in pairs(hitbox_original_properties) do
+        if not player or not player.Parent or not player.Character or not player.Character:IsDescendantOf(game) then
+            restoredPart(player)
+            hitbox_original_properties[player] = nil
+        end
+    end
+end
+
+-- Connect player events
+Players.PlayerAdded:Connect(onPlayerAdded)
+for _, player in ipairs(Players:GetPlayers()) do
+    onPlayerAdded(player)
+end
+
+-- Modern GUI Creation with SMOOTHER ANIMATIONS
+local function createModernGUI()
+    -- Main GUI
+    gui = Instance.new("ScreenGui")
+    gui.Name = "SuloHitboxGUI"
+    gui.ResetOnSpawn = false
+    gui.Parent = playerGui
+    
+    -- Main container with tabbed interface
+    local mainContainer = Instance.new("Frame")
+    mainContainer.Size = UDim2.new(0, 460, 0, 680)
+    mainContainer.Position = UDim2.new(0.5, -230, 0.5, -340)
+    mainContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    mainContainer.BackgroundTransparency = 0.05
+    mainContainer.BorderSizePixel = 0
+    mainContainer.Active = true
+    mainContainer.Draggable = true
+    mainContainer.Parent = gui
+    
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 20)
+    mainCorner.Parent = mainContainer
+    
+    local mainGradient = Instance.new("UIGradient")
+    mainGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 55)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(25, 25, 35)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
+    }
+    mainGradient.Rotation = 45
+    mainGradient.Parent = mainContainer
+    
+    local mainStroke = Instance.new("UIStroke")
+    mainStroke.Color = Color3.fromRGB(100, 150, 255)
+    mainStroke.Thickness = 2
+    mainStroke.Transparency = 0.3
+    mainStroke.Parent = mainContainer
+    
+    -- Smoother animated border color
+    spawn(function()
+        while mainContainer.Parent do
+            for i = 0, 360, 2 do
+                if not mainContainer.Parent then break end
+                local hue = i / 360
+                mainStroke.Color = Color3.fromHSV(hue, 0.8, 1)
+                wait(0.05)
+            end
+        end
+    end)
+    
+    -- Header with tabs
+    local header = Instance.new("Frame")
+    header.Size = UDim2.new(1, 0, 0, 80)
+    header.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    header.BackgroundTransparency = 0.2
+    header.BorderSizePixel = 0
+    header.Parent = mainContainer
+    
+    local headerCorner = Instance.new("UICorner")
+    headerCorner.CornerRadius = UDim.new(0, 20)
+    headerCorner.Parent = header
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -60, 0, 30)
+    title.Position = UDim2.new(0, 20, 0, 10)
+    title.BackgroundTransparency = 1
+    title.Text = "🎯 SULO'S HITBOX EXPANDER"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextSize = 18
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = header
+    
+    -- Close button with smooth hover
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(1, -40, 0, 10)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+    closeBtn.BorderSizePixel = 0
+    closeBtn.Text = "✕"
+    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeBtn.TextSize = 14
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.Parent = header
+    
+    local closeBtnCorner = Instance.new("UICorner")
+    closeBtnCorner.CornerRadius = UDim.new(1, 0)
+    closeBtnCorner.Parent = closeBtn
+    
+    closeBtn.MouseEnter:Connect(function()
+        TweenService:Create(closeBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {
+            BackgroundColor3 = Color3.fromRGB(255, 60, 60),
+            Size = UDim2.new(0, 32, 0, 32)
+        }):Play()
+    end)
+    
+    closeBtn.MouseLeave:Connect(function()
+        TweenService:Create(closeBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {
+            BackgroundColor3 = Color3.fromRGB(255, 80, 80),
+            Size = UDim2.new(0, 30, 0, 30)
+        }):Play()
+    end)
+    
+    closeBtn.MouseButton1Click:Connect(function()
+        -- Clean up
+        hitboxEnabled = false
+        npcHitboxEnabled = false
+        
+        for _, player in ipairs(Players:GetPlayers()) do
+            restoredPart(player)
+        end
+        
+        for npc in pairs(trackedNPCs) do
+            restoredNPCPart(npc)
+        end
+        
+        hitbox_original_properties = {}
+        npc_original_properties = {}
+        trackedNPCs = {}
+        
+        if statusConnection then
+            statusConnection:Disconnect()
+            statusConnection = nil
+        end
+        
+        if npcStatusConnection then
+            npcStatusConnection:Disconnect()
+            npcStatusConnection = nil
+        end
+        
+        -- Smooth close animation
+        local closeTween = TweenService:Create(mainContainer,
+            TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+            {Size = UDim2.new(0, 0, 0, 0)}
+        )
+        closeTween:Play()
+        
+        closeTween.Completed:Connect(function()
+            gui:Destroy()
+        end)
+    end)
+    
+    -- Tab buttons container
+    local tabContainer = Instance.new("Frame")
+    tabContainer.Size = UDim2.new(1, -40, 0, 35)
+    tabContainer.Position = UDim2.new(0, 20, 0, 45)
+    tabContainer.BackgroundTransparency = 1
+    tabContainer.Parent = header
+    
+    local tabLayout = Instance.new("UIListLayout")
+    tabLayout.FillDirection = Enum.FillDirection.Horizontal
+    tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tabLayout.Padding = UDim.new(0, 5)
+    tabLayout.Parent = tabContainer
+    
+    -- Content frames for each tab
+    local contentArea = Instance.new("Frame")
+    contentArea.Size = UDim2.new(1, -20, 1, -100)
+    contentArea.Position = UDim2.new(0, 10, 0, 90)
+    contentArea.BackgroundTransparency = 1
+    contentArea.Parent = mainContainer
+    
+    local tabs = {}
+    local currentTab = "MAIN"
+    
+    -- Function to create tab button and frame with smooth transitions
+    local function createTab(name, layoutOrder)
+        local tabBtn = Instance.new("TextButton")
+        tabBtn.Size = UDim2.new(0, 70, 1, 0)
+        tabBtn.BackgroundColor3 = name == "MAIN" and Color3.fromRGB(60, 120, 255) or Color3.fromRGB(50, 50, 70)
+        tabBtn.BorderSizePixel = 0
+        tabBtn.Text = name
+        tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        tabBtn.TextSize = 11
+        tabBtn.Font = Enum.Font.GothamBold
+        tabBtn.LayoutOrder = layoutOrder
+        tabBtn.Parent = tabContainer
+        
+        local tabCorner = Instance.new("UICorner")
+        tabCorner.CornerRadius = UDim.new(0, 10)
+        tabCorner.Parent = tabBtn
+        
+        -- Smooth hover effect
+        tabBtn.MouseEnter:Connect(function()
+            if currentTab ~= name then
+                TweenService:Create(tabBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {
+                    BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+                }):Play()
+            end
+        end)
+        
+        tabBtn.MouseLeave:Connect(function()
+            if currentTab ~= name then
+                TweenService:Create(tabBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {
+                    BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+                }):Play()
+            end
+        end)
+        
+        local tabFrame = Instance.new("ScrollingFrame")
+        tabFrame.Size = UDim2.new(1, 0, 1, 0)
+        tabFrame.BackgroundTransparency = 1
+        tabFrame.BorderSizePixel = 0
+        tabFrame.ScrollBarThickness = 6
+        tabFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 150, 255)
+        tabFrame.CanvasSize = UDim2.new(0, 0, 0, 1200)
+        tabFrame.Visible = name == "MAIN"
+        tabFrame.Parent = contentArea
+        
+        local layout = Instance.new("UIListLayout")
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Padding = UDim.new(0, 15)
+        layout.Parent = tabFrame
+        
+        tabs[name] = {button = tabBtn, frame = tabFrame}
+        
+        tabBtn.MouseButton1Click:Connect(function()
+            if currentTab ~= name then
+                currentTab = name
+                for tabName, tab in pairs(tabs) do
+                    tab.frame.Visible = tabName == name
+                    TweenService:Create(tab.button, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {
+                        BackgroundColor3 = tabName == name and Color3.fromRGB(60, 120, 255) or Color3.fromRGB(50, 50, 70)
+                    }):Play()
+                end
+            end
+        end)
+        
+        return tabFrame
+    end
+    
+    -- Create tabs
+    local mainTab = createTab("MAIN", 1)
+    local npcTab = createTab("NPC", 2)
+    local espTab = createTab("ESP", 3)
+    local playerTab = createTab("PLAYER", 4)
+    local miscTab = createTab("MISC", 5)
+    local creditsTab = createTab("CREDITS", 6)
+    
+    -- Function to create section within tab
+    local function createSection(parent, title, layoutOrder)
+        local section = Instance.new("Frame")
+        section.Size = UDim2.new(1, 0, 0, 200)
+        section.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+        section.BackgroundTransparency = 0.1
+        section.BorderSizePixel = 0
+        section.LayoutOrder = layoutOrder
+        section.Parent = parent
+        
+        local sectionCorner = Instance.new("UICorner")
+        sectionCorner.CornerRadius = UDim.new(0, 15)
+        sectionCorner.Parent = section
+        
+        local sectionStroke = Instance.new("UIStroke")
+        sectionStroke.Color = Color3.fromRGB(80, 80, 100)
+        sectionStroke.Thickness = 1
+        sectionStroke.Transparency = 0.5
+        sectionStroke.Parent = section
+        
+        local sectionTitle = Instance.new("TextLabel")
+        sectionTitle.Size = UDim2.new(1, -20, 0, 30)
+        sectionTitle.Position = UDim2.new(0, 10, 0, 10)
+        sectionTitle.BackgroundTransparency = 1
+        sectionTitle.Text = title
+        sectionTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        sectionTitle.TextSize = 16
+        sectionTitle.Font = Enum.Font.GothamBold
+        sectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+        sectionTitle.Parent = section
+        
+        local sectionLayout = Instance.new("UIListLayout")
+        sectionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        sectionLayout.Padding = UDim.new(0, 10)
+        sectionLayout.Parent = section
+        
+        sectionLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            section.Size = UDim2.new(1, 0, 0, math.max(200, sectionLayout.AbsoluteContentSize.Y + 20))
+        end)
+        
+        return section
+    end
+    
+    -- Function to create button with smooth animations
+    local function createButton(parent, text, callback, layoutOrder, color)
+        color = color or Color3.fromRGB(60, 120, 255)
+        
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, -20, 0, 45)
+        button.Position = UDim2.new(0, 10, 0, 0)
+        button.BackgroundColor3 = color
+        button.BackgroundTransparency = 0.1
+        button.BorderSizePixel = 0
+        button.Text = text
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.TextSize = 14
+        button.Font = Enum.Font.GothamBold
+        button.LayoutOrder = layoutOrder
+        button.Parent = parent
+        
+        local buttonCorner = Instance.new("UICorner")
+        buttonCorner.CornerRadius = UDim.new(0, 12)
+        buttonCorner.Parent = button
+        
+        button.MouseEnter:Connect(function()
+            TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                BackgroundTransparency = 0,
+                Size = UDim2.new(1, -18, 0, 47)
+            }):Play()
+        end)
+        
+        button.MouseLeave:Connect(function()
+            TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                BackgroundTransparency = 0.1,
+                Size = UDim2.new(1, -20, 0, 45)
+            }):Play()
+        end)
+        
+        button.MouseButton1Click:Connect(function()
+            -- Click animation
+            TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quart), {
+                Size = UDim2.new(1, -22, 0, 43)
+            }):Play()
+            
+            spawn(function()
+                wait(0.1)
+                TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quart), {
+                    Size = UDim2.new(1, -18, 0, 47)
+                }):Play()
+            end)
+            
+            callback()
+        end)
+        return button
+    end
+    
+    -- Function to create toggle with smooth animations
+    local function createToggle(parent, text, default, callback, layoutOrder)
+        local toggleFrame = Instance.new("Frame")
+        toggleFrame.Size = UDim2.new(1, -20, 0, 50)
+        toggleFrame.Position = UDim2.new(0, 10, 0, 0)
+        toggleFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        toggleFrame.BackgroundTransparency = 0.2
+        toggleFrame.BorderSizePixel = 0
+        toggleFrame.LayoutOrder = layoutOrder
+        toggleFrame.Parent = parent
+        
+        local toggleCorner = Instance.new("UICorner")
+        toggleCorner.CornerRadius = UDim.new(0, 12)
+        toggleCorner.Parent = toggleFrame
+        
+        local toggleLabel = Instance.new("TextLabel")
+        toggleLabel.Size = UDim2.new(1, -70, 1, 0)
+        toggleLabel.Position = UDim2.new(0, 15, 0, 0)
+        toggleLabel.BackgroundTransparency = 1
+        toggleLabel.Text = text
+        toggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        toggleLabel.TextSize = 14
+        toggleLabel.Font = Enum.Font.Gotham
+        toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        toggleLabel.Parent = toggleFrame
+        
+        local toggleButton = Instance.new("TextButton")
+        toggleButton.Size = UDim2.new(0, 50, 0, 25)
+        toggleButton.Position = UDim2.new(1, -60, 0.5, -12.5)
+        toggleButton.BackgroundColor3 = default and Color3.fromRGB(80, 200, 80) or Color3.fromRGB(200, 80, 80)
+        toggleButton.BorderSizePixel = 0
+        toggleButton.Text = default and "ON" or "OFF"
+        toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        toggleButton.TextSize = 12
+        toggleButton.Font = Enum.Font.GothamBold
+        toggleButton.Parent = toggleFrame
+        
+        local toggleBtnCorner = Instance.new("UICorner")
+        toggleBtnCorner.CornerRadius = UDim.new(1, 0)
+        toggleBtnCorner.Parent = toggleButton
+        
+        local enabled = default
+        
+        -- Smooth hover effect
+        toggleButton.MouseEnter:Connect(function()
+            TweenService:Create(toggleButton, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                Size = UDim2.new(0, 52, 0, 27)
+            }):Play()
+        end)
+        
+        toggleButton.MouseLeave:Connect(function()
+            TweenService:Create(toggleButton, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                Size = UDim2.new(0, 50, 0, 25)
+            }):Play()
+        end)
+        
+        toggleButton.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            toggleButton.Text = enabled and "ON" or "OFF"
+            TweenService:Create(toggleButton, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {
+                BackgroundColor3 = enabled and Color3.fromRGB(80, 200, 80) or Color3.fromRGB(200, 80, 80)
+            }):Play()
+            callback(enabled)
+        end)
+        
+        return toggleFrame
+    end
+    
+    -- Function to create slider with smooth animations
+    local function createSlider(parent, text, min, max, default, callback, layoutOrder)
+        local sliderFrame = Instance.new("Frame")
+        sliderFrame.Size = UDim2.new(1, -20, 0, 70)
+        sliderFrame.Position = UDim2.new(0, 10, 0, 0)
+        sliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        sliderFrame.BackgroundTransparency = 0.2
+        sliderFrame.BorderSizePixel = 0
+        sliderFrame.LayoutOrder = layoutOrder
+        sliderFrame.Parent = parent
+        
+        local sliderCorner = Instance.new("UICorner")
+        sliderCorner.CornerRadius = UDim.new(0, 12)
+        sliderCorner.Parent = sliderFrame
+        
+        local sliderLabel = Instance.new("TextLabel")
+        sliderLabel.Size = UDim2.new(1, -20, 0, 25)
+        sliderLabel.Position = UDim2.new(0, 15, 0, 5)
+        sliderLabel.BackgroundTransparency = 1
+        sliderLabel.Text = text .. ": " .. default
+        sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        sliderLabel.TextSize = 14
+        sliderLabel.Font = Enum.Font.Gotham
+        sliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+        sliderLabel.Parent = sliderFrame
+        
+        local sliderBg = Instance.new("Frame")
+        sliderBg.Size = UDim2.new(1, -30, 0, 8)
+        sliderBg.Position = UDim2.new(0, 15, 0, 35)
+        sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+        sliderBg.BorderSizePixel = 0
+        sliderBg.Parent = sliderFrame
+        
+        local sliderBgCorner = Instance.new("UICorner")
+        sliderBgCorner.CornerRadius = UDim.new(1, 0)
+        sliderBgCorner.Parent = sliderBg
+        
+        local sliderFill = Instance.new("Frame")
+        sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+        sliderFill.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+        sliderFill.BorderSizePixel = 0
+        sliderFill.Parent = sliderBg
+        
+        local sliderFillCorner = Instance.new("UICorner")
+        sliderFillCorner.CornerRadius = UDim.new(1, 0)
+        sliderFillCorner.Parent = sliderFill
+        
+        local sliderHandle = Instance.new("TextButton")
+        sliderHandle.Size = UDim2.new(0, 20, 0, 20)
+        sliderHandle.Position = UDim2.new((default - min) / (max - min), -10, 0, -6)
+        sliderHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        sliderHandle.BorderSizePixel = 0
+        sliderHandle.Text = ""
+        sliderHandle.Parent = sliderBg
+        
+        local sliderHandleCorner = Instance.new("UICorner")
+        sliderHandleCorner.CornerRadius = UDim.new(1, 0)
+        sliderHandleCorner.Parent = sliderHandle
+        
+        -- Smooth hover effect for handle
+        sliderHandle.MouseEnter:Connect(function()
+            TweenService:Create(sliderHandle, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                Size = UDim2.new(0, 24, 0, 24),
+                BackgroundColor3 = Color3.fromRGB(220, 220, 255)
+            }):Play()
+        end)
+        
+        sliderHandle.MouseLeave:Connect(function()
+            TweenService:Create(sliderHandle, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                Size = UDim2.new(0, 20, 0, 20),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            }):Play()
+        end)
+        
+        local dragging = false
+        local currentValue = default
+        
+        sliderHandle.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                TweenService:Create(sliderHandle, TweenInfo.new(0.1, Enum.EasingStyle.Quart), {
+                    Size = UDim2.new(0, 26, 0, 26)
+                }):Play()
+            end
+        end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+                currentValue = math.floor(min + (pos * (max - min)))
+                
+                -- Smooth slider movement
+                TweenService:Create(sliderHandle, TweenInfo.new(0.1, Enum.EasingStyle.Quart), {
+                    Position = UDim2.new(pos, -13, 0, -9)
+                }):Play()
+                
+                TweenService:Create(sliderFill, TweenInfo.new(0.1, Enum.EasingStyle.Quart), {
+                    Size = UDim2.new(pos, 0, 1, 0)
+                }):Play()
+                
+                sliderLabel.Text = text .. ": " .. currentValue
+                callback(currentValue)
+            end
+        end)
+        
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+                TweenService:Create(sliderHandle, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                    Size = UDim2.new(0, 24, 0, 24)
+                }):Play()
+            end
+        end)
+        
+        return sliderFrame
+    end
+    
+    -- Function to create dropdown with smooth animations
+    local function createDropdown(parent, text, options, callback, layoutOrder)
+        local dropdownFrame = Instance.new("Frame")
+        dropdownFrame.Size = UDim2.new(1, -20, 0, 50)
+        dropdownFrame.Position = UDim2.new(0, 10, 0, 0)
+        dropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        dropdownFrame.BackgroundTransparency = 0.2
+        dropdownFrame.BorderSizePixel = 0
+        dropdownFrame.LayoutOrder = layoutOrder
+        dropdownFrame.Parent = parent
+        
+        local dropdownCorner = Instance.new("UICorner")
+        dropdownCorner.CornerRadius = UDim.new(0, 12)
+        dropdownCorner.Parent = dropdownFrame
+        
+        local dropdownLabel = Instance.new("TextLabel")
+        dropdownLabel.Size = UDim2.new(0.5, 0, 1, 0)
+        dropdownLabel.Position = UDim2.new(0, 15, 0, 0)
+        dropdownLabel.BackgroundTransparency = 1
+        dropdownLabel.Text = text
+        dropdownLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        dropdownLabel.TextSize = 14
+        dropdownLabel.Font = Enum.Font.Gotham
+        dropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+        dropdownLabel.Parent = dropdownFrame
+        
+        local dropdownButton = Instance.new("TextButton")
+        dropdownButton.Size = UDim2.new(0.4, 0, 0, 30)
+        dropdownButton.Position = UDim2.new(0.55, 0, 0.5, -15)
+        dropdownButton.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+        dropdownButton.BorderSizePixel = 0
+        dropdownButton.Text = options[1] or "Select"
+        dropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        dropdownButton.TextSize = 12
+        dropdownButton.Font = Enum.Font.Gotham
+        dropdownButton.Parent = dropdownFrame
+        
+        local dropdownBtnCorner = Instance.new("UICorner")
+        dropdownBtnCorner.CornerRadius = UDim.new(0, 8)
+        dropdownBtnCorner.Parent = dropdownButton
+        
+        -- Smooth hover effect
+        dropdownButton.MouseEnter:Connect(function()
+            TweenService:Create(dropdownButton, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+            }):Play()
+        end)
+        
+        dropdownButton.MouseLeave:Connect(function()
+            TweenService:Create(dropdownButton, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+            }):Play()
+        end)
+        
+        local currentIndex = 1
+        dropdownButton.MouseButton1Click:Connect(function()
+            currentIndex = currentIndex % #options + 1
+            local selectedOption = options[currentIndex]
+            dropdownButton.Text = selectedOption
+            
+            -- Click animation
+            TweenService:Create(dropdownButton, TweenInfo.new(0.1, Enum.EasingStyle.Quart), {
+                Size = UDim2.new(0.38, 0, 0, 28)
+            }):Play()
+            
+            spawn(function()
+                wait(0.1)
+                TweenService:Create(dropdownButton, TweenInfo.new(0.1, Enum.EasingStyle.Quart), {
+                    Size = UDim2.new(0.4, 0, 0, 30)
+                }):Play()
+            end)
+            
+            callback(selectedOption)
+        end)
+        
+        return dropdownFrame
+    end
+    
+    -- MAIN TAB - Hitbox System
+    local hitboxSection = createSection(mainTab, "🎯 Player Hitbox System", 1)
+    
+    createButton(hitboxSection, "⚡ Initialize Player System", function()
+        if not systemInitialized then
+            systemInitialized = true
+            
+            statusConnection = RunService.Heartbeat:Connect(function()
+                if hitboxEnabled then
+                    updateHitboxes()
+                    checkForDeadPlayers()
+                end
+            end)
+            
+            showNotification("🚀 Player System Initialized!\nReady to use hitbox controls", Color3.fromRGB(50, 200, 50))
+        else
+            showNotification("⚠️ Player system already running!", Color3.fromRGB(255, 150, 50))
+        end
+    end, 1, Color3.fromRGB(80, 200, 80))
+    
+    createToggle(hitboxSection, "🎯 Enable Player Hitbox", false, function(enabled)
+        hitboxEnabled = enabled
+        if not enabled then
+            for _, player in ipairs(Players:GetPlayers()) do
+                restoredPart(player)
+            end
+            showNotification("🔴 Player Hitbox Disabled\nAll hitboxes restored", Color3.fromRGB(200, 50, 50))
+        else
+            if systemInitialized then
+                updateHitboxes()
+                showNotification("🟢 Player Hitbox Enabled!\nSize: " .. hitboxSize, Color3.fromRGB(50, 200, 50))
+            else
+                showNotification("⚠️ Please initialize player system first!", Color3.fromRGB(255, 150, 50))
+                hitboxEnabled = false
+            end
+        end
+    end, 2)
+    
+    createSlider(hitboxSection, "📏 Player Hitbox Size", 1, 50, 21, function(value)
+        hitboxSize = value
+        if hitboxEnabled and systemInitialized then
+            updateHitboxes()
+        end
+    end, 3)
+    
+    createSlider(hitboxSection, "👻 Player Transparency", 1, 10, 6, function(value)
+        hitboxTransparency = value
+        if hitboxEnabled and systemInitialized then
+            updateHitboxes()
+        end
+    end, 4)
+    
+    createToggle(hitboxSection, "🚫 Player No Collision", false, function(enabled)
+        noCollisionEnabled = enabled
+        if hitboxEnabled and systemInitialized then
+            updateHitboxes()
+        end
+        showNotification(enabled and "⚠️ Player No Collision Enabled!" or "✅ Player Collision Restored", 
+            enabled and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(50, 200, 50))
+    end, 5)
+    
+    createDropdown(hitboxSection, "🎯 Target Mode", {"FFA", "Enemies Only", "Everyone"}, function(mode)
+        teamCheck = mode
+        showNotification("🎯 Target mode: " .. mode, Color3.fromRGB(100, 150, 255))
+    end, 6)
+    
+    -- NPC TAB - NPC Hitbox System
+    local npcSection = createSection(npcTab, "🤖 NPC Hitbox System", 1)
+    
+    createButton(npcSection, "⚡ Initialize NPC System", function()
+        if not npcSystemInitialized then
+            npcSystemInitialized = true
+            
+            npcStatusConnection = RunService.Heartbeat:Connect(function()
+                if npcHitboxEnabled then
+                    updateNPCHitboxes()
+                end
+            end)
+            
+            -- Initial scan
+            scanForNPCs()
+            local npcCount = 0
+            for _ in pairs(trackedNPCs) do
+                npcCount = npcCount + 1
+            end
+            
+            showNotification("🚀 NPC System Initialized!\nFound " .. npcCount .. " NPCs", Color3.fromRGB(50, 200, 50))
+        else
+            showNotification("⚠️ NPC system already running!", Color3.fromRGB(255, 150, 50))
+        end
+    end, 1, Color3.fromRGB(80, 200, 80))
+    
+    createToggle(npcSection, "🤖 Enable NPC Hitbox", false, function(enabled)
+        npcHitboxEnabled = enabled
+        if not enabled then
+            for npc in pairs(trackedNPCs) do
+                restoredNPCPart(npc)
+            end
+            showNotification("🔴 NPC Hitbox Disabled\nAll NPC hitboxes restored", Color3.fromRGB(200, 50, 50))
+        else
+            if npcSystemInitialized then
+                updateNPCHitboxes()
+                local npcCount = 0
+                for _ in pairs(trackedNPCs) do
+                    npcCount = npcCount + 1
+                end
+                showNotification("🟢 NPC Hitbox Enabled!\nAffecting " .. npcCount .. " NPCs", Color3.fromRGB(50, 200, 50))
+            else
+                showNotification("⚠️ Please initialize NPC system first!", Color3.fromRGB(255, 150, 50))
+                npcHitboxEnabled = false
+            end
+        end
+    end, 2)
+    
+    createSlider(npcSection, "📏 NPC Hitbox Size", 1, 40, 15, function(value)
+        npcHitboxSize = value
+        if npcHitboxEnabled and npcSystemInitialized then
+            updateNPCHitboxes()
+        end
+    end, 3)
+    
+    createSlider(npcSection, "👻 NPC Transparency", 1, 10, 5, function(value)
+        npcHitboxTransparency = value
+        if npcHitboxEnabled and npcSystemInitialized then
+            updateNPCHitboxes()
+        end
+    end, 4)
+    
+    createToggle(npcSection, "🚫 NPC No Collision", false, function(enabled)
+        npcNoCollisionEnabled = enabled
+        if npcHitboxEnabled and npcSystemInitialized then
+            updateNPCHitboxes()
+        end
+        showNotification(enabled and "⚠️ NPC No Collision Enabled!" or "✅ NPC Collision Restored", 
+            enabled and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(50, 200, 50))
+    end, 5)
+    
+    createButton(npcSection, "🔍 Rescan for NPCs", function()
+        scanForNPCs()
+        local npcCount = 0
+        for _ in pairs(trackedNPCs) do
+            npcCount = npcCount + 1
+        end
+        showNotification("🔍 Rescan Complete!\nFound " .. npcCount .. " NPCs", Color3.fromRGB(100, 150, 255))
+    end, 6, Color3.fromRGB(100, 150, 255))
+    
+    -- NPC Info Section
+    local npcInfoSection = createSection(npcTab, "📊 NPC Information", 2)
+    
+    local npcCountLabel = Instance.new("TextLabel")
+    npcCountLabel.Size = UDim2.new(1, -20, 0, 30)
+    npcCountLabel.Position = UDim2.new(0, 10, 0, 0)
+    npcCountLabel.BackgroundTransparency = 1
+    npcCountLabel.Text = "Tracked NPCs: 0"
+    npcCountLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    npcCountLabel.TextSize = 14
+    npcCountLabel.Font = Enum.Font.Gotham
+    npcCountLabel.TextXAlignment = Enum.TextXAlignment.Left
+    npcCountLabel.LayoutOrder = 1
+    npcCountLabel.Parent = npcInfoSection
+    
+    -- Update NPC count display
+    spawn(function()
+        while gui and gui.Parent do
+            local count = 0
+            for _ in pairs(trackedNPCs) do
+                count = count + 1
+            end
+            npcCountLabel.Text = "Tracked NPCs: " .. count
+            wait(1)
+        end
+    end)
+    
+    -- ESP TAB
+    local espSection = createSection(espTab, "🔍 Visual ESP System", 1)
+    
+    local espEnabled = false
+    createToggle(espSection, "🔍 Enable Player ESP", false, function(enabled)
+        espEnabled = enabled
+        
+        local function createESP(player)
+            if not player.Character or player == LocalPlayer then return end
+            
+            local character = player.Character
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if not rootPart then return end
+            
+            local existingESP = character:FindFirstChild("ESP_Highlight")
+            if existingESP then
+                existingESP:Destroy()
+            end
+            
+            if enabled then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "ESP_Highlight"
+                highlight.Parent = character
+                highlight.FillColor = Color3.fromRGB(255, 100, 100)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.5
+                highlight.OutlineTransparency = 0
+            end
+        end
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                createESP(player)
+            end
+        end
+        
+        if enabled then
+            connections.espConnection = Players.PlayerAdded:Connect(function(player)
+                player.CharacterAdded:Connect(function()
+                    wait(0.1)
+                    if espEnabled then
+                        createESP(player)
+                    end
+                end)
+            end)
+            
+            for _, player in pairs(Players:GetPlayers()) do
+                player.CharacterAdded:Connect(function()
+                    wait(0.1)
+                    if espEnabled then
+                        createESP(player)
+                    end
+                end)
+            end
+        else
+            if connections.espConnection then
+                connections.espConnection:Disconnect()
+                connections.espConnection = nil
+            end
+        end
+        
+        showNotification(enabled and "🔍 Player ESP Enabled!" or "⏹️ Player ESP Disabled", 
+            enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50))
+    end, 1)
+    
+    createToggle(espSection, "🎨 Rainbow Player ESP", false, function(enabled)
+        if enabled then
+            spawn(function()
+                while enabled do
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player.Character and player ~= LocalPlayer then
+                            local highlight = player.Character:FindFirstChild("ESP_Highlight")
+                            if highlight then
+                                local hue = tick() % 5 / 5
+                                highlight.FillColor = Color3.fromHSV(hue, 1, 1)
+                            end
+                        end
+                    end
+                    wait(0.1)
+                end
+            end)
+        end
+    end, 2)
+    
+    local npcEspEnabled = false
+    createToggle(espSection, "🤖 Enable NPC ESP", false, function(enabled)
+        npcEspEnabled = enabled
+        
+        local function createNPCESP(npc)
+            if not npc or not isNPC(npc) then return end
+            
+            local existingESP = npc:FindFirstChild("NPC_ESP_Highlight")
+            if existingESP then
+                existingESP:Destroy()
+            end
+            
+            if enabled then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "NPC_ESP_Highlight"
+                highlight.Parent = npc
+                highlight.FillColor = Color3.fromRGB(100, 255, 100)
+                highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+                highlight.FillTransparency = 0.6
+                highlight.OutlineTransparency = 0
+            end
+        end
+        
+        for npc in pairs(trackedNPCs) do
+            createNPCESP(npc)
+        end
+        
+        showNotification(enabled and "🤖 NPC ESP Enabled!" or "⏹️ NPC ESP Disabled", 
+            enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50))
+    end, 3)
+    
+    createToggle(espSection, "🌈 Rainbow NPC ESP", false, function(enabled)
+        if enabled then
+            spawn(function()
+                while enabled do
+                    for npc in pairs(trackedNPCs) do
+                        if npc and npc.Parent then
+                            local highlight = npc:FindFirstChild("NPC_ESP_Highlight")
+                            if highlight then
+                                local hue = (tick() + 2.5) % 5 / 5
+                                highlight.FillColor = Color3.fromHSV(hue, 1, 1)
+                            end
+                        end
+                    end
+                    wait(0.1)
+                end
+            end)
+        end
+    end, 4)
+    
+    -- PLAYER TAB
+    local playerSection = createSection(playerTab, "🏃 Movement Controls", 1)
+    
+    local settings = {WalkSpeed = 16, JumpPower = 100}
+    local isWalkSpeedEnabled = false
+    local isJumpPowerEnabled = false
+    local isNoClipEnabled = false
+    local IJ = false
+    
+    createToggle(playerSection, "🚀 Custom WalkSpeed", false, function(enabled)
+        isWalkSpeedEnabled = enabled
+        showNotification(enabled and "🚀 Custom walkspeed enabled!" or "⏹️ Custom walkspeed disabled", 
+            enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50))
+    end, 1)
+    
+    createSlider(playerSection, "⚡ Walkspeed Power", 16, 500, 16, function(value)
+        settings.WalkSpeed = value
+    end, 2)
+    
+    createToggle(playerSection, "🦘 Infinite Jump", false, function(enabled)
+        IJ = enabled
+        showNotification(enabled and "🦘 Infinite jump enabled!" or "⏹️ Infinite jump disabled", 
+            enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50))
+    end, 3)
+    
+    createToggle(playerSection, "🚁 Custom JumpPower", false, function(enabled)
+        isJumpPowerEnabled = enabled
+        showNotification(enabled and "🚁 Custom jump power enabled!" or "⏹️ Custom jump power disabled", 
+            enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50))
+    end, 4)
+    
+    createSlider(playerSection, "🚁 JumpPower", 30, 500, 100, function(value)
+        settings.JumpPower = value
+    end, 5)
+    
+    createToggle(playerSection, "👻 NoClip", false, function(enabled)
+        isNoClipEnabled = enabled
+        showNotification(enabled and "👻 NoClip enabled!" or "⏹️ NoClip disabled", 
+            enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50))
+        
+        if enabled then
+            spawn(function()
+                while isNoClipEnabled do
+                    local character = LocalPlayer.Character
+                    if character then
+                        for _, part in pairs(character:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                pcall(function()
+                                    part.CanCollide = false
+                                end)
+                            end
+                        end
+                    end
+                    RunService.Stepped:Wait()
+                end
+                local character = LocalPlayer.Character
+                if character then
+                    for _, part in pairs(character:GetDescendants()) do
+                        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                            pcall(function()
+                                part.CanCollide = true
+                            end)
+                        end
+                    end
+                end
+            end)
+        end
+    end, 6)
+    
+    -- Movement handlers
+    local function updateWalkSpeed()
+        if not isWalkSpeedEnabled then return end
+        
+        local character = LocalPlayer.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid and rootPart then
+            local moveVector = humanoid.MoveDirection * settings.WalkSpeed
+            rootPart.Velocity = Vector3.new(moveVector.X, rootPart.Velocity.Y, moveVector.Z)
+        end
+    end
+    
+    RunService.Stepped:Connect(updateWalkSpeed)
+    
+    UserInputService.JumpRequest:Connect(function()
+        if IJ then
+            local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                pcall(function()
+                    humanoid:ChangeState("Jumping")
+                end)
+            end
+        end
+    end)
+    
+    local function handleJumpPower(character)
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.Jumping:Connect(function(isActive)
+                if isJumpPowerEnabled and isActive then
+                    local rootPart = character:FindFirstChild("HumanoidRootPart")
+                    if rootPart then
+                        pcall(function()
+                            rootPart.Velocity = Vector3.new(rootPart.Velocity.X, settings.JumpPower, rootPart.Velocity.Z)
+                        end)
+                    end
+                end
+            end)
+        end
+    end
+    
+    LocalPlayer.CharacterAdded:Connect(handleJumpPower)
+    if LocalPlayer.Character then
+        handleJumpPower(LocalPlayer.Character)
+    end
+    
+    -- MISC TAB
+    local miscSection = createSection(miscTab, "🔧 Miscellaneous", 1)
+    
+    createToggle(miscSection, "💡 Full Bright", false, function(enabled)
+        if not _G.FullBrightExecuted then
+            _G.FullBrightEnabled = enabled
+            
+            _G.NormalLightingSettings = {
+                Brightness = game:GetService("Lighting").Brightness,
+                ClockTime = game:GetService("Lighting").ClockTime,
+                FogEnd = game:GetService("Lighting").FogEnd,
+                GlobalShadows = game:GetService("Lighting").GlobalShadows,
+                Ambient = game:GetService("Lighting").Ambient
+            }
+            
+            local function applyFullBright()
+                pcall(function()
+                    local lighting = game:GetService("Lighting")
+                    lighting.Brightness = 1
+                    lighting.ClockTime = 12
+                    lighting.FogEnd = 786543
+                    lighting.GlobalShadows = false
+                    lighting.Ambient = Color3.fromRGB(178, 178, 178)
+                end)
+            end
+            
+            local function restoreLighting()
+                pcall(function()
+                    local lighting = game:GetService("Lighting")
+                    lighting.Brightness = _G.NormalLightingSettings.Brightness
+                    lighting.ClockTime = _G.NormalLightingSettings.ClockTime
+                    lighting.FogEnd = _G.NormalLightingSettings.FogEnd
+                    lighting.GlobalShadows = _G.NormalLightingSettings.GlobalShadows
+                    lighting.Ambient = _G.NormalLightingSettings.Ambient
+                end)
+            end
+            
+            spawn(function()
+                while true do
+                    if _G.FullBrightEnabled then
+                        applyFullBright()
+                    else
+                        restoreLighting()
+                    end
+                    wait(1)
+                end
+            end)
+            
+            _G.FullBrightExecuted = true
+        end
+        
+        _G.FullBrightEnabled = enabled
+        showNotification(enabled and "💡 Full bright enabled!" or "⏹️ Full bright disabled", 
+            enabled and Color3.fromRGB(255, 255, 150) or Color3.fromRGB(200, 50, 50))
+    end, 1)
+    
+    createButton(miscSection, "💖 Support Creator", function()
+        pcall(function()
+            MarketplaceService:PromptGamePassPurchase(LocalPlayer, GAMEPASS_ID)
+        end)
+        showNotification("🎁 Support prompt opened!\nThank you! 💖", Color3.fromRGB(150, 100, 255))
+    end, 2, Color3.fromRGB(255, 100, 150))
+    
+    createButton(miscSection, "📋 Copy Discord Link", function()
+        setclipboard(DISCORD_LINK)
+        showNotification("📋 Discord link copied!\nJoin for support and updates! 🎮", Color3.fromRGB(114, 137, 218))
+    end, 3, Color3.fromRGB(114, 137, 218))
+    
+    -- Performance section
+    local performanceSection = createSection(miscTab, "⚡ Performance", 2)
+    
+    createToggle(performanceSection, "🔧 Optimize Mode", false, function(enabled)
+        if enabled then
+            -- Reduce update frequency for better performance
+            if statusConnection then
+                statusConnection:Disconnect()
+                statusConnection = RunService.Heartbeat:Connect(function()
+                    if hitboxEnabled and tick() % 0.1 < 0.016 then -- Update every 6th frame roughly
+                        updateHitboxes()
+                        checkForDeadPlayers()
+                    end
+                end)
+            end
+            
+            if npcStatusConnection then
+                npcStatusConnection:Disconnect()
+                npcStatusConnection = RunService.Heartbeat:Connect(function()
+                    if npcHitboxEnabled and tick() % 0.2 < 0.016 then -- Update every 12th frame roughly
+                        updateNPCHitboxes()
+                    end
+                end)
+            end
+            
+            showNotification("⚡ Optimize mode enabled!\nReduced update frequency", Color3.fromRGB(100, 255, 150))
+        else
+            -- Restore normal update frequency
+            if statusConnection then
+                statusConnection:Disconnect()
+                statusConnection = RunService.Heartbeat:Connect(function()
+                    if hitboxEnabled then
+                        updateHitboxes()
+                        checkForDeadPlayers()
+                    end
+                end)
+            end
+            
+            if npcStatusConnection then
+                npcStatusConnection:Disconnect()
+                npcStatusConnection = RunService.Heartbeat:Connect(function()
+                    if npcHitboxEnabled then
+                        updateNPCHitboxes()
+                    end
+                end)
+            end
+            
+            showNotification("⚡ Optimize mode disabled!\nNormal update frequency", Color3.fromRGB(255, 150, 100))
+        end
+    end, 1)
+    
+    -- CREDITS TAB
+    local creditsFrame = Instance.new("Frame")
+    creditsFrame.Size = UDim2.new(1, -20, 0, 220)
+    creditsFrame.Position = UDim2.new(0, 10, 0, 20)
+    creditsFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+    creditsFrame.BackgroundTransparency = 0.3
+    creditsFrame.BorderSizePixel = 0
+    creditsFrame.LayoutOrder = 1
+    creditsFrame.Parent = creditsTab
+    
+    local creditCorner = Instance.new("UICorner")
+    creditCorner.CornerRadius = UDim.new(0, 15)
+    creditCorner.Parent = creditsFrame
+    
+    local creditGradient = Instance.new("UIGradient")
+    creditGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 80)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(45, 45, 65))
+    }
+    creditGradient.Rotation = 45
+    creditGradient.Parent = creditsFrame
+    
+    local creditText = Instance.new("TextLabel")
+    creditText.Size = UDim2.new(1, -20, 1, -20)
+    creditText.Position = UDim2.new(0, 10, 0, 10)
+    creditText.BackgroundTransparency = 1
+    creditText.Text = [[✨ SULO'S HITBOX EXPANDER - ENHANCED ✨
+
+🎨 Created by: SULO
+🚀 Modern tabbed GUI with smooth animations  
+🎯 Advanced player & NPC hitbox systems
+🤖 Intelligent NPC detection & tracking
+⚡ Optimized performance & stability
+🌟 Professional design & enhanced UX
+🔍 Advanced ESP systems for players & NPCs
+
+Enhanced Features:
+• Separate NPC hitbox controls
+• Smart NPC detection (R6 & R15 compatible)
+• Smoother animations & transitions
+• Performance optimization options
+• Real-time NPC tracking
+
+Thank you for using my script! 💖]]
+    creditText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    creditText.TextSize = 12
+    creditText.Font = Enum.Font.Gotham
+    creditText.TextWrapped = true
+    creditText.TextYAlignment = Enum.TextYAlignment.Top
+    creditText.Parent = creditsFrame
+    
+    local creditStroke = Instance.new("UIStroke")
+    creditStroke.Color = Color3.fromRGB(100, 150, 255)
+    creditStroke.Thickness = 1
+    creditStroke.Transparency = 0.6
+    creditStroke.Parent = creditsFrame
+    
+    createButton(creditsTab, "📞 Join Discord Server", function()
+        setclipboard(DISCORD_LINK)
+        showNotification("📞 Discord link copied!\nJoin for support and updates! 🎮", Color3.fromRGB(114, 137, 218))
+    end, 2, Color3.fromRGB(114, 137, 218))
+    
+    createButton(creditsTab, "📋 Copy Script Info", function()
+        setclipboard("SULO'S Hitbox Expander - Enhanced with NPC Support\nCreated by: SULO\nFeatures: Player & NPC hitbox systems, ESP, smooth animations\nDiscord: " .. DISCORD_LINK)
+        showNotification("📋 Enhanced script info copied!\nShare with friends! 🚀", Color3.fromRGB(100, 255, 150))
+    end, 3, Color3.fromRGB(100, 200, 150))
+    
+    -- Smooth entrance animation
+    mainContainer.Size = UDim2.new(0, 0, 0, 0)
+    mainContainer.BackgroundTransparency = 1
+    
+    local enterTween = TweenService:Create(mainContainer,
+        TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {
+            Size = UDim2.new(0, 460, 0, 680),
+            BackgroundTransparency = 0.05
+        }
+    )
+    enterTween:Play()
+    
+    -- Animate header elements
+    spawn(function()
+        wait(0.3)
+        title.TextTransparency = 1
+        closeBtn.BackgroundTransparency = 1
+        
+        TweenService:Create(title, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {
+            TextTransparency = 0
+        }):Play()
+        
+        TweenService:Create(closeBtn, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {
+            BackgroundTransparency = 0
+        }):Play()
+    end)
+end
+
+-- Enhanced welcome screen with smoother animations
+local function createWelcomeScreen()
+    local welcomeGui = Instance.new("ScreenGui")
+    welcomeGui.Name = "SuloWelcomeScreen"
+    welcomeGui.Parent = playerGui
+    
+    local background = Instance.new("Frame")
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    background.BackgroundTransparency = 1
+    background.BorderSizePixel = 0
+    background.Parent = welcomeGui
+    
+    local welcomeFrame = Instance.new("Frame")
+    welcomeFrame.Size = UDim2.new(0, 420, 0, 280)
+    welcomeFrame.Position = UDim2.new(0.5, -210, 0.5, -140)
+    welcomeFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+    welcomeFrame.BackgroundTransparency = 0.05
+    welcomeFrame.BorderSizePixel = 0
+    welcomeFrame.Parent = background
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 20)
+    corner.Parent = welcomeFrame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(100, 200, 255)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.2
+    stroke.Parent = welcomeFrame
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 60)
+    title.Position = UDim2.new(0, 0, 0, 20)
+    title.BackgroundTransparency = 1
+    title.Text = "🎯 SULO'S HITBOX EXPANDER 🎯"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextSize = 24
+    title.Font = Enum.Font.GothamBold
+    title.TextTransparency = 1
+    title.Parent = welcomeFrame
+    
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Size = UDim2.new(1, 0, 0, 30)
+    subtitle.Position = UDim2.new(0, 0, 0, 80)
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = "Welcome " .. LocalPlayer.Name .. "! 🌟"
+    subtitle.TextColor3 = Color3.fromRGB(200, 220, 255)
+    subtitle.TextSize = 16
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.TextTransparency = 1
+    subtitle.Parent = welcomeFrame
+    
+    local enhancedLabel = Instance.new("TextLabel")
+    enhancedLabel.Size = UDim2.new(1, 0, 0, 25)
+    enhancedLabel.Position = UDim2.new(0, 0, 0, 110)
+    enhancedLabel.BackgroundTransparency = 1
+    enhancedLabel.Text = "Enhanced with NPC Support & Smoother Animations"
+    enhancedLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
+    enhancedLabel.TextSize = 13
+    enhancedLabel.Font = Enum.Font.GothamBold
+    enhancedLabel.TextTransparency = 1
+    enhancedLabel.Parent = welcomeFrame
+    
+    local loading = Instance.new("TextLabel")
+    loading.Size = UDim2.new(1, 0, 0, 30)
+    loading.Position = UDim2.new(0, 0, 0, 150)
+    loading.BackgroundTransparency = 1
+    loading.Text = "Initializing systems..."
+    loading.TextColor3 = Color3.fromRGB(150, 170, 200)
+    loading.TextSize = 14
+    loading.Font = Enum.Font.Gotham
+    loading.TextTransparency = 1
+    loading.Parent = welcomeFrame
+    
+    local progressBg = Instance.new("Frame")
+    progressBg.Size = UDim2.new(0.8, 0, 0, 6)
+    progressBg.Position = UDim2.new(0.1, 0, 0, 200)
+    progressBg.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    progressBg.BackgroundTransparency = 1
+    progressBg.BorderSizePixel = 0
+    progressBg.Parent = welcomeFrame
+    
+    local progressCorner = Instance.new("UICorner")
+    progressCorner.CornerRadius = UDim.new(1, 0)
+    progressCorner.Parent = progressBg
+    
+    local progress = Instance.new("Frame")
+    progress.Size = UDim2.new(0, 0, 1, 0)
+    progress.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+    progress.BorderSizePixel = 0
+    progress.Parent = progressBg
+    
+    local progressFillCorner = Instance.new("UICorner")
+    progressFillCorner.CornerRadius = UDim.new(1, 0)
+    progressFillCorner.Parent = progress
+    
+    -- Smooth entrance animations
+    welcomeFrame.Size = UDim2.new(0, 0, 0, 0)
+    
+    -- Fade in background
+    TweenService:Create(background, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {
+        BackgroundTransparency = 0.2
+    }):Play()
+    
+    -- Scale in welcome frame
+    local openTween = TweenService:Create(welcomeFrame,
+        TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {Size = UDim2.new(0, 420, 0, 280)}
+    )
+    openTween:Play()
+    
+    -- Animate text elements
+    spawn(function()
+        wait(0.3)
+        
+        TweenService:Create(title, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {TextTransparency = 0}):Play()
+        wait(0.2)
+        TweenService:Create(subtitle, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {TextTransparency = 0}):Play()
+        wait(0.2)
+        TweenService:Create(enhancedLabel, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {TextTransparency = 0}):Play()
+        wait(0.2)
+        TweenService:Create(loading, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {TextTransparency = 0}):Play()
+        TweenService:Create(progressBg, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {BackgroundTransparency = 0}):Play()
+    end)
+    
+    -- Enhanced loading sequence
+    spawn(function()
+        wait(1)
+        local steps = {
+            {text = "Loading core systems...", progress = 0.2},
+            {text = "Initializing player hitbox engine...", progress = 0.35},
+            {text = "Setting up NPC detection system...", progress = 0.5},
+            {text = "Creating enhanced tabbed GUI...", progress = 0.7},
+            {text = "Applying smooth animations...", progress = 0.85},
+            {text = "Ready! 🚀", progress = 1.0}
+        }
+        
+        for i, step in ipairs(steps) do
+            loading.Text = step.text
+            
+            local progressTween = TweenService:Create(progress,
+                TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                {Size = UDim2.new(step.progress, 0, 1, 0)}
+            )
+            progressTween:Play()
+            
+            wait(0.6)
+        end
+        
+        loading.TextColor3 = Color3.fromRGB(100, 255, 150)
+        wait(1)
+        
+        -- Smooth fade out
+        local fadeOut = TweenService:Create(background,
+            TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+            {BackgroundTransparency = 1}
+        )
+        
+        local shrinkOut = TweenService:Create(welcomeFrame,
+            TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+            {Size = UDim2.new(0, 0, 0, 0)}
+        )
+        
+        fadeOut:Play()
+        shrinkOut:Play()
+        
+        fadeOut.Completed:Connect(function()
+            welcomeGui:Destroy()
+            createModernGUI()
+            showNotification("✅ SULO'S Enhanced Hitbox Expander loaded!\n🎯 Player & NPC systems ready!", Color3.fromRGB(50, 255, 50), 5)
+        end)
+    end)
+end
+
+-- Initialize the enhanced script
+print("🎯 Loading SULO'S Enhanced Hitbox Expander...")
+print("🤖 New features: NPC support, smoother animations, performance optimization")
+createWelcomeScreen()
