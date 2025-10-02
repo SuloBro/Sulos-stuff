@@ -445,9 +445,82 @@ task.spawn(function()
     end
 end)
 
+-- Show success notification
+local function showSuccessNotification()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "FlightLoadedNotification"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = player:WaitForChild("PlayerGui")
+    
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 350, 0, 120)
+    frame.Position = UDim2.new(1, -370, 0, 20)
+    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(85, 255, 127)
+    stroke.Thickness = 2
+    stroke.Parent = frame
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 0, 35)
+    title.Position = UDim2.new(0, 10, 0, 10)
+    title.BackgroundTransparency = 1
+    title.Text = "✓ Flight Script Loaded!"
+    title.TextColor3 = Color3.fromRGB(85, 255, 127)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = frame
+    
+    local controls = Instance.new("TextLabel")
+    controls.Size = UDim2.new(1, -20, 0, 65)
+    controls.Position = UDim2.new(0, 10, 0, 45)
+    controls.BackgroundTransparency = 1
+    controls.Text = "Double tap SPACE to toggle flight\nW/A/S/D - Move | Q/E - Down/Up"
+    controls.TextColor3 = Color3.fromRGB(200, 200, 200)
+    controls.Font = Enum.Font.Gotham
+    controls.TextSize = 13
+    controls.TextXAlignment = Enum.TextXAlignment.Left
+    controls.TextYAlignment = Enum.TextYAlignment.Top
+    controls.TextWrapped = true
+    controls.Parent = frame
+    
+    -- Slide in animation
+    frame.Position = UDim2.new(1, 0, 0, 20)
+    frame:TweenPosition(
+        UDim2.new(1, -370, 0, 20),
+        Enum.EasingDirection.Out,
+        Enum.EasingStyle.Back,
+        0.5,
+        true
+    )
+    
+    -- Auto dismiss after 5 seconds
+    task.wait(5)
+    frame:TweenPosition(
+        UDim2.new(1, 0, 0, 20),
+        Enum.EasingDirection.In,
+        Enum.EasingStyle.Back,
+        0.4,
+        true
+    )
+    task.wait(0.5)
+    screenGui:Destroy()
+end
+
 -- Main initialization
 if checkGroupMembership() then
     setupJoints()
+    
+    -- Show success notification
+    showSuccessNotification()
     
     -- Character respawn handling
     player.CharacterAdded:Connect(function(newChar)
