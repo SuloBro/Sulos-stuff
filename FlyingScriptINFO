@@ -1,0 +1,470 @@
+-- Smooth Flight Script with Group Check and Animations
+-- Required Group ID: 10612101
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+-- Configuration
+local GROUP_ID = 10612101
+local GROUP_LINK = "https://www.roblox.com/communities/10612101/Smokex#!/about"
+local maxspeed = 100
+local speed = 0
+
+-- Flight state
+local flying = false
+local ctrl = {f = 0, b = 0, l = 0, r = 0, up = 0, down = 0}
+local lastctrl = {f = 0, b = 0, l = 0, r = 0}
+local bodyGyro
+local bodyVelocity
+local lastSpacePress = 0
+local DOUBLE_TAP_TIME = 0.3
+
+-- Animation Motor6Ds
+local animatedJoints = {}
+local animTime = 0
+
+-- Check if player is in the group
+local function checkGroupMembership()
+    local success, isInGroup = pcall(function()
+        return player:IsInGroup(GROUP_ID)
+    end)
+    
+    if not success or not isInGroup then
+        -- Create notification GUI
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "GroupCheckNotification"
+        screenGui.ResetOnSpawn = false
+        screenGui.Parent = player:WaitForChild("PlayerGui")
+        
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0, 400, 0, 200)
+        frame.Position = UDim2.new(0.5, -200, 0.5, -100)
+        frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        frame.BorderSizePixel = 0
+        frame.Parent = screenGui
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 12)
+        corner.Parent = frame
+        
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(1, -20, 0, 40)
+        title.Position = UDim2.new(0, 10, 0, 10)
+        title.BackgroundTransparency = 1
+        title.Text = "❌ Group Access Required"
+        title.TextColor3 = Color3.fromRGB(255, 85, 85)
+        title.Font = Enum.Font.GothamBold
+        title.TextSize = 18
+        title.Parent = frame
+        
+        local message = Instance.new("TextLabel")
+        message.Size = UDim2.new(1, -20, 0, 60)
+        message.Position = UDim2.new(0, 10, 0, 55)
+        message.BackgroundTransparency = 1
+        message.Text = "You must be in the Smokex group to use this flight script!"
+        message.TextColor3 = Color3.fromRGB(255, 255, 255)
+        message.Font = Enum.Font.Gotham
+        message.TextSize = 14
+        message.TextWrapped = true
+        message.Parent = frame
+        
+        local copyButton = Instance.new("TextButton")
+        copyButton.Size = UDim2.new(0, 180, 0, 40)
+        copyButton.Position = UDim2.new(0.5, -90, 1, -50)
+        copyButton.BackgroundColor3 = Color3.fromRGB(60, 150, 255)
+        copyButton.Text = "📋 Copy Group Link"
+        copyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        copyButton.Font = Enum.Font.GothamBold
+        copyButton.TextSize = 14
+        copyButton.Parent = frame
+        
+        local buttonCorner = Instance.new("UICorner")
+        buttonCorner.CornerRadius = UDim.new(0, 8)
+        buttonCorner.Parent = copyButton
+        
+        copyButton.MouseButton1Click:Connect(function()
+            setclipboard(GROUP_LINK)
+            copyButton.Text = "✓ Link Copied!"
+            copyButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
+            wait(2)
+            screenGui:Destroy()
+        end)
+        
+        return false
+    end
+    
+    return true
+end
+
+-- Get Motor6D joints for animation
+local function setupJoints()
+    animatedJoints = {}
+    
+    for _, descendant in pairs(character:GetDescendants()) do
+        if descendant:IsA("Motor6D") then
+            local jointData = {
+                motor = descendant,
+                originalC0 = descendant.C0
+            }
+            
+            -- R6 joint names
+            if descendant.Name == "Left Shoulder" then
+                jointData.type = "LeftShoulder"
+            elseif descendant.Name == "Right Shoulder" then
+                jointData.type = "RightShoulder"
+            elseif descendant.Name == "Left Hip" then
+                jointData.type = "LeftHip"
+            elseif descendant.Name == "Right Hip" then
+                jointData.type = "RightHip"
+            -- R15 joint names
+            elseif descendant.Name == "LeftShoulder" then
+                jointData.type = "LeftShoulder"
+            elseif descendant.Name == "RightShoulder" then
+                jointData.type = "RightShoulder"
+            elseif descendant.Name == "LeftHip" then
+                jointData.type = "LeftHip"
+            elseif descendant.Name == "RightHip" then
+                jointData.type = "RightHip"
+            -- R15 additional arm joints
+            elseif descendant.Name == "LeftElbow" then
+                jointData.type = "LeftElbow"
+            elseif descendant.Name == "RightElbow" then
+                jointData.type = "RightElbow"
+            -- R15 additional leg joints
+            elseif descendant.Name == "LeftKnee" then
+                jointData.type = "LeftKnee"
+            elseif descendant.Name == "RightKnee" then
+                jointData.type = "RightKnee"
+            end
+            
+            if jointData.type then
+                animatedJoints[jointData.type] = jointData
+            end
+        end
+    end
+end
+
+-- Animate joints
+local function updateAnimations(deltaTime, isMoving)
+    if not flying then
+        for _, joint in pairs(animatedJoints) do
+            joint.motor.C0 = joint.motor.C0:Lerp(joint.originalC0, 0.1)
+        end
+        return
+    end
+    
+    animTime = animTime + deltaTime
+    
+    if not isMoving then
+        -- Idle hover animation - arms slightly forward and down, legs together
+        if animatedJoints.LeftShoulder then
+            local wave = math.sin(animTime * 2) * 0.03
+            local target = animatedJoints.LeftShoulder.originalC0 * CFrame.Angles(math.rad(30 + wave * 5), 0, math.rad(-10))
+            animatedJoints.LeftShoulder.motor.C0 = animatedJoints.LeftShoulder.motor.C0:Lerp(target, 0.1)
+        end
+        
+        if animatedJoints.RightShoulder then
+            local wave = math.sin(animTime * 2) * 0.03
+            local target = animatedJoints.RightShoulder.originalC0 * CFrame.Angles(math.rad(30 + wave * 5), 0, math.rad(10))
+            animatedJoints.RightShoulder.motor.C0 = animatedJoints.RightShoulder.motor.C0:Lerp(target, 0.1)
+        end
+        
+        -- R15 Elbows for idle
+        if animatedJoints.LeftElbow then
+            local target = animatedJoints.LeftElbow.originalC0 * CFrame.Angles(math.rad(-10), 0, 0)
+            animatedJoints.LeftElbow.motor.C0 = animatedJoints.LeftElbow.motor.C0:Lerp(target, 0.1)
+        end
+        
+        if animatedJoints.RightElbow then
+            local target = animatedJoints.RightElbow.originalC0 * CFrame.Angles(math.rad(-10), 0, 0)
+            animatedJoints.RightElbow.motor.C0 = animatedJoints.RightElbow.motor.C0:Lerp(target, 0.1)
+        end
+        
+        if animatedJoints.LeftHip then
+            local target = animatedJoints.LeftHip.originalC0 * CFrame.Angles(math.rad(10), 0, math.rad(-5))
+            animatedJoints.LeftHip.motor.C0 = animatedJoints.LeftHip.motor.C0:Lerp(target, 0.1)
+        end
+        
+        if animatedJoints.RightHip then
+            local target = animatedJoints.RightHip.originalC0 * CFrame.Angles(math.rad(10), 0, math.rad(5))
+            animatedJoints.RightHip.motor.C0 = animatedJoints.RightHip.motor.C0:Lerp(target, 0.1)
+        end
+        
+        -- R15 Knees for idle
+        if animatedJoints.LeftKnee then
+            local target = animatedJoints.LeftKnee.originalC0 * CFrame.Angles(math.rad(-15), 0, 0)
+            animatedJoints.LeftKnee.motor.C0 = animatedJoints.LeftKnee.motor.C0:Lerp(target, 0.1)
+        end
+        
+        if animatedJoints.RightKnee then
+            local target = animatedJoints.RightKnee.originalC0 * CFrame.Angles(math.rad(-15), 0, 0)
+            animatedJoints.RightKnee.motor.C0 = animatedJoints.RightKnee.motor.C0:Lerp(target, 0.1)
+        end
+    else
+        -- Superman flying pose - one arm forward, one arm back, legs together and back
+        if animatedJoints.LeftShoulder then
+            local wave = math.sin(animTime * 3) * 0.05
+            -- Left arm extended forward like Superman
+            local target = animatedJoints.LeftShoulder.originalC0 * CFrame.Angles(math.rad(-160 + wave * 10), 0, math.rad(-5))
+            animatedJoints.LeftShoulder.motor.C0 = animatedJoints.LeftShoulder.motor.C0:Lerp(target, 0.15)
+        end
+        
+        if animatedJoints.RightShoulder then
+            local wave = math.sin(animTime * 3) * 0.05
+            -- Right arm swept back along body
+            local target = animatedJoints.RightShoulder.originalC0 * CFrame.Angles(math.rad(45 + wave * 10), 0, math.rad(15))
+            animatedJoints.RightShoulder.motor.C0 = animatedJoints.RightShoulder.motor.C0:Lerp(target, 0.15)
+        end
+        
+        -- R15 Elbows for flying
+        if animatedJoints.LeftElbow then
+            -- Straighten left arm for Superman punch
+            local target = animatedJoints.LeftElbow.originalC0 * CFrame.Angles(math.rad(0), 0, 0)
+            animatedJoints.LeftElbow.motor.C0 = animatedJoints.LeftElbow.motor.C0:Lerp(target, 0.15)
+        end
+        
+        if animatedJoints.RightElbow then
+            -- Bend right arm slightly
+            local target = animatedJoints.RightElbow.originalC0 * CFrame.Angles(math.rad(-20), 0, 0)
+            animatedJoints.RightElbow.motor.C0 = animatedJoints.RightElbow.motor.C0:Lerp(target, 0.15)
+        end
+        
+        if animatedJoints.LeftHip then
+            -- Legs together and slightly bent back
+            local target = animatedJoints.LeftHip.originalC0 * CFrame.Angles(math.rad(20), 0, math.rad(-3))
+            animatedJoints.LeftHip.motor.C0 = animatedJoints.LeftHip.motor.C0:Lerp(target, 0.15)
+        end
+        
+        if animatedJoints.RightHip then
+            -- Legs together and slightly bent back
+            local target = animatedJoints.RightHip.originalC0 * CFrame.Angles(math.rad(20), 0, math.rad(3))
+            animatedJoints.RightHip.motor.C0 = animatedJoints.RightHip.motor.C0:Lerp(target, 0.15)
+        end
+        
+        -- R15 Knees for flying
+        if animatedJoints.LeftKnee then
+            local target = animatedJoints.LeftKnee.originalC0 * CFrame.Angles(math.rad(-25), 0, 0)
+            animatedJoints.LeftKnee.motor.C0 = animatedJoints.LeftKnee.motor.C0:Lerp(target, 0.15)
+        end
+        
+        if animatedJoints.RightKnee then
+            local target = animatedJoints.RightKnee.originalC0 * CFrame.Angles(math.rad(-25), 0, 0)
+            animatedJoints.RightKnee.motor.C0 = animatedJoints.RightKnee.motor.C0:Lerp(target, 0.15)
+        end
+    end
+end
+
+-- Flight function (based on working script)
+local function Fly()
+    local bg = Instance.new("BodyGyro", rootPart)
+    bg.P = 9e4
+    bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bg.cframe = rootPart.CFrame
+    bodyGyro = bg
+    
+    local bv = Instance.new("BodyVelocity", rootPart)
+    bv.velocity = Vector3.new(0, 0.1, 0)
+    bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVelocity = bv
+    
+    humanoid.PlatformStand = true
+    
+    -- Create flight effect
+    local particle = Instance.new("ParticleEmitter")
+    particle.Name = "FlightParticle"
+    particle.Texture = "rbxasset://textures/particles/smoke_main.dds"
+    particle.Color = ColorSequence.new(Color3.fromRGB(150, 200, 255))
+    particle.Size = NumberSequence.new(0.5)
+    particle.Transparency = NumberSequence.new(0.5, 1)
+    particle.Lifetime = NumberRange.new(0.5, 1)
+    particle.Rate = 20
+    particle.Speed = NumberRange.new(2)
+    particle.SpreadAngle = Vector2.new(15, 15)
+    particle.Parent = rootPart
+    
+    local lastUpdate = tick()
+    
+    repeat
+        wait()
+        
+        local deltaTime = tick() - lastUpdate
+        lastUpdate = tick()
+        
+        -- Speed control
+        if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 or ctrl.up + ctrl.down ~= 0 then
+            speed = speed + 0.5 + (speed / maxspeed)
+            if speed > maxspeed then
+                speed = maxspeed
+            end
+        elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 or ctrl.up + ctrl.down ~= 0) and speed ~= 0 then
+            speed = speed - 1
+            if speed < 0 then
+                speed = 0
+            end
+        end
+        
+        -- Calculate velocity
+        if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 or (ctrl.up + ctrl.down) ~= 0 then
+            local cam = workspace.CurrentCamera
+            local lookVector = cam.CFrame.lookVector
+            local rightVector = cam.CFrame.RightVector
+            
+            bv.velocity = (
+                (lookVector * (ctrl.f + ctrl.b)) +
+                (rightVector * (ctrl.l + ctrl.r)) +
+                (Vector3.new(0, 1, 0) * (ctrl.up + ctrl.down))
+            ) * speed
+            
+            lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+        elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and (ctrl.up + ctrl.down) == 0 and speed ~= 0 then
+            local cam = workspace.CurrentCamera
+            local lookVector = cam.CFrame.lookVector
+            local rightVector = cam.CFrame.RightVector
+            
+            bv.velocity = (
+                (lookVector * (lastctrl.f + lastctrl.b)) +
+                (rightVector * (lastctrl.l + lastctrl.r))
+            ) * speed
+        else
+            bv.velocity = Vector3.new(0, 0.1, 0)
+        end
+        
+        -- Update rotation
+        bg.cframe = workspace.CurrentCamera.CFrame * CFrame.Angles(-math.rad((ctrl.f + ctrl.b) * 50 * speed / maxspeed), 0, 0)
+        
+        -- Update animations
+        local isMoving = speed > 5
+        updateAnimations(deltaTime, isMoving)
+        
+    until not flying
+    
+    ctrl = {f = 0, b = 0, l = 0, r = 0, up = 0, down = 0}
+    lastctrl = {f = 0, b = 0, l = 0, r = 0}
+    speed = 0
+    
+    bg:Destroy()
+    bv:Destroy()
+    humanoid.PlatformStand = false
+    
+    -- Remove particle effect
+    local particle = rootPart:FindFirstChild("FlightParticle")
+    if particle then particle:Destroy() end
+end
+
+-- Toggle flight
+local function toggleFlight()
+    if flying then
+        flying = false
+    else
+        flying = true
+        Fly()
+    end
+end
+
+-- Input handling
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    -- Double tap space for toggle
+    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+        local currentTime = tick()
+        if currentTime - lastSpacePress < DOUBLE_TAP_TIME then
+            toggleFlight()
+        end
+        lastSpacePress = currentTime
+    end
+    
+    -- Movement controls
+    if input.KeyCode == Enum.KeyCode.W then
+        ctrl.f = 1
+    elseif input.KeyCode == Enum.KeyCode.S then
+        ctrl.b = -1
+    elseif input.KeyCode == Enum.KeyCode.A then
+        ctrl.l = -1
+    elseif input.KeyCode == Enum.KeyCode.D then
+        ctrl.r = 1
+    elseif input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonR2 then
+        ctrl.up = 1
+    elseif input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL2 then
+        ctrl.down = -1
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.W then
+        ctrl.f = 0
+    elseif input.KeyCode == Enum.KeyCode.S then
+        ctrl.b = 0
+    elseif input.KeyCode == Enum.KeyCode.A then
+        ctrl.l = 0
+    elseif input.KeyCode == Enum.KeyCode.D then
+        ctrl.r = 0
+    elseif input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonR2 then
+        ctrl.up = 0
+    elseif input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL2 then
+        ctrl.down = 0
+    end
+end)
+
+-- Mobile support - detect running state
+humanoid.StateChanged:Connect(function(old, new)
+    if new == Enum.HumanoidStateType.Running and flying then
+        ctrl.f = 1
+    elseif old == Enum.HumanoidStateType.Running then
+        ctrl.f = 0
+    end
+end)
+
+-- Mobile jump button support
+task.spawn(function()
+    if UserInputService.TouchEnabled then
+        local success = pcall(function()
+            local touchGui = player.PlayerGui:WaitForChild("TouchGui", 5)
+            if touchGui then
+                local touchControlFrame = touchGui:WaitForChild("TouchControlFrame", 5)
+                if touchControlFrame then
+                    local jumpButton = touchControlFrame:FindFirstChild("JumpButton")
+                    if jumpButton then
+                        jumpButton.MouseButton1Click:Connect(function()
+                            local currentTime = tick()
+                            if currentTime - lastSpacePress < DOUBLE_TAP_TIME then
+                                toggleFlight()
+                            end
+                            lastSpacePress = currentTime
+                        end)
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- Main initialization
+if checkGroupMembership() then
+    setupJoints()
+    
+    -- Character respawn handling
+    player.CharacterAdded:Connect(function(newChar)
+        character = newChar
+        humanoid = character:WaitForChild("Humanoid")
+        rootPart = character:WaitForChild("HumanoidRootPart")
+        
+        flying = false
+        ctrl = {f = 0, b = 0, l = 0, r = 0, up = 0, down = 0}
+        lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        speed = 0
+        
+        setupJoints()
+    end)
+    
+    print("✓ Flight script loaded! Double tap SPACE (or Jump on mobile) to fly!")
+    print("✓ Controls: W/A/S/D to move, Q/E for down/up")
+else
+    print("✗ You must join the Smokex group to use this script!")
+end
