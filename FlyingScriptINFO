@@ -1,22 +1,24 @@
--- Smooth Flight Script with Group Check and Animations
--- Required Group ID: 10612101
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local rootPart = character:WaitForChild("HumanoidRootPart")
+local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or rootPart
+local head = character:WaitForChild("Head")
 
--- Configuration
 local GROUP_ID = 10612101
 local GROUP_LINK = "https://www.roblox.com/communities/10612101/Smokex#!/about"
+local SUPPORT_LINK = "https://www.roblox.com/catalog/132122536399861/Spider-White-Tee-Realistic"
+local ITEM_ID = 132122536399861
+local ITEM_PRICE = 5
 local maxspeed = 100
 local speed = 0
 
--- Flight state
 local flying = false
 local ctrl = {f = 0, b = 0, l = 0, r = 0, up = 0, down = 0}
 local lastctrl = {f = 0, b = 0, l = 0, r = 0}
@@ -24,19 +26,16 @@ local bodyGyro
 local bodyVelocity
 local lastSpacePress = 0
 local DOUBLE_TAP_TIME = 0.3
+local hoverAnim
+local flyForwardAnim
+local currentAnimTrack
 
--- Animation Motor6Ds
-local animatedJoints = {}
-local animTime = 0
-
--- Check if player is in the group
 local function checkGroupMembership()
     local success, isInGroup = pcall(function()
         return player:IsInGroup(GROUP_ID)
     end)
     
     if not success or not isInGroup then
-        -- Create notification GUI
         local screenGui = Instance.new("ScreenGui")
         screenGui.Name = "GroupCheckNotification"
         screenGui.ResetOnSpawn = false
@@ -102,165 +101,643 @@ local function checkGroupMembership()
     return true
 end
 
--- Get Motor6D joints for animation
-local function setupJoints()
-    animatedJoints = {}
+local function createConfirmationGui(confirmType)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ConfirmationGui"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = player:WaitForChild("PlayerGui")
     
-    for _, descendant in pairs(character:GetDescendants()) do
-        if descendant:IsA("Motor6D") then
-            local jointData = {
-                motor = descendant,
-                originalC0 = descendant.C0
-            }
-            
-            -- R6 joint names
-            if descendant.Name == "Left Shoulder" then
-                jointData.type = "LeftShoulder"
-            elseif descendant.Name == "Right Shoulder" then
-                jointData.type = "RightShoulder"
-            elseif descendant.Name == "Left Hip" then
-                jointData.type = "LeftHip"
-            elseif descendant.Name == "Right Hip" then
-                jointData.type = "RightHip"
-            -- R15 joint names
-            elseif descendant.Name == "LeftShoulder" then
-                jointData.type = "LeftShoulder"
-            elseif descendant.Name == "RightShoulder" then
-                jointData.type = "RightShoulder"
-            elseif descendant.Name == "LeftHip" then
-                jointData.type = "LeftHip"
-            elseif descendant.Name == "RightHip" then
-                jointData.type = "RightHip"
-            -- R15 additional arm joints
-            elseif descendant.Name == "LeftElbow" then
-                jointData.type = "LeftElbow"
-            elseif descendant.Name == "RightElbow" then
-                jointData.type = "RightElbow"
-            -- R15 additional leg joints
-            elseif descendant.Name == "LeftKnee" then
-                jointData.type = "LeftKnee"
-            elseif descendant.Name == "RightKnee" then
-                jointData.type = "RightKnee"
-            end
-            
-            if jointData.type then
-                animatedJoints[jointData.type] = jointData
+    local overlay = Instance.new("Frame")
+    overlay.Size = UDim2.new(1, 0, 1, 0)
+    overlay.Position = UDim2.new(0, 0, 0, 0)
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    overlay.BackgroundTransparency = 0.5
+    overlay.BorderSizePixel = 0
+    overlay.Parent = screenGui
+    
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 450, 0, 280)
+    mainFrame.Position = UDim2.new(0.5, -225, 0.5, -140)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.ZIndex = 2
+    mainFrame.Parent = screenGui
+    
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 16)
+    mainCorner.Parent = mainFrame
+    
+    local backgroundImage = Instance.new("ImageLabel")
+    backgroundImage.Size = UDim2.new(1, 0, 1, 0)
+    backgroundImage.Position = UDim2.new(0, 0, 0, 0)
+    backgroundImage.BackgroundTransparency = 1
+    backgroundImage.Image = "rbxassetid://1147675663"
+    backgroundImage.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    backgroundImage.ImageTransparency = 0.7
+    backgroundImage.ScaleType = Enum.ScaleType.Crop
+    backgroundImage.ZIndex = 1
+    backgroundImage.Parent = mainFrame
+    
+    local imageCorner = Instance.new("UICorner")
+    imageCorner.CornerRadius = UDim.new(0, 16)
+    imageCorner.Parent = backgroundImage
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 80)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 40, 60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 60, 80))
+    })
+    gradient.Rotation = 45
+    gradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.3),
+        NumberSequenceKeypoint.new(0.5, 0.5),
+        NumberSequenceKeypoint.new(1, 0.3)
+    })
+    gradient.Parent = mainFrame
+    
+    spawn(function()
+        while mainFrame and mainFrame.Parent do
+            for i = 0, 360, 1 do
+                if not mainFrame or not mainFrame.Parent then break end
+                gradient.Rotation = i
+                task.wait(0.02)
             end
         end
+    end)
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(100, 150, 255)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.3
+    stroke.Parent = mainFrame
+    
+    local glow = Instance.new("ImageLabel")
+    glow.Size = UDim2.new(1, 40, 1, 40)
+    glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    glow.AnchorPoint = Vector2.new(0.5, 0.5)
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxassetid://1147675663"
+    glow.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    glow.ImageTransparency = 0.5
+    glow.ScaleType = Enum.ScaleType.Stretch
+    glow.ZIndex = 0
+    glow.Parent = mainFrame
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -40, 0, 50)
+    title.Position = UDim2.new(0, 20, 0, 20)
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 24
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextXAlignment = Enum.TextXAlignment.Center
+    title.Parent = mainFrame
+    
+    local message = Instance.new("TextLabel")
+    message.Size = UDim2.new(1, -60, 0, 80)
+    message.Position = UDim2.new(0, 30, 0, 80)
+    message.BackgroundTransparency = 1
+    message.Font = Enum.Font.Gotham
+    message.TextSize = 16
+    message.TextColor3 = Color3.fromRGB(220, 220, 220)
+    message.TextWrapped = true
+    message.TextXAlignment = Enum.TextXAlignment.Center
+    message.TextYAlignment = Enum.TextYAlignment.Top
+    message.Parent = mainFrame
+    
+    local buttonContainer = Instance.new("Frame")
+    buttonContainer.Size = UDim2.new(1, -60, 0, 50)
+    buttonContainer.Position = UDim2.new(0, 30, 1, -70)
+    buttonContainer.BackgroundTransparency = 1
+    buttonContainer.Parent = mainFrame
+    
+    local buttonLayout = Instance.new("UIListLayout")
+    buttonLayout.FillDirection = Enum.FillDirection.Horizontal
+    buttonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    buttonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    buttonLayout.Padding = UDim.new(0, 15)
+    buttonLayout.Parent = buttonContainer
+    
+    local yesButton = Instance.new("TextButton")
+    yesButton.Size = UDim2.new(0, 160, 0, 50)
+    yesButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
+    yesButton.Text = "✓ Yes"
+    yesButton.TextColor3 = Color3.fromRGB(20, 20, 20)
+    yesButton.Font = Enum.Font.GothamBold
+    yesButton.TextSize = 18
+    yesButton.BorderSizePixel = 0
+    yesButton.Parent = buttonContainer
+    
+    local yesCorner = Instance.new("UICorner")
+    yesCorner.CornerRadius = UDim.new(0, 10)
+    yesCorner.Parent = yesButton
+    
+    local noButton = Instance.new("TextButton")
+    noButton.Size = UDim2.new(0, 160, 0, 50)
+    noButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+    noButton.Text = "✖ No"
+    noButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    noButton.Font = Enum.Font.GothamBold
+    noButton.TextSize = 18
+    noButton.BorderSizePixel = 0
+    noButton.Parent = buttonContainer
+    
+    local noCorner = Instance.new("UICorner")
+    noCorner.CornerRadius = UDim.new(0, 10)
+    noCorner.Parent = noButton
+    
+    if confirmType == "support" then
+        title.Text = "💚 Support Sulo"
+        message.Text = "Are you sure you want to donate " .. ITEM_PRICE .. " Robux?\n\nThis will help support the creator!"
+        
+        yesButton.MouseButton1Click:Connect(function()
+            local thirdPartyEnabled = false
+            local success, result = pcall(function()
+                return MarketplaceService:GetProductInfo(ITEM_ID)
+            end)
+            
+            if success and result then
+                thirdPartyEnabled = pcall(function()
+                    MarketplaceService:PromptPurchase(player, ITEM_ID)
+                end)
+            end
+            
+            if not thirdPartyEnabled then
+                setclipboard(SUPPORT_LINK)
+                
+                message.Text = "Paste this link in your browser!\n\nThis game doesn't allow third-party sales.\nLink copied to clipboard!"
+                message.TextColor3 = Color3.fromRGB(255, 200, 100)
+                yesButton:Destroy()
+                noButton.Text = "✓ Close"
+                noButton.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+                
+                task.wait(4)
+                screenGui:Destroy()
+            else
+                task.wait(1)
+                screenGui:Destroy()
+            end
+        end)
+        
+    elseif confirmType == "remove" then
+        title.Text = "🗑️ Remove Billboard"
+        message.Text = "Are you sure you want to remove the support GUI?\n\nYou'll need to rejoin to get it back."
+        
+        yesButton.MouseButton1Click:Connect(function()
+            local supportGui = player.PlayerGui:FindFirstChild("SuloooossGui")
+            if supportGui then
+                local mainFrame = supportGui:FindFirstChild("MainFrame")
+                if mainFrame then
+                    TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                        Size = UDim2.new(0, 0, 0, 0),
+                        Position = UDim2.new(0.5, 0, 0, 20)
+                    }):Play()
+                    
+                    task.wait(0.5)
+                    supportGui:Destroy()
+                end
+            end
+            screenGui:Destroy()
+        end)
     end
+    
+    noButton.MouseButton1Click:Connect(function()
+        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0)
+        }):Play()
+        TweenService:Create(overlay, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundTransparency = 1
+        }):Play()
+        task.wait(0.3)
+        screenGui:Destroy()
+    end)
+    
+    yesButton.MouseEnter:Connect(function()
+        TweenService:Create(yesButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(100, 255, 150),
+            Size = UDim2.new(0, 170, 0, 52)
+        }):Play()
+    end)
+    
+    yesButton.MouseLeave:Connect(function()
+        TweenService:Create(yesButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(85, 255, 127),
+            Size = UDim2.new(0, 160, 0, 50)
+        }):Play()
+    end)
+    
+    noButton.MouseEnter:Connect(function()
+        TweenService:Create(noButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(255, 120, 120),
+            Size = UDim2.new(0, 170, 0, 52)
+        }):Play()
+    end)
+    
+    noButton.MouseLeave:Connect(function()
+        TweenService:Create(noButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(255, 85, 85),
+            Size = UDim2.new(0, 160, 0, 50)
+        }):Play()
+    end)
+    
+    mainFrame.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 450, 0, 280)
+    }):Play()
 end
 
--- Animate joints
-local function updateAnimations(deltaTime, isMoving)
-    if not flying then
-        for _, joint in pairs(animatedJoints) do
-            joint.motor.C0 = joint.motor.C0:Lerp(joint.originalC0, 0.1)
-        end
+local function createBillboard()
+    local playerGui = player:WaitForChild("PlayerGui")
+    
+    if playerGui:FindFirstChild("SuloooossGui") then
         return
     end
     
-    animTime = animTime + deltaTime
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "SuloooossGui"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = playerGui
     
-    if not isMoving then
-        -- Idle hover animation - arms slightly forward and down, legs together
-        if animatedJoints.LeftShoulder then
-            local wave = math.sin(animTime * 2) * 0.03
-            local target = animatedJoints.LeftShoulder.originalC0 * CFrame.Angles(math.rad(30 + wave * 5), 0, math.rad(-10))
-            animatedJoints.LeftShoulder.motor.C0 = animatedJoints.LeftShoulder.motor.C0:Lerp(target, 0.1)
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.new(0, 280, 0, 90)
+    mainFrame.Position = UDim2.new(0.5, -140, 0, 20)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    mainFrame.BackgroundTransparency = 0.3
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = screenGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = mainFrame
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 150, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 100, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 150, 255))
+    })
+    gradient.Rotation = 45
+    gradient.Parent = mainFrame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(200, 220, 255)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.3
+    stroke.Parent = mainFrame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -10, 0, 25)
+    label.Position = UDim2.new(0, 5, 0, 5)
+    label.BackgroundTransparency = 1
+    label.Text = "✨ Support Sulo? ♥"
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.TextStrokeTransparency = 0.5
+    label.Parent = mainFrame
+    
+    local buttonContainer = Instance.new("Frame")
+    buttonContainer.Size = UDim2.new(1, -10, 0, 50)
+    buttonContainer.Position = UDim2.new(0, 5, 0, 35)
+    buttonContainer.BackgroundTransparency = 1
+    buttonContainer.Parent = mainFrame
+    
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.FillDirection = Enum.FillDirection.Horizontal
+    listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    listLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    listLayout.Padding = UDim.new(0, 8)
+    listLayout.Parent = buttonContainer
+    
+    local supportButton = Instance.new("TextButton")
+    supportButton.Name = "SupportButton"
+    supportButton.Size = UDim2.new(0, 120, 0, 40)
+    supportButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
+    supportButton.Text = "💚 Support"
+    supportButton.TextColor3 = Color3.fromRGB(20, 20, 20)
+    supportButton.Font = Enum.Font.GothamBold
+    supportButton.TextSize = 14
+    supportButton.BorderSizePixel = 0
+    supportButton.AutoButtonColor = false
+    supportButton.Parent = buttonContainer
+    
+    local supportCorner = Instance.new("UICorner")
+    supportCorner.CornerRadius = UDim.new(0, 8)
+    supportCorner.Parent = supportButton
+    
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Size = UDim2.new(0, 120, 0, 40)
+    closeButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+    closeButton.Text = "✖ Remove"
+    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.TextSize = 14
+    closeButton.BorderSizePixel = 0
+    closeButton.AutoButtonColor = false
+    closeButton.Parent = buttonContainer
+    
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 8)
+    closeCorner.Parent = closeButton
+    
+    supportButton.MouseButton1Click:Connect(function()
+        createConfirmationGui("support")
+    end)
+    
+    supportButton.MouseEnter:Connect(function()
+        TweenService:Create(supportButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(100, 255, 150),
+            Size = UDim2.new(0, 125, 0, 42)
+        }):Play()
+    end)
+    
+    supportButton.MouseLeave:Connect(function()
+        TweenService:Create(supportButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(85, 255, 127),
+            Size = UDim2.new(0, 120, 0, 40)
+        }):Play()
+    end)
+    
+    closeButton.MouseButton1Click:Connect(function()
+        createConfirmationGui("remove")
+    end)
+    
+    closeButton.MouseEnter:Connect(function()
+        TweenService:Create(closeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(255, 120, 120),
+            Size = UDim2.new(0, 125, 0, 42)
+        }):Play()
+    end)
+    
+    closeButton.MouseLeave:Connect(function()
+        TweenService:Create(closeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(255, 85, 85),
+            Size = UDim2.new(0, 120, 0, 40)
+        }):Play()
+    end)
+    
+    spawn(function()
+        while mainFrame and mainFrame.Parent do
+            for i = 0, 360, 2 do
+                if not mainFrame or not mainFrame.Parent then break end
+                gradient.Rotation = i
+                task.wait(0.03)
+            end
         end
-        
-        if animatedJoints.RightShoulder then
-            local wave = math.sin(animTime * 2) * 0.03
-            local target = animatedJoints.RightShoulder.originalC0 * CFrame.Angles(math.rad(30 + wave * 5), 0, math.rad(10))
-            animatedJoints.RightShoulder.motor.C0 = animatedJoints.RightShoulder.motor.C0:Lerp(target, 0.1)
-        end
-        
-        -- R15 Elbows for idle
-        if animatedJoints.LeftElbow then
-            local target = animatedJoints.LeftElbow.originalC0 * CFrame.Angles(math.rad(-10), 0, 0)
-            animatedJoints.LeftElbow.motor.C0 = animatedJoints.LeftElbow.motor.C0:Lerp(target, 0.1)
-        end
-        
-        if animatedJoints.RightElbow then
-            local target = animatedJoints.RightElbow.originalC0 * CFrame.Angles(math.rad(-10), 0, 0)
-            animatedJoints.RightElbow.motor.C0 = animatedJoints.RightElbow.motor.C0:Lerp(target, 0.1)
-        end
-        
-        if animatedJoints.LeftHip then
-            local target = animatedJoints.LeftHip.originalC0 * CFrame.Angles(math.rad(10), 0, math.rad(-5))
-            animatedJoints.LeftHip.motor.C0 = animatedJoints.LeftHip.motor.C0:Lerp(target, 0.1)
-        end
-        
-        if animatedJoints.RightHip then
-            local target = animatedJoints.RightHip.originalC0 * CFrame.Angles(math.rad(10), 0, math.rad(5))
-            animatedJoints.RightHip.motor.C0 = animatedJoints.RightHip.motor.C0:Lerp(target, 0.1)
-        end
-        
-        -- R15 Knees for idle
-        if animatedJoints.LeftKnee then
-            local target = animatedJoints.LeftKnee.originalC0 * CFrame.Angles(math.rad(-15), 0, 0)
-            animatedJoints.LeftKnee.motor.C0 = animatedJoints.LeftKnee.motor.C0:Lerp(target, 0.1)
-        end
-        
-        if animatedJoints.RightKnee then
-            local target = animatedJoints.RightKnee.originalC0 * CFrame.Angles(math.rad(-15), 0, 0)
-            animatedJoints.RightKnee.motor.C0 = animatedJoints.RightKnee.motor.C0:Lerp(target, 0.1)
-        end
-    else
-        -- Superman flying pose - one arm forward, one arm back, legs together and back
-        if animatedJoints.LeftShoulder then
-            local wave = math.sin(animTime * 3) * 0.05
-            -- Left arm extended forward like Superman
-            local target = animatedJoints.LeftShoulder.originalC0 * CFrame.Angles(math.rad(-160 + wave * 10), 0, math.rad(-5))
-            animatedJoints.LeftShoulder.motor.C0 = animatedJoints.LeftShoulder.motor.C0:Lerp(target, 0.15)
-        end
-        
-        if animatedJoints.RightShoulder then
-            local wave = math.sin(animTime * 3) * 0.05
-            -- Right arm swept back along body
-            local target = animatedJoints.RightShoulder.originalC0 * CFrame.Angles(math.rad(45 + wave * 10), 0, math.rad(15))
-            animatedJoints.RightShoulder.motor.C0 = animatedJoints.RightShoulder.motor.C0:Lerp(target, 0.15)
-        end
-        
-        -- R15 Elbows for flying
-        if animatedJoints.LeftElbow then
-            -- Straighten left arm for Superman punch
-            local target = animatedJoints.LeftElbow.originalC0 * CFrame.Angles(math.rad(0), 0, 0)
-            animatedJoints.LeftElbow.motor.C0 = animatedJoints.LeftElbow.motor.C0:Lerp(target, 0.15)
-        end
-        
-        if animatedJoints.RightElbow then
-            -- Bend right arm slightly
-            local target = animatedJoints.RightElbow.originalC0 * CFrame.Angles(math.rad(-20), 0, 0)
-            animatedJoints.RightElbow.motor.C0 = animatedJoints.RightElbow.motor.C0:Lerp(target, 0.15)
-        end
-        
-        if animatedJoints.LeftHip then
-            -- Legs together and slightly bent back
-            local target = animatedJoints.LeftHip.originalC0 * CFrame.Angles(math.rad(20), 0, math.rad(-3))
-            animatedJoints.LeftHip.motor.C0 = animatedJoints.LeftHip.motor.C0:Lerp(target, 0.15)
-        end
-        
-        if animatedJoints.RightHip then
-            -- Legs together and slightly bent back
-            local target = animatedJoints.RightHip.originalC0 * CFrame.Angles(math.rad(20), 0, math.rad(3))
-            animatedJoints.RightHip.motor.C0 = animatedJoints.RightHip.motor.C0:Lerp(target, 0.15)
-        end
-        
-        -- R15 Knees for flying
-        if animatedJoints.LeftKnee then
-            local target = animatedJoints.LeftKnee.originalC0 * CFrame.Angles(math.rad(-25), 0, 0)
-            animatedJoints.LeftKnee.motor.C0 = animatedJoints.LeftKnee.motor.C0:Lerp(target, 0.15)
-        end
-        
-        if animatedJoints.RightKnee then
-            local target = animatedJoints.RightKnee.originalC0 * CFrame.Angles(math.rad(-25), 0, 0)
-            animatedJoints.RightKnee.motor.C0 = animatedJoints.RightKnee.motor.C0:Lerp(target, 0.15)
-        end
-    end
+    end)
+    
+    mainFrame.Size = UDim2.new(0, 0, 0, 0)
+    mainFrame.Position = UDim2.new(0.5, 0, 0, 20)
+    TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 280, 0, 90),
+        Position = UDim2.new(0.5, -140, 0, 20)
+    }):Play()
 end
 
--- Flight function (based on working script)
+local function playPremiumIntro()
+    print("🎬 STARTING PREMIUM INTRO...")
+    
+    humanoid.WalkSpeed = 0
+    humanoid.JumpPower = 0
+    
+    local attachment = Instance.new("Attachment")
+    attachment.Name = "IntroAttachment"
+    attachment.Parent = torso
+    
+    local auraParticle = Instance.new("ParticleEmitter")
+    auraParticle.Name = "Aura"
+    auraParticle.Parent = attachment
+    auraParticle.Texture = "rbxasset://textures/particles/smoke_main.dds"
+    auraParticle.Rate = 100
+    auraParticle.Lifetime = NumberRange.new(1, 1.5)
+    auraParticle.Speed = NumberRange.new(0, 0)
+    auraParticle.SpreadAngle = Vector2.new(180, 180)
+    auraParticle.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 180, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 120, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 255))
+    })
+    auraParticle.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.3, 6),
+        NumberSequenceKeypoint.new(1, 8)
+    })
+    auraParticle.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.8),
+        NumberSequenceKeypoint.new(0.5, 0.5),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    auraParticle.LightEmission = 1
+    auraParticle.ZOffset = -2
+    
+    local spiralParticle = Instance.new("ParticleEmitter")
+    spiralParticle.Name = "Spiral"
+    spiralParticle.Parent = attachment
+    spiralParticle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+    spiralParticle.Rate = 60
+    spiralParticle.Lifetime = NumberRange.new(2, 3)
+    spiralParticle.Speed = NumberRange.new(5, 8)
+    spiralParticle.SpreadAngle = Vector2.new(360, 0)
+    spiralParticle.Color = ColorSequence.new(Color3.fromRGB(200, 230, 255))
+    spiralParticle.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(0.5, 0.8),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    spiralParticle.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.7, 0.5),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    spiralParticle.LightEmission = 1
+    spiralParticle.Acceleration = Vector3.new(0, 20, 0)
+    spiralParticle.Drag = 1
+    
+    local runeParticle = Instance.new("ParticleEmitter")
+    runeParticle.Name = "Runes"
+    runeParticle.Parent = attachment
+    runeParticle.Texture = "rbxassetid://11719595129"
+    runeParticle.Rate = 1
+    runeParticle.Lifetime = NumberRange.new(2, 2.5)
+    runeParticle.Speed = NumberRange.new(3, 5)
+    runeParticle.SpreadAngle = Vector2.new(360, 360)
+    runeParticle.Rotation = NumberRange.new(0, 360)
+    runeParticle.RotSpeed = NumberRange.new(-100, 100)
+    runeParticle.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 200, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 150, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 200, 255))
+    })
+    runeParticle.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.2, 2),
+        NumberSequenceKeypoint.new(0.8, 2),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    runeParticle.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(0.2, 0.2),
+        NumberSequenceKeypoint.new(0.8, 0.2),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    runeParticle.LightEmission = 1
+    runeParticle.Drag = 2
+    
+    local groundAttachment = Instance.new("Attachment")
+    groundAttachment.Parent = rootPart
+    groundAttachment.Position = Vector3.new(0, -3, 0)
+    
+    local shockwave = Instance.new("ParticleEmitter")
+    shockwave.Name = "Shockwave"
+    shockwave.Parent = groundAttachment
+    shockwave.Texture = "rbxasset://textures/particles/smoke_main.dds"
+    shockwave.EmissionDirection = Enum.NormalId.Top
+    shockwave.Rate = 30
+    shockwave.Lifetime = NumberRange.new(1, 1.5)
+    shockwave.Speed = NumberRange.new(20, 30)
+    shockwave.SpreadAngle = Vector2.new(180, 180)
+    shockwave.Color = ColorSequence.new(Color3.fromRGB(150, 200, 255))
+    shockwave.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 2),
+        NumberSequenceKeypoint.new(0.5, 6),
+        NumberSequenceKeypoint.new(1, 10)
+    })
+    shockwave.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    shockwave.LightEmission = 0.8
+    shockwave.Acceleration = Vector3.new(0, -5, 0)
+    
+    local light = Instance.new("PointLight")
+    light.Parent = torso
+    light.Brightness = 0
+    light.Range = 0
+    light.Color = Color3.fromRGB(150, 180, 255)
+    
+    local colorCorrection = Instance.new("ColorCorrectionEffect")
+    colorCorrection.Parent = game.Lighting
+    colorCorrection.Brightness = 0
+    colorCorrection.Contrast = 0
+    colorCorrection.Saturation = 0
+    
+    local bloom = Instance.new("BloomEffect")
+    bloom.Parent = game.Lighting
+    bloom.Intensity = 0
+    bloom.Size = 24
+    bloom.Threshold = 0.8
+    
+    local bodyPosition = Instance.new("BodyPosition")
+    bodyPosition.Parent = rootPart
+    bodyPosition.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyPosition.P = 2000
+    bodyPosition.D = 300
+    
+    local bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.Parent = rootPart
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.P = 9e4
+    bodyGyro.CFrame = rootPart.CFrame
+    
+    local levitateAnim = Instance.new("Animation")
+    levitateAnim.AnimationId = "rbxassetid://3695333486"
+    local levitateTrack = humanoid:LoadAnimation(levitateAnim)
+    levitateTrack:Play()
+    
+    local targetPos = rootPart.Position + Vector3.new(0, 12, 0)
+    local startPos = rootPart.Position
+    local duration = 3
+    local startTime = tick()
+    
+    TweenService:Create(light, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Brightness = 5,
+        Range = 40
+    }):Play()
+    
+    TweenService:Create(colorCorrection, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Brightness = 0.15,
+        Saturation = 0.3
+    }):Play()
+    
+    TweenService:Create(bloom, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Intensity = 0.5
+    }):Play()
+    
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        local elapsed = tick() - startTime
+        local alpha = math.min(elapsed / duration, 1)
+        
+        local easedAlpha = 1 - math.pow(1 - alpha, 4)
+        bodyPosition.Position = startPos:Lerp(targetPos, easedAlpha)
+        
+        bodyGyro.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(elapsed * 30), 0)
+        
+        light.Brightness = 5 + math.sin(elapsed * 5) * 1
+        
+        if elapsed >= duration then
+            connection:Disconnect()
+            
+            task.wait(0.5)
+            
+            TweenService:Create(bodyPosition, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                Position = startPos
+            }):Play()
+            
+            TweenService:Create(light, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                Brightness = 0,
+                Range = 0
+            }):Play()
+            
+            TweenService:Create(colorCorrection, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                Brightness = 0,
+                Saturation = 0
+            }):Play()
+            
+            TweenService:Create(bloom, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                Intensity = 0
+            }):Play()
+            
+            task.wait(1.5)
+            
+            levitateTrack:Stop()
+            
+            bodyPosition:Destroy()
+            bodyGyro:Destroy()
+            
+            auraParticle.Enabled = false
+            spiralParticle.Enabled = false
+            runeParticle.Enabled = false
+            shockwave.Enabled = false
+            
+            task.wait(2)
+            attachment:Destroy()
+            groundAttachment:Destroy()
+            light:Destroy()
+            colorCorrection:Destroy()
+            bloom:Destroy()
+            
+            humanoid.WalkSpeed = 16
+            humanoid.JumpPower = 50
+            
+            print("✅ PREMIUM INTRO COMPLETE!")
+        end
+    end)
+end
+
+local function createFlyingAnimations()
+    hoverAnim = Instance.new("Animation")
+    hoverAnim.AnimationId = "rbxassetid://112089880074848"
+    
+    flyForwardAnim = Instance.new("Animation")
+    flyForwardAnim.AnimationId = "rbxassetid://130932988394284"
+end
+
 local function Fly()
     local bg = Instance.new("BodyGyro", rootPart)
     bg.P = 9e4
@@ -275,41 +752,100 @@ local function Fly()
     
     humanoid.PlatformStand = true
     
-    -- Create flight effect
-    local particle = Instance.new("ParticleEmitter")
-    particle.Name = "FlightParticle"
-    particle.Texture = "rbxasset://textures/particles/smoke_main.dds"
-    particle.Color = ColorSequence.new(Color3.fromRGB(150, 200, 255))
-    particle.Size = NumberSequence.new(0.5)
-    particle.Transparency = NumberSequence.new(0.5, 1)
-    particle.Lifetime = NumberRange.new(0.5, 1)
-    particle.Rate = 20
-    particle.Speed = NumberRange.new(2)
-    particle.SpreadAngle = Vector2.new(15, 15)
-    particle.Parent = rootPart
+    local trailAttachment0 = Instance.new("Attachment")
+    trailAttachment0.Parent = rootPart
+    trailAttachment0.Position = Vector3.new(-0.5, -1, 0)
     
-    local lastUpdate = tick()
+    local trailAttachment1 = Instance.new("Attachment")
+    trailAttachment1.Parent = rootPart
+    trailAttachment1.Position = Vector3.new(0.5, -1, 0)
+    
+    local trail = Instance.new("Trail")
+    trail.Parent = rootPart
+    trail.Attachment0 = trailAttachment0
+    trail.Attachment1 = trailAttachment1
+    trail.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 200, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(180, 150, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 200, 255))
+    })
+    trail.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.4),
+        NumberSequenceKeypoint.new(0.5, 0.6),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    trail.Lifetime = 1.5
+    trail.MinLength = 0.1
+    trail.LightEmission = 1
+    trail.WidthScale = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(1, 0.3)
+    })
+    trail.FaceCamera = true
+    
+    local particleAttachment = Instance.new("Attachment")
+    particleAttachment.Parent = rootPart
+    
+    local ambientParticle = Instance.new("ParticleEmitter")
+    ambientParticle.Name = "FlightAmbient"
+    ambientParticle.Parent = particleAttachment
+    ambientParticle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+    ambientParticle.Color = ColorSequence.new(Color3.fromRGB(200, 230, 255))
+    ambientParticle.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.4),
+        NumberSequenceKeypoint.new(0.5, 0.6),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    ambientParticle.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.2),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    ambientParticle.Lifetime = NumberRange.new(0.8, 1.2)
+    ambientParticle.Rate = 25
+    ambientParticle.Speed = NumberRange.new(2, 4)
+    ambientParticle.SpreadAngle = Vector2.new(40, 40)
+    ambientParticle.LightEmission = 1
+    ambientParticle.Drag = 3
+    
+    local hoverTrack = humanoid:LoadAnimation(hoverAnim)
+    hoverTrack.Priority = Enum.AnimationPriority.Action
+    hoverTrack.Looped = true
+    hoverTrack:Play(0.3)
+    currentAnimTrack = hoverTrack
+    
+    local forwardTrack = humanoid:LoadAnimation(flyForwardAnim)
+    forwardTrack.Priority = Enum.AnimationPriority.Action
+    forwardTrack.Looped = true
     
     repeat
         wait()
         
-        local deltaTime = tick() - lastUpdate
-        lastUpdate = tick()
+        local isMoving = ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 or ctrl.up + ctrl.down ~= 0
         
-        -- Speed control
-        if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 or ctrl.up + ctrl.down ~= 0 then
+        if isMoving then
             speed = speed + 0.5 + (speed / maxspeed)
             if speed > maxspeed then
                 speed = maxspeed
             end
-        elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 or ctrl.up + ctrl.down ~= 0) and speed ~= 0 then
+        elseif speed ~= 0 then
             speed = speed - 1
             if speed < 0 then
                 speed = 0
             end
         end
         
-        -- Calculate velocity
+        local isMovingForward = ctrl.f > 0 or speed > 10
+        
+        if isMovingForward and currentAnimTrack ~= forwardTrack then
+            hoverTrack:Stop(0.3)
+            forwardTrack:Play(0.3)
+            currentAnimTrack = forwardTrack
+        elseif not isMovingForward and currentAnimTrack ~= hoverTrack then
+            forwardTrack:Stop(0.3)
+            hoverTrack:Play(0.3)
+            currentAnimTrack = hoverTrack
+        end
+        
         if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 or (ctrl.up + ctrl.down) ~= 0 then
             local cam = workspace.CurrentCamera
             local lookVector = cam.CFrame.lookVector
@@ -335,12 +871,7 @@ local function Fly()
             bv.velocity = Vector3.new(0, 0.1, 0)
         end
         
-        -- Update rotation
         bg.cframe = workspace.CurrentCamera.CFrame * CFrame.Angles(-math.rad((ctrl.f + ctrl.b) * 50 * speed / maxspeed), 0, 0)
-        
-        -- Update animations
-        local isMoving = speed > 5
-        updateAnimations(deltaTime, isMoving)
         
     until not flying
     
@@ -352,12 +883,16 @@ local function Fly()
     bv:Destroy()
     humanoid.PlatformStand = false
     
-    -- Remove particle effect
-    local particle = rootPart:FindFirstChild("FlightParticle")
-    if particle then particle:Destroy() end
+    if hoverTrack then hoverTrack:Stop(0.3) end
+    if forwardTrack then forwardTrack:Stop(0.3) end
+    currentAnimTrack = nil
+    
+    trailAttachment0:Destroy()
+    trailAttachment1:Destroy()
+    trail:Destroy()
+    particleAttachment:Destroy()
 end
 
--- Toggle flight
 local function toggleFlight()
     if flying then
         flying = false
@@ -367,11 +902,9 @@ local function toggleFlight()
     end
 end
 
--- Input handling
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
-    -- Double tap space for toggle
     if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         local currentTime = tick()
         if currentTime - lastSpacePress < DOUBLE_TAP_TIME then
@@ -380,7 +913,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         lastSpacePress = currentTime
     end
     
-    -- Movement controls
     if input.KeyCode == Enum.KeyCode.W then
         ctrl.f = 1
     elseif input.KeyCode == Enum.KeyCode.S then
@@ -412,40 +944,6 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 end)
 
--- Mobile support - detect running state
-humanoid.StateChanged:Connect(function(old, new)
-    if new == Enum.HumanoidStateType.Running and flying then
-        ctrl.f = 1
-    elseif old == Enum.HumanoidStateType.Running then
-        ctrl.f = 0
-    end
-end)
-
--- Mobile jump button support
-task.spawn(function()
-    if UserInputService.TouchEnabled then
-        local success = pcall(function()
-            local touchGui = player.PlayerGui:WaitForChild("TouchGui", 5)
-            if touchGui then
-                local touchControlFrame = touchGui:WaitForChild("TouchControlFrame", 5)
-                if touchControlFrame then
-                    local jumpButton = touchControlFrame:FindFirstChild("JumpButton")
-                    if jumpButton then
-                        jumpButton.MouseButton1Click:Connect(function()
-                            local currentTime = tick()
-                            if currentTime - lastSpacePress < DOUBLE_TAP_TIME then
-                                toggleFlight()
-                            end
-                            lastSpacePress = currentTime
-                        end)
-                    end
-                end
-            end
-        end)
-    end
-end)
-
--- Show success notification
 local function showSuccessNotification()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "FlightLoadedNotification"
@@ -472,7 +970,7 @@ local function showSuccessNotification()
     title.Size = UDim2.new(1, -20, 0, 35)
     title.Position = UDim2.new(0, 10, 0, 10)
     title.BackgroundTransparency = 1
-    title.Text = "✓ Flight Script Loaded!"
+    title.Text = "✨ Sulooooss Flight Loaded!"
     title.TextColor3 = Color3.fromRGB(85, 255, 127)
     title.Font = Enum.Font.GothamBold
     title.TextSize = 18
@@ -492,7 +990,6 @@ local function showSuccessNotification()
     controls.TextWrapped = true
     controls.Parent = frame
     
-    -- Slide in animation
     frame.Position = UDim2.new(1, 0, 0, 20)
     frame:TweenPosition(
         UDim2.new(1, -370, 0, 20),
@@ -502,7 +999,6 @@ local function showSuccessNotification()
         true
     )
     
-    -- Auto dismiss after 5 seconds
     task.wait(5)
     frame:TweenPosition(
         UDim2.new(1, 0, 0, 20),
@@ -515,29 +1011,36 @@ local function showSuccessNotification()
     screenGui:Destroy()
 end
 
--- Main initialization
 if checkGroupMembership() then
-    setupJoints()
+    createFlyingAnimations()
     
-    -- Show success notification
+    createBillboard()
+    
+    playPremiumIntro()
+    
+    task.wait(4)
     showSuccessNotification()
     
-    -- Character respawn handling
     player.CharacterAdded:Connect(function(newChar)
         character = newChar
         humanoid = character:WaitForChild("Humanoid")
         rootPart = character:WaitForChild("HumanoidRootPart")
+        torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or rootPart
+        head = character:WaitForChild("Head")
         
         flying = false
         ctrl = {f = 0, b = 0, l = 0, r = 0, up = 0, down = 0}
         lastctrl = {f = 0, b = 0, l = 0, r = 0}
         speed = 0
+        currentAnimTrack = nil
         
-        setupJoints()
+        createFlyingAnimations()
+        createBillboard()
     end)
     
-    print("✓ Flight script loaded! Double tap SPACE (or Jump on mobile) to fly!")
-    print("✓ Controls: W/A/S/D to move, Q/E for down/up")
+    print("✨ Sulooooss Premium Flight Script Loaded!")
+    print("✓ Double tap SPACE to fly!")
+    print("✓ Support GUI active at the top of your screen!")
 else
     print("✗ You must join the Smokex group to use this script!")
 end
