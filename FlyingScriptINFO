@@ -132,7 +132,7 @@ local function createConfirmationGui(confirmType)
     backgroundImage.Size = UDim2.new(1, 0, 1, 0)
     backgroundImage.Position = UDim2.new(0, 0, 0, 0)
     backgroundImage.BackgroundTransparency = 1
-    backgroundImage.Image = "rbxassetid://1147675663"
+    backgroundImage.Image = "rbxassetid://2446230853"
     backgroundImage.ImageColor3 = Color3.fromRGB(255, 255, 255)
     backgroundImage.ImageTransparency = 0.7
     backgroundImage.ScaleType = Enum.ScaleType.Crop
@@ -513,7 +513,7 @@ local function playPremiumIntro()
     auraParticle.Name = "Aura"
     auraParticle.Parent = attachment
     auraParticle.Texture = "rbxasset://textures/particles/smoke_main.dds"
-    auraParticle.Rate = 100
+    auraParticle.Rate = 150
     auraParticle.Lifetime = NumberRange.new(1, 1.5)
     auraParticle.Speed = NumberRange.new(0, 0)
     auraParticle.SpreadAngle = Vector2.new(180, 180)
@@ -562,7 +562,7 @@ local function playPremiumIntro()
     runeParticle.Name = "Runes"
     runeParticle.Parent = attachment
     runeParticle.Texture = "rbxassetid://11719595129"
-    runeParticle.Rate = 1
+    runeParticle.Rate = 100
     runeParticle.Lifetime = NumberRange.new(2, 2.5)
     runeParticle.Speed = NumberRange.new(3, 5)
     runeParticle.SpreadAngle = Vector2.new(360, 360)
@@ -597,7 +597,7 @@ local function playPremiumIntro()
     shockwave.Parent = groundAttachment
     shockwave.Texture = "rbxasset://textures/particles/smoke_main.dds"
     shockwave.EmissionDirection = Enum.NormalId.Top
-    shockwave.Rate = 30
+    shockwave.Rate = 50
     shockwave.Lifetime = NumberRange.new(1, 1.5)
     shockwave.Speed = NumberRange.new(20, 30)
     shockwave.SpreadAngle = Vector2.new(180, 180)
@@ -801,7 +801,7 @@ local function Fly()
         NumberSequenceKeypoint.new(1, 1)
     })
     ambientParticle.Lifetime = NumberRange.new(0.8, 1.2)
-    ambientParticle.Rate = 25
+    ambientParticle.Rate = 2
     ambientParticle.Speed = NumberRange.new(2, 4)
     ambientParticle.SpreadAngle = Vector2.new(40, 40)
     ambientParticle.LightEmission = 1
