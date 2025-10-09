@@ -30,6 +30,9 @@ local hoverAnim
 local flyForwardAnim
 local currentAnimTrack
 
+-- Trail cleanup storage
+local activeTrails = {}
+
 local function checkGroupMembership()
     local success, isInGroup = pcall(function()
         return player:IsInGroup(GROUP_ID)
@@ -132,7 +135,7 @@ local function createConfirmationGui(confirmType)
     backgroundImage.Size = UDim2.new(1, 0, 1, 0)
     backgroundImage.Position = UDim2.new(0, 0, 0, 0)
     backgroundImage.BackgroundTransparency = 1
-    backgroundImage.Image = "rbxassetid://2446230853"
+    backgroundImage.Image = "rbxassetid://1147675663"
     backgroundImage.ImageColor3 = Color3.fromRGB(255, 255, 255)
     backgroundImage.ImageTransparency = 0.7
     backgroundImage.ScaleType = Enum.ScaleType.Crop
@@ -173,18 +176,6 @@ local function createConfirmationGui(confirmType)
     stroke.Transparency = 0.3
     stroke.Parent = mainFrame
     
-    local glow = Instance.new("ImageLabel")
-    glow.Size = UDim2.new(1, 40, 1, 40)
-    glow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    glow.AnchorPoint = Vector2.new(0.5, 0.5)
-    glow.BackgroundTransparency = 1
-    glow.Image = "rbxassetid://1147675663"
-    glow.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    glow.ImageTransparency = 0.5
-    glow.ScaleType = Enum.ScaleType.Stretch
-    glow.ZIndex = 0
-    glow.Parent = mainFrame
-    
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, -40, 0, 50)
     title.Position = UDim2.new(0, 20, 0, 20)
@@ -193,6 +184,7 @@ local function createConfirmationGui(confirmType)
     title.TextSize = 24
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.TextXAlignment = Enum.TextXAlignment.Center
+    title.ZIndex = 3
     title.Parent = mainFrame
     
     local message = Instance.new("TextLabel")
@@ -205,12 +197,14 @@ local function createConfirmationGui(confirmType)
     message.TextWrapped = true
     message.TextXAlignment = Enum.TextXAlignment.Center
     message.TextYAlignment = Enum.TextYAlignment.Top
+    message.ZIndex = 3
     message.Parent = mainFrame
     
     local buttonContainer = Instance.new("Frame")
     buttonContainer.Size = UDim2.new(1, -60, 0, 50)
     buttonContainer.Position = UDim2.new(0, 30, 1, -70)
     buttonContainer.BackgroundTransparency = 1
+    buttonContainer.ZIndex = 3
     buttonContainer.Parent = mainFrame
     
     local buttonLayout = Instance.new("UIListLayout")
@@ -228,6 +222,7 @@ local function createConfirmationGui(confirmType)
     yesButton.Font = Enum.Font.GothamBold
     yesButton.TextSize = 18
     yesButton.BorderSizePixel = 0
+    yesButton.ZIndex = 4
     yesButton.Parent = buttonContainer
     
     local yesCorner = Instance.new("UICorner")
@@ -242,6 +237,7 @@ local function createConfirmationGui(confirmType)
     noButton.Font = Enum.Font.GothamBold
     noButton.TextSize = 18
     noButton.BorderSizePixel = 0
+    noButton.ZIndex = 4
     noButton.Parent = buttonContainer
     
     local noCorner = Instance.new("UICorner")
@@ -505,6 +501,13 @@ local function playPremiumIntro()
     humanoid.WalkSpeed = 0
     humanoid.JumpPower = 0
     
+    -- PLAY CUSTOM EMOTE ANIMATION (visible to all players!)
+    local introAnim = Instance.new("Animation")
+    introAnim.AnimationId = "rbxassetid://76571200040224"
+    local introTrack = humanoid:LoadAnimation(introAnim)
+    introTrack.Priority = Enum.AnimationPriority.Action4
+    introTrack:Play()
+    
     local attachment = Instance.new("Attachment")
     attachment.Name = "IntroAttachment"
     attachment.Parent = torso
@@ -513,7 +516,7 @@ local function playPremiumIntro()
     auraParticle.Name = "Aura"
     auraParticle.Parent = attachment
     auraParticle.Texture = "rbxasset://textures/particles/smoke_main.dds"
-    auraParticle.Rate = 150
+    auraParticle.Rate = 100
     auraParticle.Lifetime = NumberRange.new(1, 1.5)
     auraParticle.Speed = NumberRange.new(0, 0)
     auraParticle.SpreadAngle = Vector2.new(180, 180)
@@ -562,7 +565,7 @@ local function playPremiumIntro()
     runeParticle.Name = "Runes"
     runeParticle.Parent = attachment
     runeParticle.Texture = "rbxassetid://11719595129"
-    runeParticle.Rate = 100
+    runeParticle.Rate = 20
     runeParticle.Lifetime = NumberRange.new(2, 2.5)
     runeParticle.Speed = NumberRange.new(3, 5)
     runeParticle.SpreadAngle = Vector2.new(360, 360)
@@ -597,7 +600,7 @@ local function playPremiumIntro()
     shockwave.Parent = groundAttachment
     shockwave.Texture = "rbxasset://textures/particles/smoke_main.dds"
     shockwave.EmissionDirection = Enum.NormalId.Top
-    shockwave.Rate = 50
+    shockwave.Rate = 30
     shockwave.Lifetime = NumberRange.new(1, 1.5)
     shockwave.Speed = NumberRange.new(20, 30)
     shockwave.SpreadAngle = Vector2.new(180, 180)
@@ -643,11 +646,6 @@ local function playPremiumIntro()
     bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
     bodyGyro.P = 9e4
     bodyGyro.CFrame = rootPart.CFrame
-    
-    local levitateAnim = Instance.new("Animation")
-    levitateAnim.AnimationId = "rbxassetid://3695333486"
-    local levitateTrack = humanoid:LoadAnimation(levitateAnim)
-    levitateTrack:Play()
     
     local targetPos = rootPart.Position + Vector3.new(0, 12, 0)
     local startPos = rootPart.Position
@@ -705,7 +703,7 @@ local function playPremiumIntro()
             
             task.wait(1.5)
             
-            levitateTrack:Stop()
+            introTrack:Stop()
             
             bodyPosition:Destroy()
             bodyGyro:Destroy()
@@ -738,6 +736,87 @@ local function createFlyingAnimations()
     flyForwardAnim.AnimationId = "rbxassetid://130932988394284"
 end
 
+-- FIXED TRAIL FUNCTION WITH PROPER TWO-ATTACHMENT SETUP + SERVER REPLICATION
+local function createLegTrail(leg, legName)
+    if not leg then return end
+    
+    -- Create two separate attachments for the trail
+    local topAttachment = Instance.new("Attachment")
+    topAttachment.Name = legName .. "TrailTop"
+    topAttachment.Parent = leg
+    topAttachment.Position = Vector3.new(0, 0.5, 0)  -- Top of leg
+    
+    local bottomAttachment = Instance.new("Attachment")
+    bottomAttachment.Name = legName .. "TrailBottom"
+    bottomAttachment.Parent = leg
+    bottomAttachment.Position = Vector3.new(0, -1, 0)  -- Bottom of leg
+    
+    -- Wait a frame to ensure attachments replicate
+    task.wait()
+    
+    -- Create the trail with DIFFERENT attachments
+    local trail = Instance.new("Trail")
+    trail.Name = legName .. "Trail"
+    trail.Parent = workspace  -- Parent to workspace first for replication
+    trail.Attachment0 = topAttachment
+    trail.Attachment1 = bottomAttachment
+    
+    -- Enhanced trail properties - THINNER WIDTH
+    trail.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 200, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 150, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 255))
+    })
+    
+    trail.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.2),
+        NumberSequenceKeypoint.new(0.5, 0.4),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    
+    trail.Lifetime = 1.2
+    trail.MinLength = 0.01
+    trail.LightEmission = 1
+    trail.LightInfluence = 0
+    
+    -- MUCH THINNER WIDTH - reduced from 1 to 0.4
+    trail.WidthScale = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.4),
+        NumberSequenceKeypoint.new(0.5, 0.3),
+        NumberSequenceKeypoint.new(1, 0.1)
+    })
+    
+    trail.FaceCamera = true
+    trail.Enabled = true
+    
+    -- Now parent to leg after setting up (helps with replication)
+    trail.Parent = leg
+    
+    -- Store for cleanup
+    table.insert(activeTrails, {
+        trail = trail,
+        topAttachment = topAttachment,
+        bottomAttachment = bottomAttachment
+    })
+    
+    return trail, topAttachment, bottomAttachment
+end
+
+local function cleanupTrails()
+    for _, trailData in ipairs(activeTrails) do
+        if trailData.trail then
+            trailData.trail:Destroy()
+        end
+        if trailData.topAttachment then
+            trailData.topAttachment:Destroy()
+        end
+        if trailData.bottomAttachment then
+            trailData.bottomAttachment:Destroy()
+        end
+    end
+    activeTrails = {}
+end
+
 local function Fly()
     local bg = Instance.new("BodyGyro", rootPart)
     bg.P = 9e4
@@ -752,61 +831,22 @@ local function Fly()
     
     humanoid.PlatformStand = true
     
-    local trailAttachment0 = Instance.new("Attachment")
-    trailAttachment0.Parent = rootPart
-    trailAttachment0.Position = Vector3.new(-0.5, -1, 0)
+    -- Find legs (works for R6 and R15)
+    local leftLeg = character:FindFirstChild("Left Leg") or 
+                    character:FindFirstChild("LeftLowerLeg") or 
+                    character:FindFirstChild("LeftUpperLeg") or 
+                    character:FindFirstChild("LeftFoot")
     
-    local trailAttachment1 = Instance.new("Attachment")
-    trailAttachment1.Parent = rootPart
-    trailAttachment1.Position = Vector3.new(0.5, -1, 0)
+    local rightLeg = character:FindFirstChild("Right Leg") or 
+                     character:FindFirstChild("RightLowerLeg") or 
+                     character:FindFirstChild("RightUpperLeg") or 
+                     character:FindFirstChild("RightFoot")
     
-    local trail = Instance.new("Trail")
-    trail.Parent = rootPart
-    trail.Attachment0 = trailAttachment0
-    trail.Attachment1 = trailAttachment1
-    trail.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 200, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(180, 150, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 200, 255))
-    })
-    trail.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.4),
-        NumberSequenceKeypoint.new(0.5, 0.6),
-        NumberSequenceKeypoint.new(1, 1)
-    })
-    trail.Lifetime = 1.5
-    trail.MinLength = 0.1
-    trail.LightEmission = 1
-    trail.WidthScale = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 1),
-        NumberSequenceKeypoint.new(1, 0.3)
-    })
-    trail.FaceCamera = true
+    -- Create trails with proper two-attachment setup
+    createLegTrail(leftLeg, "Left")
+    createLegTrail(rightLeg, "Right")
     
-    local particleAttachment = Instance.new("Attachment")
-    particleAttachment.Parent = rootPart
-    
-    local ambientParticle = Instance.new("ParticleEmitter")
-    ambientParticle.Name = "FlightAmbient"
-    ambientParticle.Parent = particleAttachment
-    ambientParticle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-    ambientParticle.Color = ColorSequence.new(Color3.fromRGB(200, 230, 255))
-    ambientParticle.Size = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.4),
-        NumberSequenceKeypoint.new(0.5, 0.6),
-        NumberSequenceKeypoint.new(1, 0)
-    })
-    ambientParticle.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.2),
-        NumberSequenceKeypoint.new(1, 1)
-    })
-    ambientParticle.Lifetime = NumberRange.new(0.8, 1.2)
-    ambientParticle.Rate = 2
-    ambientParticle.Speed = NumberRange.new(2, 4)
-    ambientParticle.SpreadAngle = Vector2.new(40, 40)
-    ambientParticle.LightEmission = 1
-    ambientParticle.Drag = 3
-    
+    -- Load animations
     local hoverTrack = humanoid:LoadAnimation(hoverAnim)
     hoverTrack.Priority = Enum.AnimationPriority.Action
     hoverTrack.Looped = true
@@ -844,6 +884,14 @@ local function Fly()
             forwardTrack:Stop(0.3)
             hoverTrack:Play(0.3)
             currentAnimTrack = hoverTrack
+        end
+        
+        -- Dynamically adjust forward animation speed based on flight speed
+        if currentAnimTrack == forwardTrack then
+            local speedPercent = speed / maxspeed
+            -- Speed ranges from 0.8 (slow) to 1.5 (fast)
+            local animSpeed = 0.8 + (speedPercent * 0.7)
+            forwardTrack:AdjustSpeed(animSpeed)
         end
         
         if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 or (ctrl.up + ctrl.down) ~= 0 then
@@ -887,10 +935,8 @@ local function Fly()
     if forwardTrack then forwardTrack:Stop(0.3) end
     currentAnimTrack = nil
     
-    trailAttachment0:Destroy()
-    trailAttachment1:Destroy()
-    trail:Destroy()
-    particleAttachment:Destroy()
+    -- Clean up trails properly
+    cleanupTrails()
 end
 
 local function toggleFlight()
@@ -1018,7 +1064,7 @@ if checkGroupMembership() then
     
     playPremiumIntro()
     
-    task.wait(4)
+    task.wait(1)
     showSuccessNotification()
     
     player.CharacterAdded:Connect(function(newChar)
