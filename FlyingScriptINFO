@@ -503,7 +503,7 @@ local function playPremiumIntro()
     
     -- PLAY CUSTOM EMOTE ANIMATION (visible to all players!)
     local introAnim = Instance.new("Animation")
-    introAnim.AnimationId = "rbxassetid://76571200040224"
+    introAnim.AnimationId = "rbxassetid://74473837890133"
     local introTrack = humanoid:LoadAnimation(introAnim)
     introTrack.Priority = Enum.AnimationPriority.Action4
     introTrack:Play()
@@ -730,7 +730,7 @@ end
 
 local function createFlyingAnimations()
     hoverAnim = Instance.new("Animation")
-    hoverAnim.AnimationId = "rbxassetid://112089880074848"
+    hoverAnim.AnimationId = "rbxassetid://92938115163388"
     
     flyForwardAnim = Instance.new("Animation")
     flyForwardAnim.AnimationId = "rbxassetid://130932988394284"
