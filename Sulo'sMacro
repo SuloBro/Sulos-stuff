@@ -14,7 +14,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- Configuration
 local SPEED_BOOST = 300
 local DEFAULT_SPEED = 16
-local DONATE_LINK = "https://www.roblox.com/game-pass/1486250230/Support-Me"
+local DONATE_LINK = "https://www.roblox.com/game-pass/1133771852/Supporter"
 
 -- Sound IDs
 local SOUND_IDS = {
