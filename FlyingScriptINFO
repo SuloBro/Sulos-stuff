@@ -13,9 +13,9 @@ local head = character:WaitForChild("Head")
 
 local GROUP_ID = 10612101
 local GROUP_LINK = "https://www.roblox.com/communities/10612101/Smokex#!/about"
-local SUPPORT_LINK = "https://www.roblox.com/catalog/132122536399861/Spider-White-Tee-Realistic"
+local SUPPORT_LINK = "https://www.roblox.com/game-pass/1133771852/Supporter"
 local ITEM_ID = 132122536399861
-local ITEM_PRICE = 5
+local ITEM_PRICE = 20
 local maxspeed = 100
 local speed = 0
 
