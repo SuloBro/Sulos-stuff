@@ -474,7 +474,7 @@ end
 
 local function createFlyingAnimations()
 	hoverAnim = Instance.new("Animation")
-	hoverAnim.AnimationId = "rbxassetid://92938115163388"
+	hoverAnim.AnimationId = "rbxassetid://112089880074848"
 
 	flyForwardAnim = Instance.new("Animation")
 	flyForwardAnim.AnimationId = "rbxassetid://130932988394284"
