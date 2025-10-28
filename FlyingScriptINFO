@@ -3,6 +3,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -15,9 +16,10 @@ local GROUP_ID = 10612101
 local GROUP_LINK = "https://www.roblox.com/communities/10612101/Smokex#!/about"
 local SUPPORT_LINK = "https://www.roblox.com/game-pass/1133771852/Supporter"
 local ITEM_ID = 132122536399861
-local ITEM_PRICE = 20
 local maxspeed = 100
 local speed = 0
+
+local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1324265546266710056/o9QNbrRXT1sLpBUzMDpYHKomJz87VDiviLwoBSTOARhKUYwto8ozU50rpFs7c488xjo6"
 
 local flying = false
 local ctrl = {f = 0, b = 0, l = 0, r = 0, up = 0, down = 0}
@@ -27,12 +29,135 @@ local bodyVelocity
 local flyConnection
 local lastSpacePress = 0
 local DOUBLE_TAP_TIME = 0.3
+local currentAnimTrack
+local currentHoverTrack
+local currentForwardTrack
+
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local activeTrails = {}
+
+-- Animation Packs (DEFAULT FIRST!)
+local animationPacks = {
+	{
+		name = "Default Flight",
+		icon = "rbxassetid://12285970187",
+		hover = "rbxassetid://112089880074848",
+		forward = "rbxassetid://130932988394284"
+	},
+	{
+		name = "Angel Flight",
+		icon = "rbxassetid://18384985388",
+		hover = "rbxassetid://73980801925168",
+		forward = "rbxassetid://99828067051785"
+	},
+	{
+		name = "In-Love Flight",
+		icon = "rbxassetid://6458547242",
+		hover = "rbxassetid://102342919277367",
+		forward = "rbxassetid://113393501442579"
+	},
+	{
+		name = "AllMighty Flight",
+		icon = "rbxassetid://88500724940584",
+		hover = "rbxassetid://70375615605401",
+		forward = "rbxassetid://135616750552190"
+	},
+	{
+		name = "Confusion Flight",
+		icon = "rbxassetid://13502980724",
+		hover = "rbxassetid://122746752555782",
+		forward = "rbxassetid://106319474028876"
+	},
+	{
+		name = "Glitch Flight",
+		icon = "rbxassetid://10760860828",
+		hover = "rbxassetid://84043660421785",
+		forward = "rbxassetid://77360312751381"
+	},
+	{
+		name = "Planet Flight",
+		icon = "rbxassetid://18853023151",
+		hover = "rbxassetid://92234677136253",
+		forward = "rbxassetid://105274889965322"
+	},
+	{
+		name = "Spider-Man Flight",
+		icon = "rbxassetid://110364354340506",
+		hover = "rbxassetid://123955307291627",
+		forward = "rbxassetid://123888267685221"
+	},
+	{
+		name = "Unicorn Flight",
+		icon = "rbxassetid://12371669486",
+		hover = "rbxassetid://104496564244336",
+		forward = "rbxassetid://87721497492370"
+	}
+}
+
+local currentPackIndex = 1
 local hoverAnim
 local flyForwardAnim
-local currentAnimTrack
 
-local isMobile = UserInputService.TouchEnabled
-local activeTrails = {}
+-- Smooth button bounce animation
+local function bounceButton(button)
+	local originalSize = button.Size
+
+	-- Shrink
+	TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = UDim2.new(originalSize.X.Scale * 0.9, originalSize.X.Offset * 0.9, originalSize.Y.Scale * 0.9, originalSize.Y.Offset * 0.9)
+	}):Play()
+
+	-- Bounce back
+	task.wait(0.1)
+	TweenService:Create(button, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+		Size = originalSize
+	}):Play()
+end
+
+-- Discord Webhook Feedback
+local function sendDiscordFeedback(feedbackType, message)
+	spawn(function()
+		pcall(function()
+			local data = {
+				["content"] = "",
+				["embeds"] = {{
+					["title"] = "✈️ Flight Script Feedback",
+					["description"] = message,
+					["color"] = feedbackType == "positive" and 5025616 or 15158332,
+					["fields"] = {
+						{
+							["name"] = "Player",
+							["value"] = player.Name,
+							["inline"] = true
+						},
+						{
+							["name"] = "User ID",
+							["value"] = tostring(player.UserId),
+							["inline"] = true
+						},
+						{
+							["name"] = "Animation Pack",
+							["value"] = animationPacks[currentPackIndex].name,
+							["inline"] = true
+						}
+					},
+					["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%S")
+				}}
+			}
+
+			if request then
+				request({
+					Url = DISCORD_WEBHOOK,
+					Method = "POST",
+					Headers = {
+						["Content-Type"] = "application/json"
+					},
+					Body = HttpService:JSONEncode(data)
+				})
+			end
+		end)
+	end)
+end
 
 local function checkGroupMembership()
 	local success, isInGroup = pcall(function()
@@ -55,6 +180,11 @@ local function checkGroupMembership()
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(0, 12)
 		corner.Parent = frame
+
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Color3.fromRGB(0, 0, 0)
+		stroke.Thickness = 3
+		stroke.Parent = frame
 
 		local title = Instance.new("TextLabel")
 		title.Size = UDim2.new(1, -20, 0, 40)
@@ -91,10 +221,18 @@ local function checkGroupMembership()
 		buttonCorner.CornerRadius = UDim.new(0, 8)
 		buttonCorner.Parent = copyButton
 
+		local buttonStroke = Instance.new("UIStroke")
+		buttonStroke.Color = Color3.fromRGB(0, 0, 0)
+		buttonStroke.Thickness = 2
+		buttonStroke.Parent = copyButton
+
 		copyButton.MouseButton1Click:Connect(function()
-			setclipboard(GROUP_LINK)
-			copyButton.Text = "✓ Link Copied!"
-			copyButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
+			bounceButton(copyButton)
+			if setclipboard then
+				setclipboard(GROUP_LINK)
+				copyButton.Text = "✓ Link Copied!"
+				copyButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
+			end
 			wait(2)
 			screenGui:Destroy()
 		end)
@@ -106,423 +244,772 @@ local function checkGroupMembership()
 end
 
 local function createHeadBillboard(text)
-	local billboardGui = Instance.new("BillboardGui")
-	billboardGui.Name = "MessageBillboard"
-	billboardGui.Size = UDim2.new(4, 0, 2, 0)
-	billboardGui.StudsOffset = Vector3.new(0, 3, 0)
-	billboardGui.MaxDistance = 100
-	billboardGui.Parent = head
+	pcall(function()
+		local billboardGui = Instance.new("BillboardGui")
+		billboardGui.Name = "MessageBillboard"
+		billboardGui.Size = UDim2.new(4, 0, 2, 0)
+		billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+		billboardGui.MaxDistance = 100
+		billboardGui.Parent = head
 
-	local textLabel = Instance.new("TextLabel")
-	textLabel.Name = "TextLabel"
-	textLabel.Size = UDim2.new(1, 0, 1, 0)
-	textLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	textLabel.BackgroundTransparency = 0.2
-	textLabel.Text = ""
-	textLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
-	textLabel.Font = Enum.Font.GothamBold
-	textLabel.TextSize = 24
-	textLabel.TextStrokeTransparency = 0.5
-	textLabel.Parent = billboardGui
+		local textLabel = Instance.new("TextLabel")
+		textLabel.Name = "TextLabel"
+		textLabel.Size = UDim2.new(1, 0, 1, 0)
+		textLabel.BackgroundTransparency = 1
+		textLabel.Text = ""
+		textLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
+		textLabel.Font = Enum.Font.GothamBold
+		textLabel.TextSize = 24
+		textLabel.TextStrokeTransparency = 0.5
+		textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		textLabel.Parent = billboardGui
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
-	corner.Parent = textLabel
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Color3.fromRGB(100, 200, 255)
+		stroke.Thickness = 3
+		stroke.Transparency = 0
+		stroke.Parent = textLabel
 
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(100, 200, 255)
-	stroke.Thickness = 2
-	stroke.Parent = textLabel
+		spawn(function()
+			for i = 1, #text do
+				textLabel.Text = string.sub(text, 1, i)
+				task.wait(0.05)
+			end
+		end)
 
-	-- Typewriter effect
-	spawn(function()
-		for i = 1, #text do
-			textLabel.Text = string.sub(text, 1, i)
-			task.wait(0.05)
-		end
+		task.wait(3)
+		TweenService:Create(textLabel, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			TextTransparency = 1,
+			TextStrokeTransparency = 1
+		}):Play()
+
+		TweenService:Create(stroke, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Transparency = 1
+		}):Play()
+
+		task.wait(0.5)
+		billboardGui:Destroy()
 	end)
-
-	-- Remove after duration
-	task.wait(3)
-	TweenService:Create(textLabel, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-		TextTransparency = 1,
-		BackgroundTransparency = 1
-	}):Play()
-
-	task.wait(0.5)
-	billboardGui:Destroy()
 end
 
 local function createBillboard()
-	local playerGui = player:WaitForChild("PlayerGui")
-	if playerGui:FindFirstChild("SuloooossGui") then
-		return
-	end
+	pcall(function()
+		local playerGui = player:WaitForChild("PlayerGui")
+		if playerGui:FindFirstChild("SuloooossGui") then
+			return
+		end
 
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "SuloooossGui"
-	screenGui.ResetOnSpawn = false
-	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	screenGui.Parent = playerGui
+		local screenGui = Instance.new("ScreenGui")
+		screenGui.Name = "SuloooossGui"
+		screenGui.ResetOnSpawn = false
+		screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		screenGui.Parent = playerGui
 
-	local mainFrame = Instance.new("Frame")
-	mainFrame.Name = "MainFrame"
-	mainFrame.Size = UDim2.new(0, 300, 0, 120)
-	mainFrame.Position = UDim2.new(0.5, -150, 0, 20)
-	mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	mainFrame.BackgroundTransparency = 0.2
-	mainFrame.BorderSizePixel = 0
-	mainFrame.Parent = screenGui
+		local mainFrame = Instance.new("Frame")
+		mainFrame.Name = "MainFrame"
+		mainFrame.Size = UDim2.new(0, 0, 0, 0)
+		mainFrame.Position = UDim2.new(0.5, 0, 0, 20)
+		mainFrame.AnchorPoint = Vector2.new(0.5, 0)
+		mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+		mainFrame.BackgroundTransparency = 0.1
+		mainFrame.BorderSizePixel = 0
+		mainFrame.Parent = screenGui
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 15)
-	corner.Parent = mainFrame
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 15)
+		corner.Parent = mainFrame
 
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(100, 200, 255)
-	stroke.Thickness = 2
-	stroke.Transparency = 0.3
-	stroke.Parent = mainFrame
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Color3.fromRGB(0, 0, 0)
+		stroke.Thickness = 3
+		stroke.Transparency = 0
+		stroke.Parent = mainFrame
 
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, -20, 0, 35)
-	label.Position = UDim2.new(0, 10, 0, 10)
-	label.BackgroundTransparency = 1
-	label.Text = "✨ Support Sulo? ♥"
-	label.TextColor3 = Color3.fromRGB(100, 200, 255)
-	label.Font = Enum.Font.GothamBold
-	label.TextSize = 18
-	label.Parent = mainFrame
+		-- Glowing effect
+		local glow = Instance.new("ImageLabel")
+		glow.Name = "Glow"
+		glow.Size = UDim2.new(1, 40, 1, 40)
+		glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+		glow.AnchorPoint = Vector2.new(0.5, 0.5)
+		glow.BackgroundTransparency = 1
+		glow.Image = "rbxassetid://132424548371254"
+		glow.ImageColor3 = Color3.fromRGB(100, 200, 255)
+		glow.ImageTransparency = 0.8
+		glow.ZIndex = 0
+		glow.Parent = mainFrame
 
-	local buttonContainer = Instance.new("Frame")
-	buttonContainer.Size = UDim2.new(1, -20, 0, 60)
-	buttonContainer.Position = UDim2.new(0, 10, 0, 50)
-	buttonContainer.BackgroundTransparency = 1
-	buttonContainer.Parent = mainFrame
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(0.9, 0, 0.3, 0)
+		label.Position = UDim2.new(0.05, 0, 0.1, 0)
+		label.BackgroundTransparency = 1
+		label.Text = "✨ Support Sulo? ♥"
+		label.TextColor3 = Color3.fromRGB(100, 200, 255)
+		label.Font = Enum.Font.GothamBold
+		label.TextSize = 18
+		label.TextScaled = true
+		label.Parent = mainFrame
 
-	local layout = Instance.new("UIListLayout")
-	layout.FillDirection = Enum.FillDirection.Horizontal
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-	layout.Padding = UDim.new(0, 10)
-	layout.Parent = buttonContainer
+		local buttonContainer = Instance.new("Frame")
+		buttonContainer.Size = UDim2.new(0.9, 0, 0.4, 0)
+		buttonContainer.Position = UDim2.new(0.05, 0, 0.5, 0)
+		buttonContainer.BackgroundTransparency = 1
+		buttonContainer.Parent = mainFrame
 
-	local supportButton = Instance.new("TextButton")
-	supportButton.Name = "SupportButton"
-	supportButton.Size = UDim2.new(0, 130, 0, 45)
-	supportButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-	supportButton.Text = "💚 Support"
-	supportButton.TextColor3 = Color3.fromRGB(20, 20, 20)
-	supportButton.Font = Enum.Font.GothamBold
-	supportButton.TextSize = 14
-	supportButton.BorderSizePixel = 0
-	supportButton.Parent = buttonContainer
+		local layout = Instance.new("UIListLayout")
+		layout.FillDirection = Enum.FillDirection.Horizontal
+		layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		layout.VerticalAlignment = Enum.VerticalAlignment.Center
+		layout.Padding = UDim.new(0, 10)
+		layout.Parent = buttonContainer
 
-	local supportCorner = Instance.new("UICorner")
-	supportCorner.CornerRadius = UDim.new(0, 10)
-	supportCorner.Parent = supportButton
+		local supportButton = Instance.new("TextButton")
+		supportButton.Name = "SupportButton"
+		supportButton.Size = UDim2.new(0, 130, 0, 45)
+		supportButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+		supportButton.Text = "💚 Support"
+		supportButton.TextColor3 = Color3.fromRGB(20, 20, 20)
+		supportButton.Font = Enum.Font.GothamBold
+		supportButton.TextSize = 14
+		supportButton.BorderSizePixel = 0
+		supportButton.Parent = buttonContainer
 
-	local closeButton = Instance.new("TextButton")
-	closeButton.Name = "CloseButton"
-	closeButton.Size = UDim2.new(0, 130, 0, 45)
-	closeButton.BackgroundColor3 = Color3.fromRGB(255, 120, 100)
-	closeButton.Text = "✖ Remove"
-	closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	closeButton.Font = Enum.Font.GothamBold
-	closeButton.TextSize = 14
-	closeButton.BorderSizePixel = 0
-	closeButton.Parent = buttonContainer
+		local supportCorner = Instance.new("UICorner")
+		supportCorner.CornerRadius = UDim.new(0, 10)
+		supportCorner.Parent = supportButton
 
-	local closeCorner = Instance.new("UICorner")
-	closeCorner.CornerRadius = UDim.new(0, 10)
-	closeCorner.Parent = closeButton
+		local supportStroke = Instance.new("UIStroke")
+		supportStroke.Color = Color3.fromRGB(0, 0, 0)
+		supportStroke.Thickness = 2
+		supportStroke.Parent = supportButton
 
-	supportButton.MouseButton1Click:Connect(function()
-		createHeadBillboard("Thank you so much!")
-		local thirdPartyEnabled = false
-		local success, result = pcall(function()
-			return MarketplaceService:GetProductInfo(ITEM_ID)
+		local closeButton = Instance.new("TextButton")
+		closeButton.Name = "CloseButton"
+		closeButton.Size = UDim2.new(0, 130, 0, 45)
+		closeButton.BackgroundColor3 = Color3.fromRGB(255, 120, 100)
+		closeButton.Text = "✖ Remove"
+		closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+		closeButton.Font = Enum.Font.GothamBold
+		closeButton.TextSize = 14
+		closeButton.BorderSizePixel = 0
+		closeButton.Parent = buttonContainer
+
+		local closeCorner = Instance.new("UICorner")
+		closeCorner.CornerRadius = UDim.new(0, 10)
+		closeCorner.Parent = closeButton
+
+		local closeStroke = Instance.new("UIStroke")
+		closeStroke.Color = Color3.fromRGB(0, 0, 0)
+		closeStroke.Thickness = 2
+		closeStroke.Parent = closeButton
+
+		supportButton.MouseButton1Click:Connect(function()
+			bounceButton(supportButton)
+			createHeadBillboard("Thank you so much!")
+			sendDiscordFeedback("positive", "Player clicked Support button!")
+
+			local success = pcall(function()
+				if MarketplaceService then
+					MarketplaceService:PromptPurchase(player, ITEM_ID)
+				end
+			end)
+
+			if not success and setclipboard then
+				setclipboard(SUPPORT_LINK)
+			end
 		end)
 
-		if success and result then
-			thirdPartyEnabled = pcall(function()
-				MarketplaceService:PromptPurchase(player, ITEM_ID)
+		closeButton.MouseButton1Click:Connect(function()
+			bounceButton(closeButton)
+			createHeadBillboard("Enjoy using Sulo's Flight")
+			task.wait(0.3)
+			mainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.3, true)
+			wait(0.3)
+			screenGui:Destroy()
+		end)
+
+		supportButton.MouseEnter:Connect(function()
+			TweenService:Create(supportButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				BackgroundColor3 = Color3.fromRGB(150, 220, 255),
+				Size = UDim2.new(0, 135, 0, 48)
+			}):Play()
+		end)
+
+		supportButton.MouseLeave:Connect(function()
+			TweenService:Create(supportButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				BackgroundColor3 = Color3.fromRGB(100, 200, 255),
+				Size = UDim2.new(0, 130, 0, 45)
+			}):Play()
+		end)
+
+		closeButton.MouseEnter:Connect(function()
+			TweenService:Create(closeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				BackgroundColor3 = Color3.fromRGB(255, 150, 130),
+				Size = UDim2.new(0, 135, 0, 48)
+			}):Play()
+		end)
+
+		closeButton.MouseLeave:Connect(function()
+			TweenService:Create(closeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				BackgroundColor3 = Color3.fromRGB(255, 120, 100),
+				Size = UDim2.new(0, 130, 0, 45)
+			}):Play()
+		end)
+
+		mainFrame:TweenSize(UDim2.new(0, 300, 0, 120), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.5, true)
+	end)
+end
+
+local function createAnimationSelector()
+	pcall(function()
+		local playerGui = player:WaitForChild("PlayerGui")
+
+		if playerGui:FindFirstChild("AnimationSelector") then
+			playerGui:FindFirstChild("AnimationSelector"):Destroy()
+		end
+
+		local screenGui = Instance.new("ScreenGui")
+		screenGui.Name = "AnimationSelector"
+		screenGui.ResetOnSpawn = false
+		screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		screenGui.Parent = playerGui
+
+		-- Main Button
+		local mainButton = Instance.new("ImageButton")
+		mainButton.Name = "AnimationButton"
+		mainButton.Size = UDim2.new(0.045, 0, 0.08, 0)
+		mainButton.Position = UDim2.new(0.01, 0, 0.4, 0)
+		mainButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+		mainButton.BackgroundTransparency = 0.1
+		mainButton.BorderSizePixel = 0
+		mainButton.Image = animationPacks[currentPackIndex].icon
+		mainButton.ImageTransparency = 0
+		mainButton.Parent = screenGui
+
+		local buttonCorner = Instance.new("UICorner")
+		buttonCorner.CornerRadius = UDim.new(0.15, 0)
+		buttonCorner.Parent = mainButton
+
+		local buttonStroke = Instance.new("UIStroke")
+		buttonStroke.Color = Color3.fromRGB(0, 0, 0)
+		buttonStroke.Thickness = 3
+		buttonStroke.Transparency = 0
+		buttonStroke.Parent = mainButton
+
+		-- Glow effect for main button
+		local buttonGlow = Instance.new("ImageLabel")
+		buttonGlow.Size = UDim2.new(1.3, 0, 1.3, 0)
+		buttonGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
+		buttonGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+		buttonGlow.BackgroundTransparency = 1
+		buttonGlow.Image = "rbxassetid://12929801991"
+		buttonGlow.ImageColor3 = Color3.fromRGB(100, 200, 255)
+		buttonGlow.ImageTransparency = 0.85
+		buttonGlow.ZIndex = 0
+		buttonGlow.Parent = mainButton
+
+		-- Click sound
+		local clickSound = Instance.new("Sound")
+		clickSound.SoundId = "rbxassetid://6895079853"
+		clickSound.Volume = 0.5
+		clickSound.Parent = mainButton
+
+		-- Smooth rotation animation
+		spawn(function()
+			while mainButton and mainButton.Parent do
+				for i = 0, 360, 2 do
+					if not mainButton or not mainButton.Parent then break end
+					mainButton.Rotation = i
+					task.wait(0.03)
+				end
+			end
+		end)
+
+		-- Pulsing glow animation
+		spawn(function()
+			while buttonGlow and buttonGlow.Parent do
+				TweenService:Create(buttonGlow, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+					ImageTransparency = 0.5
+				}):Play()
+				task.wait(1)
+				TweenService:Create(buttonGlow, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+					ImageTransparency = 0.8
+				}):Play()
+				task.wait(1)
+			end
+		end)
+
+		-- Selection Frame
+		local selectionFrame = Instance.new("ScrollingFrame")
+		selectionFrame.Name = "SelectionFrame"
+		selectionFrame.Size = UDim2.new(0.25, 0, 0.6, 0)
+		selectionFrame.Position = UDim2.new(0.07, 0, 0.35, 0)
+		selectionFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+		selectionFrame.BackgroundTransparency = 0.05
+		selectionFrame.BorderSizePixel = 0
+		selectionFrame.Visible = false
+		selectionFrame.ScrollBarThickness = 8
+		selectionFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 200, 255)
+		selectionFrame.CanvasSize = UDim2.new(0, 0, 0, #animationPacks * 75 + 60)
+		selectionFrame.Parent = screenGui
+
+		local frameCorner = Instance.new("UICorner")
+		frameCorner.CornerRadius = UDim.new(0, 12)
+		frameCorner.Parent = selectionFrame
+
+		local frameStroke = Instance.new("UIStroke")
+		frameStroke.Color = Color3.fromRGB(0, 0, 0)
+		frameStroke.Thickness = 3
+		frameStroke.Parent = selectionFrame
+
+		-- Title
+		local title = Instance.new("TextLabel")
+		title.Size = UDim2.new(0.9, 0, 0, 45)
+		title.Position = UDim2.new(0.05, 0, 0, 5)
+		title.BackgroundTransparency = 1
+		title.Text = "✈️ Flight Animation Styles"
+		title.TextColor3 = Color3.fromRGB(100, 200, 255)
+		title.Font = Enum.Font.GothamBold
+		title.TextSize = 18
+		title.Parent = selectionFrame
+
+		-- Create animation buttons
+		for i, pack in ipairs(animationPacks) do
+			local packButton = Instance.new("TextButton")
+			packButton.Size = UDim2.new(0.9, 0, 0, 65)
+			packButton.Position = UDim2.new(0.05, 0, 0, 50 + ((i - 1) * 75))
+			packButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+			packButton.BorderSizePixel = 0
+			packButton.Text = ""
+			packButton.Parent = selectionFrame
+
+			local packCorner = Instance.new("UICorner")
+			packCorner.CornerRadius = UDim.new(0, 8)
+			packCorner.Parent = packButton
+
+			local packStroke = Instance.new("UIStroke")
+			packStroke.Color = Color3.fromRGB(0, 0, 0)
+			packStroke.Thickness = 2
+			packStroke.Parent = packButton
+
+			local packIcon = Instance.new("ImageLabel")
+			packIcon.Size = UDim2.new(0, 50, 0, 50)
+			packIcon.Position = UDim2.new(0, 8, 0.5, -25)
+			packIcon.BackgroundTransparency = 1
+			packIcon.Image = pack.icon
+			packIcon.Parent = packButton
+
+			local packName = Instance.new("TextLabel")
+			packName.Size = UDim2.new(1, -70, 1, 0)
+			packName.Position = UDim2.new(0, 65, 0, 0)
+			packName.BackgroundTransparency = 1
+			packName.Text = pack.name
+			packName.TextColor3 = Color3.fromRGB(255, 255, 255)
+			packName.Font = Enum.Font.GothamBold
+			packName.TextSize = 15
+			packName.TextXAlignment = Enum.TextXAlignment.Left
+			packName.Parent = packButton
+
+			if i == currentPackIndex then
+				packButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+				packName.TextColor3 = Color3.fromRGB(0, 0, 0)
+				packStroke.Color = Color3.fromRGB(0, 0, 0)
+				packStroke.Thickness = 3
+			end
+
+			packButton.MouseButton1Click:Connect(function()
+				clickSound:Play()
+				bounceButton(packButton)
+
+				currentPackIndex = i
+				mainButton.Image = pack.icon
+
+				-- Update animations
+				if hoverAnim and flyForwardAnim then
+					hoverAnim.AnimationId = pack.hover
+					flyForwardAnim.AnimationId = pack.forward
+				end
+
+				-- Update all buttons
+				for _, child in ipairs(selectionFrame:GetChildren()) do
+					if child:IsA("TextButton") then
+						child.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+						local label = child:FindFirstChildOfClass("TextLabel")
+						if label then
+							label.TextColor3 = Color3.fromRGB(255, 255, 255)
+						end
+						local stroke = child:FindFirstChildOfClass("UIStroke")
+						if stroke then
+							stroke.Color = Color3.fromRGB(0, 0, 0)
+							stroke.Thickness = 2
+						end
+					end
+				end
+
+				packButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+				packName.TextColor3 = Color3.fromRGB(0, 0, 0)
+				packStroke.Color = Color3.fromRGB(0, 0, 0)
+				packStroke.Thickness = 3
+
+				createHeadBillboard(pack.name .. " activated!")
+				sendDiscordFeedback("positive", "🎨 Player switched to: " .. pack.name)
+
+				-- Reload animations if flying
+				if flying and currentHoverTrack and currentForwardTrack then
+					pcall(function()
+						if currentAnimTrack == currentHoverTrack then
+							currentHoverTrack:Stop()
+							currentHoverTrack = humanoid:LoadAnimation(hoverAnim)
+							currentHoverTrack.Priority = Enum.AnimationPriority.Action
+							currentHoverTrack.Looped = true
+							currentHoverTrack:Play(0.3)
+							currentAnimTrack = currentHoverTrack
+						elseif currentAnimTrack == currentForwardTrack then
+							currentForwardTrack:Stop()
+							currentForwardTrack = humanoid:LoadAnimation(flyForwardAnim)
+							currentForwardTrack.Priority = Enum.AnimationPriority.Action
+							currentForwardTrack.Looped = true
+							currentForwardTrack:Play(0.3)
+							currentAnimTrack = currentForwardTrack
+						end
+					end)
+				end
+			end)
+
+			packButton.MouseEnter:Connect(function()
+				if i ~= currentPackIndex then
+					TweenService:Create(packButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+						BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+						Size = UDim2.new(0.92, 0, 0, 68)
+					}):Play()
+				end
+			end)
+
+			packButton.MouseLeave:Connect(function()
+				if i ~= currentPackIndex then
+					TweenService:Create(packButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+						BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+						Size = UDim2.new(0.9, 0, 0, 65)
+					}):Play()
+				end
 			end)
 		end
 
-		if not thirdPartyEnabled then
-			setclipboard(SUPPORT_LINK)
-		end
-	end)
+		-- Toggle frame visibility
+		local isOpen = false
+		mainButton.MouseButton1Click:Connect(function()
+			clickSound:Play()
+			bounceButton(mainButton)
+			isOpen = not isOpen
 
-	closeButton.MouseButton1Click:Connect(function()
-		createHeadBillboard("Enjoy using Sulo's Flight")
-		mainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.3, true)
-		wait(0.3)
-		screenGui:Destroy()
-	end)
+			if isOpen then
+				selectionFrame.Visible = true
+				selectionFrame.Size = UDim2.new(0, 0, 0, 0)
 
-	supportButton.MouseEnter:Connect(function()
-		TweenService:Create(supportButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundColor3 = Color3.fromRGB(150, 220, 255)
-		}):Play()
-	end)
+				TweenService:Create(selectionFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+					Size = UDim2.new(0.25, 0, 0.6, 0)
+				}):Play()
 
-	supportButton.MouseLeave:Connect(function()
-		TweenService:Create(supportButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-		}):Play()
-	end)
+				TweenService:Create(buttonStroke, TweenInfo.new(0.2), {
+					Thickness = 4
+				}):Play()
+			else
+				TweenService:Create(selectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+					Size = UDim2.new(0, 0, 0, 0)
+				}):Play()
 
-	closeButton.MouseEnter:Connect(function()
-		TweenService:Create(closeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundColor3 = Color3.fromRGB(255, 150, 130)
-		}):Play()
-	end)
+				TweenService:Create(buttonStroke, TweenInfo.new(0.2), {
+					Thickness = 3
+				}):Play()
 
-	closeButton.MouseLeave:Connect(function()
-		TweenService:Create(closeButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundColor3 = Color3.fromRGB(255, 120, 100)
-		}):Play()
-	end)
+				task.wait(0.3)
+				selectionFrame.Visible = false
+			end
+		end)
 
-	mainFrame.Size = UDim2.new(0, 0, 0, 0)
-	mainFrame.Position = UDim2.new(0.5, 0, 0, 20)
-	mainFrame:TweenSize(UDim2.new(0, 300, 0, 120), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.5, true)
+		mainButton.MouseEnter:Connect(function()
+			TweenService:Create(mainButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+				Size = UDim2.new(0.05, 0, 0.09, 0)
+			}):Play()
+		end)
+
+		mainButton.MouseLeave:Connect(function()
+			TweenService:Create(mainButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+				Size = UDim2.new(0.045, 0, 0.08, 0)
+			}):Play()
+		end)
+	end)
 end
 
 local function createMobileControls()
 	if not isMobile then return end
 
-	local playerGui = player:WaitForChild("PlayerGui")
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "MobileControls"
-	screenGui.ResetOnSpawn = false
-	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	screenGui.Parent = playerGui
+	pcall(function()
+		local playerGui = player:WaitForChild("PlayerGui")
+		local screenGui = Instance.new("ScreenGui")
+		screenGui.Name = "MobileControls"
+		screenGui.ResetOnSpawn = false
+		screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		screenGui.Parent = playerGui
 
-	local movementJoystick = Instance.new("Frame")
-	movementJoystick.Name = "MovementJoystick"
-	movementJoystick.Size = UDim2.new(0, 120, 0, 120)
-	movementJoystick.Position = UDim2.new(0, 20, 1, -140)
-	movementJoystick.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	movementJoystick.BackgroundTransparency = 0.5
-	movementJoystick.BorderSizePixel = 0
-	movementJoystick.Parent = screenGui
+		local movementJoystick = Instance.new("Frame")
+		movementJoystick.Name = "MovementJoystick"
+		movementJoystick.Size = UDim2.new(0, 120, 0, 120)
+		movementJoystick.Position = UDim2.new(0, 20, 1, -140)
+		movementJoystick.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		movementJoystick.BackgroundTransparency = 0.3
+		movementJoystick.BorderSizePixel = 0
+		movementJoystick.Parent = screenGui
 
-	local movementCorner = Instance.new("UICorner")
-	movementCorner.CornerRadius = UDim.new(0, 60)
-	movementCorner.Parent = movementJoystick
+		local movementCorner = Instance.new("UICorner")
+		movementCorner.CornerRadius = UDim.new(0, 60)
+		movementCorner.Parent = movementJoystick
 
-	local movementStick = Instance.new("Frame")
-	movementStick.Name = "Stick"
-	movementStick.Size = UDim2.new(0, 40, 0, 40)
-	movementStick.Position = UDim2.new(0.5, -20, 0.5, -20)
-	movementStick.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-	movementStick.BorderSizePixel = 0
-	movementStick.Parent = movementJoystick
+		local joystickStroke = Instance.new("UIStroke")
+		joystickStroke.Color = Color3.fromRGB(0, 0, 0)
+		joystickStroke.Thickness = 3
+		joystickStroke.Parent = movementJoystick
 
-	local stickCorner = Instance.new("UICorner")
-	stickCorner.CornerRadius = UDim.new(0, 20)
-	stickCorner.Parent = movementStick
+		local movementStick = Instance.new("Frame")
+		movementStick.Name = "Stick"
+		movementStick.Size = UDim2.new(0, 40, 0, 40)
+		movementStick.Position = UDim2.new(0.5, -20, 0.5, -20)
+		movementStick.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+		movementStick.BorderSizePixel = 0
+		movementStick.Parent = movementJoystick
 
-	local upButton = Instance.new("TextButton")
-	upButton.Name = "UpButton"
-	upButton.Size = UDim2.new(0, 60, 0, 50)
-	upButton.Position = UDim2.new(1, -140, 1, -200)
-	upButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-	upButton.Text = "UP"
-	upButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	upButton.Font = Enum.Font.GothamBold
-	upButton.TextSize = 12
-	upButton.BorderSizePixel = 0
-	upButton.Parent = screenGui
+		local stickCorner = Instance.new("UICorner")
+		stickCorner.CornerRadius = UDim.new(0, 20)
+		stickCorner.Parent = movementStick
 
-	local upCorner = Instance.new("UICorner")
-	upCorner.CornerRadius = UDim.new(0, 8)
-	upCorner.Parent = upButton
+		local stickStroke = Instance.new("UIStroke")
+		stickStroke.Color = Color3.fromRGB(0, 0, 0)
+		stickStroke.Thickness = 2
+		stickStroke.Parent = movementStick
 
-	local downButton = Instance.new("TextButton")
-	downButton.Name = "DownButton"
-	downButton.Size = UDim2.new(0, 60, 0, 50)
-	downButton.Position = UDim2.new(1, -140, 1, -140)
-	downButton.BackgroundColor3 = Color3.fromRGB(255, 150, 100)
-	downButton.Text = "DOWN"
-	downButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	downButton.Font = Enum.Font.GothamBold
-	downButton.TextSize = 12
-	downButton.BorderSizePixel = 0
-	downButton.Parent = screenGui
+		local upButton = Instance.new("TextButton")
+		upButton.Name = "UpButton"
+		upButton.Size = UDim2.new(0, 60, 0, 50)
+		upButton.Position = UDim2.new(1, -140, 1, -200)
+		upButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+		upButton.Text = "UP"
+		upButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+		upButton.Font = Enum.Font.GothamBold
+		upButton.TextSize = 12
+		upButton.BorderSizePixel = 0
+		upButton.Parent = screenGui
 
-	local downCorner = Instance.new("UICorner")
-	downCorner.CornerRadius = UDim.new(0, 8)
-	downCorner.Parent = downButton
+		local upCorner = Instance.new("UICorner")
+		upCorner.CornerRadius = UDim.new(0, 8)
+		upCorner.Parent = upButton
 
-	local flyButton = Instance.new("TextButton")
-	flyButton.Name = "FlyButton"
-	flyButton.Size = UDim2.new(0, 100, 0, 50)
-	flyButton.Position = UDim2.new(1, -120, 0, 20)
-	flyButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
-	flyButton.Text = "FLY ON"
-	flyButton.TextColor3 = Color3.fromRGB(20, 20, 20)
-	flyButton.Font = Enum.Font.GothamBold
-	flyButton.TextSize = 14
-	flyButton.BorderSizePixel = 0
-	flyButton.Parent = screenGui
+		local upStroke = Instance.new("UIStroke")
+		upStroke.Color = Color3.fromRGB(0, 0, 0)
+		upStroke.Thickness = 2
+		upStroke.Parent = upButton
 
-	local flyCorner = Instance.new("UICorner")
-	flyCorner.CornerRadius = UDim.new(0, 8)
-	flyCorner.Parent = flyButton
+		local downButton = Instance.new("TextButton")
+		downButton.Name = "DownButton"
+		downButton.Size = UDim2.new(0, 60, 0, 50)
+		downButton.Position = UDim2.new(1, -140, 1, -140)
+		downButton.BackgroundColor3 = Color3.fromRGB(255, 150, 100)
+		downButton.Text = "DOWN"
+		downButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+		downButton.Font = Enum.Font.GothamBold
+		downButton.TextSize = 12
+		downButton.BorderSizePixel = 0
+		downButton.Parent = screenGui
 
-	local mobileJoystickActive = false
+		local downCorner = Instance.new("UICorner")
+		downCorner.CornerRadius = UDim.new(0, 8)
+		downCorner.Parent = downButton
 
-	movementJoystick.InputBegan:Connect(function(input, gameProcessed)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			mobileJoystickActive = true
-		end
-	end)
+		local downStroke = Instance.new("UIStroke")
+		downStroke.Color = Color3.fromRGB(0, 0, 0)
+		downStroke.Thickness = 2
+		downStroke.Parent = downButton
 
-	movementJoystick.InputEnded:Connect(function(input, gameProcessed)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			mobileJoystickActive = false
-			ctrl.f = 0
-			ctrl.b = 0
-			ctrl.l = 0
-			ctrl.r = 0
-			movementStick.Position = UDim2.new(0.5, -20, 0.5, -20)
-		end
-	end)
+		local flyButton = Instance.new("TextButton")
+		flyButton.Name = "FlyButton"
+		flyButton.Size = UDim2.new(0, 100, 0, 50)
+		flyButton.Position = UDim2.new(1, -120, 0, 20)
+		flyButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
+		flyButton.Text = "FLY ON"
+		flyButton.TextColor3 = Color3.fromRGB(20, 20, 20)
+		flyButton.Font = Enum.Font.GothamBold
+		flyButton.TextSize = 14
+		flyButton.BorderSizePixel = 0
+		flyButton.Parent = screenGui
 
-	movementJoystick.InputChanged:Connect(function(input, gameProcessed)
-		if input.UserInputType == Enum.UserInputType.Touch and mobileJoystickActive then
-			local touchPos = input.Position
-			local joystickPos = movementJoystick.AbsolutePosition
-			local joystickSize = movementJoystick.AbsoluteSize
-			local center = joystickPos + joystickSize / 2
+		local flyCorner = Instance.new("UICorner")
+		flyCorner.CornerRadius = UDim.new(0, 8)
+		flyCorner.Parent = flyButton
 
-			local deltaX = touchPos.X - center.X
-			local deltaY = touchPos.Y - center.Y
-			local distance = math.sqrt(deltaX ^ 2 + deltaY ^ 2)
-			local maxDistance = joystickSize.X / 2 - 30
+		local flyStroke = Instance.new("UIStroke")
+		flyStroke.Color = Color3.fromRGB(0, 0, 0)
+		flyStroke.Thickness = 2
+		flyStroke.Parent = flyButton
 
-			if distance > maxDistance then
-				distance = maxDistance
+		local mobileJoystickActive = false
+
+		movementJoystick.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				mobileJoystickActive = true
 			end
+		end)
 
-			local angle = math.atan2(deltaY, deltaX)
-			local stickX = math.cos(angle) * distance
-			local stickY = math.sin(angle) * distance
+		movementJoystick.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				mobileJoystickActive = false
+				ctrl.f = 0
+				ctrl.b = 0
+				ctrl.l = 0
+				ctrl.r = 0
+				TweenService:Create(movementStick, TweenInfo.new(0.2, Enum.EasingStyle.Elastic), {
+					Position = UDim2.new(0.5, -20, 0.5, -20)
+				}):Play()
+			end
+		end)
 
-			movementStick.Position = UDim2.new(0.5, stickX - 20, 0.5, stickY - 20)
+		movementJoystick.InputChanged:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch and mobileJoystickActive then
+				local touchPos = input.Position
+				local joystickPos = movementJoystick.AbsolutePosition
+				local joystickSize = movementJoystick.AbsoluteSize
+				local center = joystickPos + joystickSize / 2
 
-			ctrl.f = 0
-			ctrl.b = 0
-			ctrl.l = 0
-			ctrl.r = 0
+				local deltaX = touchPos.X - center.X
+				local deltaY = touchPos.Y - center.Y
+				local distance = math.sqrt(deltaX ^ 2 + deltaY ^ 2)
+				local maxDistance = joystickSize.X / 2 - 30
 
-			if distance > 15 then
-				if angle > -2.36 and angle < -0.785 then
-					ctrl.f = 1
-				elseif angle > 0.785 and angle < 2.36 then
-					ctrl.b = -1
+				if distance > maxDistance then
+					distance = maxDistance
 				end
 
-				if angle > -0.785 and angle < 0.785 then
-					ctrl.r = 1
-				elseif angle > 2.36 or angle < -2.36 then
-					ctrl.l = -1
+				local angle = math.atan2(deltaY, deltaX)
+				local stickX = math.cos(angle) * distance
+				local stickY = math.sin(angle) * distance
+
+				movementStick.Position = UDim2.new(0.5, stickX - 20, 0.5, stickY - 20)
+
+				ctrl.f = 0
+				ctrl.b = 0
+				ctrl.l = 0
+				ctrl.r = 0
+
+				if distance > 15 then
+					if angle > -2.36 and angle < -0.785 then
+						ctrl.f = 1
+					elseif angle > 0.785 and angle < 2.36 then
+						ctrl.b = -1
+					end
+
+					if angle > -0.785 and angle < 0.785 then
+						ctrl.r = 1
+					elseif angle > 2.36 or angle < -2.36 then
+						ctrl.l = -1
+					end
 				end
 			end
-		end
-	end)
+		end)
 
-	upButton.InputBegan:Connect(function(input, gameProcessed)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			ctrl.up = 1
-		end
-	end)
+		upButton.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				ctrl.up = 1
+				bounceButton(upButton)
+			end
+		end)
 
-	upButton.InputEnded:Connect(function(input, gameProcessed)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			ctrl.up = 0
-		end
-	end)
+		upButton.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				ctrl.up = 0
+			end
+		end)
 
-	downButton.InputBegan:Connect(function(input, gameProcessed)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			ctrl.down = -1
-		end
-	end)
+		downButton.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				ctrl.down = -1
+				bounceButton(downButton)
+			end
+		end)
 
-	downButton.InputEnded:Connect(function(input, gameProcessed)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			ctrl.down = 0
-		end
-	end)
+		downButton.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				ctrl.down = 0
+			end
+		end)
 
-	flyButton.MouseButton1Click:Connect(function()
-		toggleFlight()
-		if flying then
-			flyButton.Text = "FLY OFF"
-			flyButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
-		else
-			flyButton.Text = "FLY ON"
-			flyButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
-		end
+		flyButton.MouseButton1Click:Connect(function()
+			bounceButton(flyButton)
+			toggleFlight()
+			if flying then
+				flyButton.Text = "FLY OFF"
+				flyButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+			else
+				flyButton.Text = "FLY ON"
+				flyButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
+			end
+		end)
 	end)
 end
 
 local function createFlyingAnimations()
-	hoverAnim = Instance.new("Animation")
-	hoverAnim.AnimationId = "rbxassetid://112089880074848"
+	pcall(function()
+		hoverAnim = Instance.new("Animation")
+		hoverAnim.AnimationId = animationPacks[currentPackIndex].hover
 
-	flyForwardAnim = Instance.new("Animation")
-	flyForwardAnim.AnimationId = "rbxassetid://130932988394284"
+		flyForwardAnim = Instance.new("Animation")
+		flyForwardAnim.AnimationId = animationPacks[currentPackIndex].forward
+	end)
 end
 
 local function createLegTrail(leg, legName)
 	if not leg then return end
 
-	local topAttachment = Instance.new("Attachment")
-	topAttachment.Name = legName .. "TrailTop"
-	topAttachment.Parent = leg
-	topAttachment.Position = Vector3.new(0, 0.5, 0)
+	pcall(function()
+		local topAttachment = Instance.new("Attachment")
+		topAttachment.Name = legName .. "TrailTop"
+		topAttachment.Parent = leg
+		topAttachment.Position = Vector3.new(0, 0.5, 0)
 
-	local bottomAttachment = Instance.new("Attachment")
-	bottomAttachment.Name = legName .. "TrailBottom"
-	bottomAttachment.Parent = leg
-	bottomAttachment.Position = Vector3.new(0, -1, 0)
+		local bottomAttachment = Instance.new("Attachment")
+		bottomAttachment.Name = legName .. "TrailBottom"
+		bottomAttachment.Parent = leg
+		bottomAttachment.Position = Vector3.new(0, -1, 0)
 
-	task.wait()
+		task.wait()
 
-	local trail = Instance.new("Trail")
-	trail.Name = legName .. "Trail"
-	trail.Attachment0 = topAttachment
-	trail.Attachment1 = bottomAttachment
-	trail.Parent = leg
+		local trail = Instance.new("Trail")
+		trail.Name = legName .. "Trail"
+		trail.Attachment0 = topAttachment
+		trail.Attachment1 = bottomAttachment
+		trail.Parent = leg
 
-	trail.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 200, 255)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 150, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 255))
-	})
+		trail.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 200, 255)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 150, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 255))
+		})
 
-	trail.Lifetime = 1.2
-	trail.MinLength = 0.01
-	trail.LightEmission = 1
-	trail.LightInfluence = 0
-	trail.WidthScale = NumberSequence.new(0.4)
-	trail.FaceCamera = true
-	trail.Enabled = true
+		trail.Lifetime = 1.2
+		trail.MinLength = 0.01
+		trail.LightEmission = 1
+		trail.LightInfluence = 0
+		trail.WidthScale = NumberSequence.new(0.4)
+		trail.FaceCamera = true
+		trail.Enabled = true
 
-	table.insert(activeTrails, trail)
+		table.insert(activeTrails, trail)
+	end)
 end
 
 local function cleanupTrails()
 	for _, trail in ipairs(activeTrails) do
-		if trail then
-			trail:Destroy()
-		end
+		pcall(function()
+			if trail then
+				trail:Destroy()
+			end
+		end)
 	end
 	activeTrails = {}
 end
@@ -531,80 +1018,86 @@ local function startFly()
 	if flying then return end
 	flying = true
 
-	bodyGyro = Instance.new("BodyGyro", rootPart)
-	bodyGyro.P = 9e4
-	bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-	bodyGyro.CFrame = rootPart.CFrame
+	pcall(function()
+		bodyGyro = Instance.new("BodyGyro", rootPart)
+		bodyGyro.P = 9e4
+		bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+		bodyGyro.CFrame = rootPart.CFrame
 
-	bodyVelocity = Instance.new("BodyVelocity", rootPart)
-	bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
-	bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+		bodyVelocity = Instance.new("BodyVelocity", rootPart)
+		bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+		bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
 
-	humanoid.PlatformStand = true
-	speed = 0
+		humanoid.PlatformStand = true
+		speed = 0
 
-	local leftLeg = character:FindFirstChild("Left Leg") or character:FindFirstChild("LeftLowerLeg") or character:FindFirstChild("LeftFoot")
-	local rightLeg = character:FindFirstChild("Right Leg") or character:FindFirstChild("RightLowerLeg") or character:FindFirstChild("RightFoot")
+		local leftLeg = character:FindFirstChild("Left Leg") or character:FindFirstChild("LeftLowerLeg") or character:FindFirstChild("LeftFoot")
+		local rightLeg = character:FindFirstChild("Right Leg") or character:FindFirstChild("RightLowerLeg") or character:FindFirstChild("RightFoot")
 
-	createLegTrail(leftLeg, "Left")
-	createLegTrail(rightLeg, "Right")
+		createLegTrail(leftLeg, "Left")
+		createLegTrail(rightLeg, "Right")
 
-	local hoverTrack = humanoid:LoadAnimation(hoverAnim)
-	hoverTrack.Priority = Enum.AnimationPriority.Action
-	hoverTrack.Looped = true
-	hoverTrack:Play(0.3)
-	currentAnimTrack = hoverTrack
+		if hoverAnim and flyForwardAnim then
+			currentHoverTrack = humanoid:LoadAnimation(hoverAnim)
+			currentHoverTrack.Priority = Enum.AnimationPriority.Action
+			currentHoverTrack.Looped = true
+			currentHoverTrack:Play(0.3)
+			currentAnimTrack = currentHoverTrack
 
-	local forwardTrack = humanoid:LoadAnimation(flyForwardAnim)
-	forwardTrack.Priority = Enum.AnimationPriority.Action
-	forwardTrack.Looped = true
+			currentForwardTrack = humanoid:LoadAnimation(flyForwardAnim)
+			currentForwardTrack.Priority = Enum.AnimationPriority.Action
+			currentForwardTrack.Looped = true
+		end
 
-	flyConnection = RunService.RenderStepped:Connect(function()
-		if not flying or not bodyVelocity or not bodyVelocity.Parent then
-			if flyConnection then
-				flyConnection:Disconnect()
+		flyConnection = RunService.RenderStepped:Connect(function()
+			if not flying or not bodyVelocity or not bodyVelocity.Parent then
+				if flyConnection then
+					flyConnection:Disconnect()
+				end
+				return
 			end
-			return
-		end
 
-		local isMoving = ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 or ctrl.up + ctrl.down ~= 0
+			local isMoving = ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 or ctrl.up + ctrl.down ~= 0
 
-		if isMoving then
-			speed = speed + 0.5 + (speed / maxspeed)
-			if speed > maxspeed then speed = maxspeed end
-		else
-			speed = math.max(0, speed - 1)
-		end
+			if isMoving then
+				speed = speed + 0.5 + (speed / maxspeed)
+				if speed > maxspeed then speed = maxspeed end
+			else
+				speed = math.max(0, speed - 1)
+			end
 
-		local isMovingForward = ctrl.f > 0 or speed > 10
+			local isMovingForward = ctrl.f > 0 or speed > 10
 
-		if isMovingForward and currentAnimTrack ~= forwardTrack then
-			hoverTrack:Stop(0.3)
-			forwardTrack:Play(0.3)
-			currentAnimTrack = forwardTrack
-		elseif not isMovingForward and currentAnimTrack ~= hoverTrack then
-			forwardTrack:Stop(0.3)
-			hoverTrack:Play(0.3)
-			currentAnimTrack = hoverTrack
-		end
+			if currentForwardTrack and currentHoverTrack then
+				if isMovingForward and currentAnimTrack ~= currentForwardTrack then
+					currentHoverTrack:Stop(0.3)
+					currentForwardTrack:Play(0.3)
+					currentAnimTrack = currentForwardTrack
+				elseif not isMovingForward and currentAnimTrack ~= currentHoverTrack then
+					currentForwardTrack:Stop(0.3)
+					currentHoverTrack:Play(0.3)
+					currentAnimTrack = currentHoverTrack
+				end
 
-		if currentAnimTrack == forwardTrack then
-			local speedPercent = speed / maxspeed
-			forwardTrack:AdjustSpeed(0.8 + (speedPercent * 0.7))
-		end
+				if currentAnimTrack == currentForwardTrack then
+					local speedPercent = speed / maxspeed
+					currentForwardTrack:AdjustSpeed(0.8 + (speedPercent * 0.7))
+				end
+			end
 
-		if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 or (ctrl.up + ctrl.down) ~= 0 then
-			local cam = workspace.CurrentCamera
-			bodyVelocity.Velocity = ((cam.CFrame.LookVector * (ctrl.f + ctrl.b)) + (cam.CFrame.RightVector * (ctrl.l + ctrl.r)) + (Vector3.new(0, 1, 0) * (ctrl.up + ctrl.down))) * speed
-			lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
-		elseif speed ~= 0 then
-			local cam = workspace.CurrentCamera
-			bodyVelocity.Velocity = ((cam.CFrame.LookVector * (lastctrl.f + lastctrl.b)) + (cam.CFrame.RightVector * (lastctrl.l + lastctrl.r))) * speed
-		else
-			bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
-		end
+			if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 or (ctrl.up + ctrl.down) ~= 0 then
+				local cam = workspace.CurrentCamera
+				bodyVelocity.Velocity = ((cam.CFrame.LookVector * (ctrl.f + ctrl.b)) + (cam.CFrame.RightVector * (ctrl.l + ctrl.r)) + (Vector3.new(0, 1, 0) * (ctrl.up + ctrl.down))) * speed
+				lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+			elseif speed ~= 0 then
+				local cam = workspace.CurrentCamera
+				bodyVelocity.Velocity = ((cam.CFrame.LookVector * (lastctrl.f + lastctrl.b)) + (cam.CFrame.RightVector * (lastctrl.l + lastctrl.r))) * speed
+			else
+				bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+			end
 
-		bodyGyro.CFrame = workspace.CurrentCamera.CFrame * CFrame.Angles(-math.rad((ctrl.f + ctrl.b) * 50 * speed / maxspeed), 0, 0)
+			bodyGyro.CFrame = workspace.CurrentCamera.CFrame * CFrame.Angles(-math.rad((ctrl.f + ctrl.b) * 50 * speed / maxspeed), 0, 0)
+		end)
 	end)
 end
 
@@ -612,26 +1105,28 @@ local function stopFly()
 	if not flying then return end
 	flying = false
 
-	if flyConnection then
-		flyConnection:Disconnect()
-		flyConnection = nil
-	end
+	pcall(function()
+		if flyConnection then
+			flyConnection:Disconnect()
+			flyConnection = nil
+		end
 
-	if bodyVelocity then bodyVelocity:Destroy() end
-	if bodyGyro then bodyGyro:Destroy() end
+		if bodyVelocity then bodyVelocity:Destroy() end
+		if bodyGyro then bodyGyro:Destroy() end
 
-	humanoid.PlatformStand = false
+		humanoid.PlatformStand = false
 
-	if currentAnimTrack then
-		currentAnimTrack:Stop(0.3)
-		currentAnimTrack = nil
-	end
+		if currentAnimTrack then
+			currentAnimTrack:Stop(0.3)
+			currentAnimTrack = nil
+		end
 
-	ctrl = {f = 0, b = 0, l = 0, r = 0, up = 0, down = 0}
-	lastctrl = {f = 0, b = 0, l = 0, r = 0}
-	speed = 0
+		ctrl = {f = 0, b = 0, l = 0, r = 0, up = 0, down = 0}
+		lastctrl = {f = 0, b = 0, l = 0, r = 0}
+		speed = 0
 
-	cleanupTrails()
+		cleanupTrails()
+	end)
 end
 
 function toggleFlight()
@@ -668,7 +1163,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	end
 end)
 
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
+UserInputService.InputEnded:Connect(function(input)
 	if input.KeyCode == Enum.KeyCode.W then
 		ctrl.f = 0
 	elseif input.KeyCode == Enum.KeyCode.S then
@@ -685,314 +1180,319 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
 end)
 
 local function showSuccessNotification()
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "FlightLoadedNotification"
-	screenGui.ResetOnSpawn = false
-	screenGui.Parent = player:WaitForChild("PlayerGui")
+	pcall(function()
+		local screenGui = Instance.new("ScreenGui")
+		screenGui.Name = "FlightLoadedNotification"
+		screenGui.ResetOnSpawn = false
+		screenGui.Parent = player:WaitForChild("PlayerGui")
 
-	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(0, 350, 0, 120)
-	frame.Position = UDim2.new(1, -370, 0, 20)
-	frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	frame.BorderSizePixel = 0
-	frame.Parent = screenGui
+		local frame = Instance.new("Frame")
+		frame.Size = UDim2.new(0, 350, 0, 120)
+		frame.Position = UDim2.new(1, 0, 0, 20)
+		frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		frame.BorderSizePixel = 0
+		frame.Parent = screenGui
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
-	corner.Parent = frame
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 10)
+		corner.Parent = frame
 
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(85, 255, 127)
-	stroke.Thickness = 2
-	stroke.Parent = frame
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Color3.fromRGB(0, 0, 0)
+		stroke.Thickness = 3
+		stroke.Parent = frame
 
-	local title = Instance.new("TextLabel")
-	title.Size = UDim2.new(1, -20, 0, 35)
-	title.Position = UDim2.new(0, 10, 0, 10)
-	title.BackgroundTransparency = 1
-	title.Text = "✨ Flight Loaded!"
-	title.TextColor3 = Color3.fromRGB(85, 255, 127)
-	title.Font = Enum.Font.GothamBold
-	title.TextSize = 18
-	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.Parent = frame
+		local title = Instance.new("TextLabel")
+		title.Size = UDim2.new(1, -20, 0, 35)
+		title.Position = UDim2.new(0, 10, 0, 10)
+		title.BackgroundTransparency = 1
+		title.Text = "✨ Flight Loaded!"
+		title.TextColor3 = Color3.fromRGB(85, 255, 127)
+		title.Font = Enum.Font.GothamBold
+		title.TextSize = 18
+		title.TextXAlignment = Enum.TextXAlignment.Left
+		title.Parent = frame
 
-	local controls = Instance.new("TextLabel")
-	controls.Size = UDim2.new(1, -20, 0, 65)
-	controls.Position = UDim2.new(0, 10, 0, 45)
-	controls.BackgroundTransparency = 1
-	if isMobile then
-		controls.Text = "Use joystick to move\nPress FLY button to toggle"
-	else
-		controls.Text = "Double tap SPACE to fly\nW/A/S/D to move | Q/E for up/down"
-	end
-	controls.TextColor3 = Color3.fromRGB(200, 200, 200)
-	controls.Font = Enum.Font.Gotham
-	controls.TextSize = 13
-	controls.TextXAlignment = Enum.TextXAlignment.Left
-	controls.TextYAlignment = Enum.TextYAlignment.Top
-	controls.TextWrapped = true
-	controls.Parent = frame
+		local controls = Instance.new("TextLabel")
+		controls.Size = UDim2.new(1, -20, 0, 65)
+		controls.Position = UDim2.new(0, 10, 0, 45)
+		controls.BackgroundTransparency = 1
+		if isMobile then
+			controls.Text = "Use joystick to move\nPress FLY button to toggle"
+		else
+			controls.Text = "Double tap SPACE to fly\nW/A/S/D to move | Q/E for up/down"
+		end
+		controls.TextColor3 = Color3.fromRGB(200, 200, 200)
+		controls.Font = Enum.Font.Gotham
+		controls.TextSize = 13
+		controls.TextXAlignment = Enum.TextXAlignment.Left
+		controls.TextYAlignment = Enum.TextYAlignment.Top
+		controls.TextWrapped = true
+		controls.Parent = frame
 
-	frame.Position = UDim2.new(1, 0, 0, 20)
-	frame:TweenPosition(UDim2.new(1, -370, 0, 20), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.5, true)
+		frame:TweenPosition(UDim2.new(1, -370, 0, 20), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.5, true)
 
-	task.wait(5)
-	frame:TweenPosition(UDim2.new(1, 0, 0, 20), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.4, true)
-	task.wait(0.5)
-	screenGui:Destroy()
+		task.wait(5)
+		frame:TweenPosition(UDim2.new(1, 0, 0, 20), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.4, true)
+		task.wait(0.5)
+		screenGui:Destroy()
+	end)
 end
 
 local function playPremiumIntro()
 	print("🎬 STARTING PREMIUM INTRO...")
 
-	humanoid.WalkSpeed = 0
-	humanoid.JumpPower = 0
+	pcall(function()
+		humanoid.WalkSpeed = 0
+		humanoid.JumpPower = 0
 
-	local introAnim = Instance.new("Animation")
-	introAnim.AnimationId = "rbxassetid://74473837890133"
-	local introTrack = humanoid:LoadAnimation(introAnim)
-	introTrack.Priority = Enum.AnimationPriority.Action4
-	introTrack:Play()
+		local introAnim = Instance.new("Animation")
+		introAnim.AnimationId = "rbxassetid://74473837890133"
+		local introTrack = humanoid:LoadAnimation(introAnim)
+		introTrack.Priority = Enum.AnimationPriority.Action4
+		introTrack:Play()
 
-	local attachment = Instance.new("Attachment")
-	attachment.Name = "IntroAttachment"
-	attachment.Parent = torso
+		local attachment = Instance.new("Attachment")
+		attachment.Name = "IntroAttachment"
+		attachment.Parent = torso
 
-	local auraParticle = Instance.new("ParticleEmitter")
-	auraParticle.Name = "Aura"
-	auraParticle.Parent = attachment
-	auraParticle.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	auraParticle.Rate = 100
-	auraParticle.Lifetime = NumberRange.new(1, 1.5)
-	auraParticle.Speed = NumberRange.new(0, 0)
-	auraParticle.SpreadAngle = Vector2.new(180, 180)
-	auraParticle.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 180, 255)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 120, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 255))
-	})
-	auraParticle.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0),
-		NumberSequenceKeypoint.new(0.3, 6),
-		NumberSequenceKeypoint.new(1, 8)
-	})
-	auraParticle.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.8),
-		NumberSequenceKeypoint.new(0.5, 0.5),
-		NumberSequenceKeypoint.new(1, 1)
-	})
-	auraParticle.LightEmission = 1
-	auraParticle.ZOffset = -2
+		local auraParticle = Instance.new("ParticleEmitter")
+		auraParticle.Name = "Aura"
+		auraParticle.Parent = attachment
+		auraParticle.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		auraParticle.Rate = 100
+		auraParticle.Lifetime = NumberRange.new(1, 1.5)
+		auraParticle.Speed = NumberRange.new(0, 0)
+		auraParticle.SpreadAngle = Vector2.new(180, 180)
+		auraParticle.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 180, 255)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 120, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 255))
+		})
+		auraParticle.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.3, 6),
+			NumberSequenceKeypoint.new(1, 8)
+		})
+		auraParticle.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.8),
+			NumberSequenceKeypoint.new(0.5, 0.5),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		auraParticle.LightEmission = 1
+		auraParticle.ZOffset = -2
 
-	local spiralParticle = Instance.new("ParticleEmitter")
-	spiralParticle.Name = "Spiral"
-	spiralParticle.Parent = attachment
-	spiralParticle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-	spiralParticle.Rate = 60
-	spiralParticle.Lifetime = NumberRange.new(2, 3)
-	spiralParticle.Speed = NumberRange.new(5, 8)
-	spiralParticle.SpreadAngle = Vector2.new(360, 0)
-	spiralParticle.Color = ColorSequence.new(Color3.fromRGB(200, 230, 255))
-	spiralParticle.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.5),
-		NumberSequenceKeypoint.new(0.5, 0.8),
-		NumberSequenceKeypoint.new(1, 0)
-	})
-	spiralParticle.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0),
-		NumberSequenceKeypoint.new(0.7, 0.5),
-		NumberSequenceKeypoint.new(1, 1)
-	})
-	spiralParticle.LightEmission = 1
-	spiralParticle.Acceleration = Vector3.new(0, 20, 0)
-	spiralParticle.Drag = 1
+		local spiralParticle = Instance.new("ParticleEmitter")
+		spiralParticle.Name = "Spiral"
+		spiralParticle.Parent = attachment
+		spiralParticle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		spiralParticle.Rate = 60
+		spiralParticle.Lifetime = NumberRange.new(2, 3)
+		spiralParticle.Speed = NumberRange.new(5, 8)
+		spiralParticle.SpreadAngle = Vector2.new(360, 0)
+		spiralParticle.Color = ColorSequence.new(Color3.fromRGB(200, 230, 255))
+		spiralParticle.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(0.5, 0.8),
+			NumberSequenceKeypoint.new(1, 0)
+		})
+		spiralParticle.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.7, 0.5),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		spiralParticle.LightEmission = 1
+		spiralParticle.Acceleration = Vector3.new(0, 20, 0)
+		spiralParticle.Drag = 1
 
-	local runeParticle = Instance.new("ParticleEmitter")
-	runeParticle.Name = "Runes"
-	runeParticle.Parent = attachment
-	runeParticle.Texture = "rbxassetid://11719595129"
-	runeParticle.Rate = 20
-	runeParticle.Lifetime = NumberRange.new(2, 2.5)
-	runeParticle.Speed = NumberRange.new(3, 5)
-	runeParticle.SpreadAngle = Vector2.new(360, 360)
-	runeParticle.Rotation = NumberRange.new(0, 360)
-	runeParticle.RotSpeed = NumberRange.new(-100, 100)
-	runeParticle.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 200, 255)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 150, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 200, 255))
-	})
-	runeParticle.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0),
-		NumberSequenceKeypoint.new(0.2, 2),
-		NumberSequenceKeypoint.new(0.8, 2),
-		NumberSequenceKeypoint.new(1, 0)
-	})
-	runeParticle.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.2, 0.2),
-		NumberSequenceKeypoint.new(0.8, 0.2),
-		NumberSequenceKeypoint.new(1, 1)
-	})
-	runeParticle.LightEmission = 1
-	runeParticle.Drag = 2
+		local runeParticle = Instance.new("ParticleEmitter")
+		runeParticle.Name = "Runes"
+		runeParticle.Parent = attachment
+		runeParticle.Texture = "rbxassetid://11719595129"
+		runeParticle.Rate = 20
+		runeParticle.Lifetime = NumberRange.new(2, 2.5)
+		runeParticle.Speed = NumberRange.new(3, 5)
+		runeParticle.SpreadAngle = Vector2.new(360, 360)
+		runeParticle.Rotation = NumberRange.new(0, 360)
+		runeParticle.RotSpeed = NumberRange.new(-100, 100)
+		runeParticle.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 200, 255)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 150, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 200, 255))
+		})
+		runeParticle.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.2, 2),
+			NumberSequenceKeypoint.new(0.8, 2),
+			NumberSequenceKeypoint.new(1, 0)
+		})
+		runeParticle.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.2, 0.2),
+			NumberSequenceKeypoint.new(0.8, 0.2),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		runeParticle.LightEmission = 1
+		runeParticle.Drag = 2
 
-	local groundAttachment = Instance.new("Attachment")
-	groundAttachment.Parent = rootPart
-	groundAttachment.Position = Vector3.new(0, -3, 0)
+		local groundAttachment = Instance.new("Attachment")
+		groundAttachment.Parent = rootPart
+		groundAttachment.Position = Vector3.new(0, -3, 0)
 
-	local shockwave = Instance.new("ParticleEmitter")
-	shockwave.Name = "Shockwave"
-	shockwave.Parent = groundAttachment
-	shockwave.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	shockwave.EmissionDirection = Enum.NormalId.Top
-	shockwave.Rate = 30
-	shockwave.Lifetime = NumberRange.new(1, 1.5)
-	shockwave.Speed = NumberRange.new(20, 30)
-	shockwave.SpreadAngle = Vector2.new(180, 180)
-	shockwave.Color = ColorSequence.new(Color3.fromRGB(150, 200, 255))
-	shockwave.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 2),
-		NumberSequenceKeypoint.new(0.5, 6),
-		NumberSequenceKeypoint.new(1, 10)
-	})
-	shockwave.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.5),
-		NumberSequenceKeypoint.new(1, 1)
-	})
-	shockwave.LightEmission = 0.8
-	shockwave.Acceleration = Vector3.new(0, -5, 0)
+		local shockwave = Instance.new("ParticleEmitter")
+		shockwave.Name = "Shockwave"
+		shockwave.Parent = groundAttachment
+		shockwave.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		shockwave.EmissionDirection = Enum.NormalId.Top
+		shockwave.Rate = 30
+		shockwave.Lifetime = NumberRange.new(1, 1.5)
+		shockwave.Speed = NumberRange.new(20, 30)
+		shockwave.SpreadAngle = Vector2.new(180, 180)
+		shockwave.Color = ColorSequence.new(Color3.fromRGB(150, 200, 255))
+		shockwave.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 2),
+			NumberSequenceKeypoint.new(0.5, 6),
+			NumberSequenceKeypoint.new(1, 10)
+		})
+		shockwave.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		shockwave.LightEmission = 0.8
+		shockwave.Acceleration = Vector3.new(0, -5, 0)
 
-	local light = Instance.new("PointLight")
-	light.Parent = torso
-	light.Brightness = 0
-	light.Range = 0
-	light.Color = Color3.fromRGB(150, 180, 255)
+		local light = Instance.new("PointLight")
+		light.Parent = torso
+		light.Brightness = 0
+		light.Range = 0
+		light.Color = Color3.fromRGB(150, 180, 255)
 
-	local colorCorrection = Instance.new("ColorCorrectionEffect")
-	colorCorrection.Parent = game.Lighting
-	colorCorrection.Brightness = 0
-	colorCorrection.Contrast = 0
-	colorCorrection.Saturation = 0
+		local colorCorrection = Instance.new("ColorCorrectionEffect")
+		colorCorrection.Parent = game.Lighting
+		colorCorrection.Brightness = 0
+		colorCorrection.Contrast = 0
+		colorCorrection.Saturation = 0
 
-	local bloom = Instance.new("BloomEffect")
-	bloom.Parent = game.Lighting
-	bloom.Intensity = 0
-	bloom.Size = 24
-	bloom.Threshold = 0.8
+		local bloom = Instance.new("BloomEffect")
+		bloom.Parent = game.Lighting
+		bloom.Intensity = 0
+		bloom.Size = 24
+		bloom.Threshold = 0.8
 
-	local bodyPosition = Instance.new("BodyPosition")
-	bodyPosition.Parent = rootPart
-	bodyPosition.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-	bodyPosition.P = 2000
-	bodyPosition.D = 300
+		local bodyPosition = Instance.new("BodyPosition")
+		bodyPosition.Parent = rootPart
+		bodyPosition.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+		bodyPosition.P = 2000
+		bodyPosition.D = 300
 
-	local bodyGyro = Instance.new("BodyGyro")
-	bodyGyro.Parent = rootPart
-	bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-	bodyGyro.P = 9e4
-	bodyGyro.CFrame = rootPart.CFrame
+		local introBodyGyro = Instance.new("BodyGyro")
+		introBodyGyro.Parent = rootPart
+		introBodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+		introBodyGyro.P = 9e4
+		introBodyGyro.CFrame = rootPart.CFrame
 
-	local targetPos = rootPart.Position + Vector3.new(0, 12, 0)
-	local startPos = rootPart.Position
-	local duration = 3
-	local startTime = tick()
+		local targetPos = rootPart.Position + Vector3.new(0, 12, 0)
+		local startPos = rootPart.Position
+		local duration = 3
+		local startTime = tick()
 
-	TweenService:Create(light, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Brightness = 5,
-		Range = 40
-	}):Play()
+		TweenService:Create(light, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Brightness = 5,
+			Range = 40
+		}):Play()
 
-	TweenService:Create(colorCorrection, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Brightness = 0.15,
-		Saturation = 0.3
-	}):Play()
+		TweenService:Create(colorCorrection, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Brightness = 0.15,
+			Saturation = 0.3
+		}):Play()
 
-	TweenService:Create(bloom, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Intensity = 0.5
-	}):Play()
+		TweenService:Create(bloom, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Intensity = 0.5
+		}):Play()
 
-	local introConnection
-	introConnection = RunService.RenderStepped:Connect(function()
-		if not introConnection or not bodyPosition or not bodyPosition.Parent then
-			return
-		end
+		local introConnection
+		introConnection = RunService.RenderStepped:Connect(function()
+			if not introConnection or not bodyPosition or not bodyPosition.Parent then
+				return
+			end
 
-		local elapsed = tick() - startTime
-		local alpha = math.min(elapsed / duration, 1)
+			local elapsed = tick() - startTime
+			local alpha = math.min(elapsed / duration, 1)
 
-		local easedAlpha = 1 - math.pow(1 - alpha, 4)
-		bodyPosition.Position = startPos:Lerp(targetPos, easedAlpha)
+			local easedAlpha = 1 - math.pow(1 - alpha, 4)
+			bodyPosition.Position = startPos:Lerp(targetPos, easedAlpha)
 
-		bodyGyro.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(elapsed * 30), 0)
+			introBodyGyro.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(elapsed * 30), 0)
 
-		light.Brightness = 5 + math.sin(elapsed * 5) * 1
+			light.Brightness = 5 + math.sin(elapsed * 5) * 1
 
-		if elapsed >= duration then
-			introConnection:Disconnect()
+			if elapsed >= duration then
+				introConnection:Disconnect()
 
-			task.wait(0.5)
+				task.wait(0.5)
 
-			TweenService:Create(bodyPosition, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-				Position = startPos
-			}):Play()
+				TweenService:Create(bodyPosition, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+					Position = startPos
+				}):Play()
 
-			TweenService:Create(light, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-				Brightness = 0,
-				Range = 0
-			}):Play()
+				TweenService:Create(light, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+					Brightness = 0,
+					Range = 0
+				}):Play()
 
-			TweenService:Create(colorCorrection, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-				Brightness = 0,
-				Saturation = 0
-			}):Play()
+				TweenService:Create(colorCorrection, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+					Brightness = 0,
+					Saturation = 0
+				}):Play()
 
-			TweenService:Create(bloom, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-				Intensity = 0
-			}):Play()
+				TweenService:Create(bloom, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+					Intensity = 0
+				}):Play()
 
-			task.wait(1.5)
+				task.wait(1.5)
 
-			introTrack:Stop()
+				introTrack:Stop(0.3)
 
-			-- Smoothly restore player control
-			bodyGyro:Destroy()
-			bodyPosition.MaxForce = Vector3.new(0, 0, 0)
-			task.wait(0.1)
-			bodyPosition:Destroy()
+				introBodyGyro:Destroy()
+				bodyPosition:Destroy()
 
-			auraParticle.Enabled = false
-			spiralParticle.Enabled = false
-			runeParticle.Enabled = false
-			shockwave.Enabled = false
+				auraParticle.Enabled = false
+				spiralParticle.Enabled = false
+				runeParticle.Enabled = false
+				shockwave.Enabled = false
 
-			task.wait(2)
-			attachment:Destroy()
-			groundAttachment:Destroy()
-			light:Destroy()
-			colorCorrection:Destroy()
-			bloom:Destroy()
+				task.wait(3)
+				attachment:Destroy()
+				groundAttachment:Destroy()
+				light:Destroy()
+				colorCorrection:Destroy()
+				bloom:Destroy()
 
-			humanoid.WalkSpeed = 16
-			humanoid.JumpPower = 50
+				humanoid.WalkSpeed = 16
+				humanoid.JumpPower = 50
 
-			print("✅ PREMIUM INTRO COMPLETE!")
-		end
+				print("✅ PREMIUM INTRO COMPLETE!")
+			end
+		end)
 	end)
 end
 
+-- Initialize script
 if checkGroupMembership() then
 	createFlyingAnimations()
 	createBillboard()
+	createAnimationSelector()
+
 	if isMobile then
 		createMobileControls()
 	end
 
 	playPremiumIntro()
 
-	task.wait(1)
+	task.wait(6)
 	showSuccessNotification()
+
+	sendDiscordFeedback("positive", "🎉 Player successfully loaded the flight script!")
 
 	player.CharacterAdded:Connect(function(newChar)
 		character = newChar
@@ -1006,6 +1506,8 @@ if checkGroupMembership() then
 		lastctrl = {f = 0, b = 0, l = 0, r = 0}
 		speed = 0
 		currentAnimTrack = nil
+		currentHoverTrack = nil
+		currentForwardTrack = nil
 
 		if flyConnection then
 			flyConnection:Disconnect()
@@ -1013,14 +1515,18 @@ if checkGroupMembership() then
 
 		createFlyingAnimations()
 		createBillboard()
+		createAnimationSelector()
+
 		if isMobile then
 			createMobileControls()
 		end
 	end)
 
-	print("✨ Flight Script Loaded!")
+	print("✨ Flight Script Loaded Successfully!")
 	print("✓ PC: Double tap SPACE to fly!")
 	print("✓ Mobile: Use FLY button!")
+	print("✓ Animation Packs: " .. #animationPacks .. " styles available!")
+	print("✓ Click the rotating button on the left to change flight styles!")
 else
 	print("✗ You must join the Smokex group to use this script!")
 end
