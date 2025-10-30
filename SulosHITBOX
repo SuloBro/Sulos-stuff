@@ -18,8 +18,8 @@ local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Configuration
-local GAMEPASS_ID = 95989323
-local DONATE_LINK = "https://www.roblox.com/game-pass/95989323/Stitch-Sticker"
+local GAMEPASS_ID = 132268448125497
+local DONATE_LINK = "https://www.roblox.com/catalog/132268448125497/Support"
 local DISCORD_LINK = "https://discord.gg/pKQVm2P6B7"
 
 -- Variables
