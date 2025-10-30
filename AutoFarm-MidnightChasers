@@ -16,7 +16,7 @@ local TweenService = game:GetService("TweenService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local player = Players.LocalPlayer
 
-local GAMEPASS_ID = 1133771852
+local GAMEPASS_ID = 132268448125497
 local hasGamepass = false
 
 -- Check if player has gamepass
