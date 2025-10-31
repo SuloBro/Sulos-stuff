@@ -14,8 +14,9 @@ local head = character:WaitForChild("Head")
 
 local GROUP_ID = 10612101
 local GROUP_LINK = "https://www.roblox.com/communities/10612101/Smokex#!/about"
-local SUPPORT_LINK = "https://www.roblox.com/catalog/132268448125497/Support"
-local ITEM_ID = 132268448125497
+local SUPPORT_LINK = "https://www.roblox.com/game-pass/1133771852/Supporter"
+local ITEM_ID = 132122536399861
+local SUPPORT_SHIRT_ID = 132268448125497
 local maxspeed = 100
 local speed = 0
 
@@ -38,6 +39,20 @@ local activeTrails = {}
 
 -- Animation Packs (DEFAULT FIRST!)
 local animationPacks = {
+	{
+		name = "Crossed Arms Flight",
+		icon = "rbxassetid://15046352596",
+		hover = "rbxassetid://85475785417743",
+		forward = "rbxassetid://89173946476926",
+		requiredShirt = SUPPORT_SHIRT_ID
+	},
+	{
+		name = "Large Bird Flight",
+		icon = "rbxassetid://15046352596",
+		hover = "rbxassetid://93644916310407",
+		forward = "rbxassetid://76789605330908",
+		requiredShirt = SUPPORT_SHIRT_ID
+	},
 	{
 		name = "Default Flight",
 		icon = "rbxassetid://12285970187",
@@ -72,7 +87,7 @@ local animationPacks = {
 		name = "Glitch Flight",
 		icon = "rbxassetid://10760860828",
 		hover = "rbxassetid://84043660421785",
-		forward = "rbxassetid://77360312751381"
+		forward = "rbxassetid://105956356813908"
 	},
 	{
 		name = "Planet Flight",
@@ -91,12 +106,50 @@ local animationPacks = {
 		icon = "rbxassetid://12371669486",
 		hover = "rbxassetid://104496564244336",
 		forward = "rbxassetid://87721497492370"
+	},
+	{
+		name = "Silly Flight",
+		icon = "rbxassetid://10819148039",
+		hover = "rbxassetid://112082806790047",
+		forward = "rbxassetid://95590211096386"
+	},
+	{
+		name = "Upside-Down Flight",
+		icon = "rbxassetid://13165639720",
+		hover = "rbxassetid://91568325212241",
+		forward = "rbxassetid://75641565837036"
+	},
+	{
+		name = "Criss-Cross Flight",
+		icon = "rbxassetid://116803627523443",
+		hover = "rbxassetid://75115828365290",
+		forward = "rbxassetid://102620389167016"
+	},
+	{
+		name = "Divine Flight",
+		icon = "rbxassetid://74095011558296",
+		hover = "rbxassetid://83875151567898",
+		forward = "rbxassetid://108959196133857"
+	},
+	{
+		name = "Floating Tools Flight (Equip an tool)",
+		icon = "rbxassetid://16915345531",
+		hover = "rbxassetid://91575955280658",
+		forward = "rbxassetid://90965552794607"
+	},
+	{
+		name = "Draggable Flight (Equip an tool)",
+		icon = "rbxassetid://14633071301",
+		hover = "rbxassetid://89996249595766",
+		forward = "rbxassetid://111251252458517"
 	}
 }
 
-local currentPackIndex = 1
+local currentPackIndex = 3
 local hoverAnim
 local flyForwardAnim
+local lastAnimationChange = 0
+local ANIMATION_CHANGE_COOLDOWN = 0.75
 
 -- Smooth button bounce animation
 local function bounceButton(button)
@@ -157,6 +210,152 @@ local function sendDiscordFeedback(feedbackType, message)
 			end
 		end)
 	end)
+end
+
+local function showCooldownNotification()
+	-- Check if notification already exists and clean it up
+	local playerGui = player:WaitForChild("PlayerGui")
+	local existingNotification = playerGui:FindFirstChild("CooldownNotification")
+	if existingNotification then
+		existingNotification:Destroy()
+	end
+	
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "CooldownNotification"
+	screenGui.ResetOnSpawn = false
+	screenGui.Parent = playerGui
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0, 300, 0, 80)
+	frame.Position = UDim2.new(0.5, -150, 0.8, -40)
+	frame.BackgroundColor3 = Color3.fromRGB(255, 200, 100)
+	frame.BorderSizePixel = 0
+	frame.Parent = screenGui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = frame
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(0, 0, 0)
+	stroke.Thickness = 2
+	stroke.Parent = frame
+
+	local message = Instance.new("TextLabel")
+	message.Size = UDim2.new(1, -20, 1, -20)
+	message.Position = UDim2.new(0, 10, 0, 10)
+	message.BackgroundTransparency = 1
+	message.Text = "⏱️ Please wait before changing animations again!"
+	message.TextColor3 = Color3.fromRGB(0, 0, 0)
+	message.Font = Enum.Font.GothamBold
+	message.TextSize = 14
+	message.TextWrapped = true
+	message.Parent = frame
+
+	-- Simple entrance animation
+	frame.Position = UDim2.new(0.5, -150, 1, 50) -- Start below screen
+	local slideIn = TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Position = UDim2.new(0.5, -150, 0.8, -40)
+	})
+	slideIn:Play()
+
+	-- Wait and then slide out and destroy
+	spawn(function()
+		task.wait(1.5)
+		
+		if screenGui and screenGui.Parent then
+			local slideOut = TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+				Position = UDim2.new(0.5, -150, 1, 50)
+			})
+			slideOut:Play()
+			
+			-- Destroy immediately after animation starts
+			task.wait(0.1)
+			if screenGui and screenGui.Parent then
+				screenGui:Destroy()
+			end
+		end
+	end)
+end
+
+local function checkShirtOwnership(shirtId)
+	local success, ownsShirt = pcall(function()
+		return MarketplaceService:PlayerOwnsAsset(player, shirtId)
+	end)
+	return success and ownsShirt
+end
+
+local function showShirtRequirementNotification()
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "ShirtRequirementNotification"
+	screenGui.ResetOnSpawn = false
+	screenGui.Parent = player:WaitForChild("PlayerGui")
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0, 400, 0, 200)
+	frame.Position = UDim2.new(0.5, -200, 0.5, -100)
+	frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	frame.BorderSizePixel = 0
+	frame.Parent = screenGui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = frame
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(0, 0, 0)
+	stroke.Thickness = 3
+	stroke.Parent = frame
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, -20, 0, 40)
+	title.Position = UDim2.new(0, 10, 0, 10)
+	title.BackgroundTransparency = 1
+	title.Text = "❌ Support Required"
+	title.TextColor3 = Color3.fromRGB(255, 85, 85)
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 18
+	title.Parent = frame
+
+	local message = Instance.new("TextLabel")
+	message.Size = UDim2.new(1, -20, 0, 60)
+	message.Position = UDim2.new(0, 10, 0, 55)
+	message.BackgroundTransparency = 1
+	message.Text = "You need to own Support to use this animation pack!"
+	message.TextColor3 = Color3.fromRGB(255, 255, 255)
+	message.Font = Enum.Font.Gotham
+	message.TextSize = 14
+	message.TextWrapped = true
+	message.Parent = frame
+
+	local okButton = Instance.new("TextButton")
+	okButton.Size = UDim2.new(0, 120, 0, 40)
+	okButton.Position = UDim2.new(0.5, -60, 1, -50)
+	okButton.BackgroundColor3 = Color3.fromRGB(60, 150, 255)
+	okButton.Text = "OK"
+	okButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	okButton.Font = Enum.Font.GothamBold
+	okButton.TextSize = 14
+	okButton.Parent = frame
+
+	local buttonCorner = Instance.new("UICorner")
+	buttonCorner.CornerRadius = UDim.new(0, 8)
+	buttonCorner.Parent = okButton
+
+	local buttonStroke = Instance.new("UIStroke")
+	buttonStroke.Color = Color3.fromRGB(0, 0, 0)
+	buttonStroke.Thickness = 2
+	buttonStroke.Parent = okButton
+
+	okButton.MouseButton1Click:Connect(function()
+		bounceButton(okButton)
+		screenGui:Destroy()
+	end)
+
+	task.wait(5)
+	if screenGui and screenGui.Parent then
+		screenGui:Destroy()
+	end
 end
 
 local function checkGroupMembership()
@@ -257,7 +456,7 @@ local function createHeadBillboard(text)
 		textLabel.Size = UDim2.new(1, 0, 1, 0)
 		textLabel.BackgroundTransparency = 1
 		textLabel.Text = ""
-		textLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
+		textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		textLabel.Font = Enum.Font.GothamBold
 		textLabel.TextSize = 24
 		textLabel.TextStrokeTransparency = 0.5
@@ -265,7 +464,7 @@ local function createHeadBillboard(text)
 		textLabel.Parent = billboardGui
 
 		local stroke = Instance.new("UIStroke")
-		stroke.Color = Color3.fromRGB(100, 200, 255)
+		stroke.Color = Color3.fromRGB(0, 0, 0)
 		stroke.Thickness = 3
 		stroke.Transparency = 0
 		stroke.Parent = textLabel
@@ -328,13 +527,13 @@ local function createBillboard()
 		-- Glowing effect
 		local glow = Instance.new("ImageLabel")
 		glow.Name = "Glow"
-		glow.Size = UDim2.new(1, 40, 1, 40)
+		glow.Size = UDim2.new(1, 0, 1, 0)
 		glow.Position = UDim2.new(0.5, 0, 0.5, 0)
 		glow.AnchorPoint = Vector2.new(0.5, 0.5)
 		glow.BackgroundTransparency = 1
-		glow.Image = "rbxassetid://132424548371254"
-		glow.ImageColor3 = Color3.fromRGB(100, 200, 255)
-		glow.ImageTransparency = 0.8
+		glow.Image = "rbxassetid://6927295847"
+		glow.ImageColor3 = Color3.fromRGB(207, 254, 255)
+		glow.ImageTransparency = 0.5
 		glow.ZIndex = 0
 		glow.Parent = mainFrame
 
@@ -367,7 +566,7 @@ local function createBillboard()
 		supportButton.Size = UDim2.new(0, 130, 0, 45)
 		supportButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
 		supportButton.Text = "💚 Support"
-		supportButton.TextColor3 = Color3.fromRGB(20, 20, 20)
+		supportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 		supportButton.Font = Enum.Font.GothamBold
 		supportButton.TextSize = 14
 		supportButton.BorderSizePixel = 0
@@ -619,6 +818,24 @@ local function createAnimationSelector()
 			packButton.MouseButton1Click:Connect(function()
 				clickSound:Play()
 				bounceButton(packButton)
+
+				-- Check animation change cooldown
+				local currentTime = tick()
+				if currentTime - lastAnimationChange < ANIMATION_CHANGE_COOLDOWN then
+					showCooldownNotification()
+					return
+				end
+
+				-- Check if this pack requires a specific shirt
+				if pack.requiredShirt then
+					if not checkShirtOwnership(pack.requiredShirt) then
+						showShirtRequirementNotification()
+						return
+					end
+				end
+
+				-- Update the last animation change time
+				lastAnimationChange = currentTime
 
 				currentPackIndex = i
 				mainButton.Image = pack.icon
