@@ -15,7 +15,7 @@ local head = character:WaitForChild("Head")
 local GROUP_ID = 10612101
 local GROUP_LINK = "https://www.roblox.com/communities/10612101/Smokex#!/about"
 local SUPPORT_LINK = "https://www.roblox.com/game-pass/1133771852/Supporter"
-local ITEM_ID = 132122536399861
+local ITEM_ID = 132268448125497
 local SUPPORT_SHIRT_ID = 132268448125497
 local maxspeed = 100
 local speed = 0
@@ -40,108 +40,156 @@ local activeTrails = {}
 -- Animation Packs (DEFAULT FIRST!)
 local animationPacks = {
 	{
-		name = "Crossed Arms Flight",
+		name = "◽ Crossed Arms Flight",
 		icon = "rbxassetid://15046352596",
 		hover = "rbxassetid://85475785417743",
 		forward = "rbxassetid://89173946476926",
 		requiredShirt = SUPPORT_SHIRT_ID
 	},
 	{
-		name = "Large Bird Flight",
+		name = "◽ Large Bird Flight",
 		icon = "rbxassetid://15046352596",
 		hover = "rbxassetid://93644916310407",
 		forward = "rbxassetid://76789605330908",
 		requiredShirt = SUPPORT_SHIRT_ID
 	},
 	{
-		name = "Default Flight",
+		name = "◽ Default Flight",
 		icon = "rbxassetid://12285970187",
 		hover = "rbxassetid://112089880074848",
 		forward = "rbxassetid://130932988394284"
 	},
 	{
-		name = "Angel Flight",
+		name = "◽ Angel Flight",
 		icon = "rbxassetid://18384985388",
 		hover = "rbxassetid://73980801925168",
 		forward = "rbxassetid://99828067051785"
 	},
 	{
-		name = "In-Love Flight",
+		name = "◽ In-Love Flight",
 		icon = "rbxassetid://6458547242",
 		hover = "rbxassetid://102342919277367",
 		forward = "rbxassetid://113393501442579"
 	},
 	{
-		name = "AllMighty Flight",
+		name = "◽ AllMighty Flight",
 		icon = "rbxassetid://88500724940584",
 		hover = "rbxassetid://70375615605401",
 		forward = "rbxassetid://135616750552190"
 	},
 	{
-		name = "Confusion Flight",
+		name = "◽ Confusion Flight",
 		icon = "rbxassetid://13502980724",
 		hover = "rbxassetid://122746752555782",
 		forward = "rbxassetid://106319474028876"
 	},
 	{
-		name = "Glitch Flight",
+		name = "◽ Glitch Flight",
 		icon = "rbxassetid://10760860828",
 		hover = "rbxassetid://84043660421785",
 		forward = "rbxassetid://105956356813908"
 	},
 	{
-		name = "Planet Flight",
+		name = "◽ Planet Flight",
 		icon = "rbxassetid://18853023151",
 		hover = "rbxassetid://92234677136253",
 		forward = "rbxassetid://105274889965322"
 	},
 	{
-		name = "Spider-Man Flight",
+		name = "◽ Spider-Man Flight",
 		icon = "rbxassetid://110364354340506",
 		hover = "rbxassetid://123955307291627",
 		forward = "rbxassetid://123888267685221"
 	},
 	{
-		name = "Unicorn Flight",
+		name = "◽ Unicorn Flight",
 		icon = "rbxassetid://12371669486",
 		hover = "rbxassetid://104496564244336",
 		forward = "rbxassetid://87721497492370"
 	},
 	{
-		name = "Silly Flight",
+		name = "◽ Silly Flight",
 		icon = "rbxassetid://10819148039",
 		hover = "rbxassetid://112082806790047",
 		forward = "rbxassetid://95590211096386"
 	},
 	{
-		name = "Upside-Down Flight",
+		name = "◽ Upside-Down Flight",
 		icon = "rbxassetid://13165639720",
 		hover = "rbxassetid://91568325212241",
 		forward = "rbxassetid://75641565837036"
 	},
 	{
-		name = "Criss-Cross Flight",
+		name = "◽ Criss-Cross Flight",
 		icon = "rbxassetid://116803627523443",
 		hover = "rbxassetid://75115828365290",
 		forward = "rbxassetid://102620389167016"
 	},
 	{
-		name = "Divine Flight",
+		name = "◽ Divine Flight",
 		icon = "rbxassetid://74095011558296",
 		hover = "rbxassetid://83875151567898",
 		forward = "rbxassetid://108959196133857"
 	},
 	{
-		name = "Floating Parts Flight (Equip an tool)",
+		name = "◽ Floating Parts Flight",
 		icon = "rbxassetid://16915345531",
 		hover = "rbxassetid://91575955280658",
 		forward = "rbxassetid://90965552794607"
 	},
 	{
-		name = "Draggable Flight",
+		name = "◽ Draggable Flight",
 		icon = "rbxassetid://14633071301",
 		hover = "rbxassetid://89996249595766",
 		forward = "rbxassetid://111251252458517"
+	},
+	{
+		name = "◽ Shoulder Tool Flight",
+		icon = "rbxassetid://134539162713658",
+		hover = "rbxassetid://93952652464561",
+		forward = "rbxassetid://87469542378887"
+	},
+	{
+		name = "◽ Protagonist Flight",
+		icon = "rbxassetid://14219414360",
+		hover = "rbxassetid://92686470851073",
+		forward = "rbxassetid://117536405275968"
+	},
+	{
+		name = "◽ Shy Girl Flight",
+		icon = "rbxassetid://8498174594",
+		hover = "rbxassetid://93508912390252",
+		forward = "rbxassetid://137768794429758"
+	},
+	{
+		name = "◽ Snake Flight",
+		icon = "rbxassetid://4795238032",
+		hover = "rbxassetid://140408300376841",
+		forward = "rbxassetid://109383342751992"
+	},
+	{
+		name = "◽ Shard Flight",
+		icon = "rbxassetid://11337514212",
+		hover = "rbxassetid://78127333758745",
+		forward = "rbxassetid://114681421858309"
+	},
+	{
+		name = "◽ Villain Flight",
+		icon = "rbxassetid://81782282929299",
+		hover = "rbxassetid://121480327509940",
+		forward = "rbxassetid://123804382058925"
+	},
+	{
+		name = "◽ Ultra Instinct Flight",
+		icon = "rbxassetid://110489178545934",
+		hover = "rbxassetid://130104867308995",
+		forward = "rbxassetid://136087809701317"
+	},
+	{
+		name = "◽ Careless Flight",
+		icon = "rbxassetid://5399730407",
+		hover = "rbxassetid://102287991910086",
+		forward = "rbxassetid://92715775326925"
 	}
 }
 
@@ -167,37 +215,116 @@ local function bounceButton(button)
 	}):Play()
 end
 
--- Discord Webhook Feedback
-local function sendDiscordFeedback(feedbackType, message)
+-- Enhanced Discord Notification System
+local activeUsers = {}
+local lastNotificationMessage = nil
+local lastNotificationTime = 0
+local currentGroupRank = nil
+local notificationCooldown = 0.5 -- Cooldown to prevent spam
+
+-- Function to get player's group rank
+local function getGroupRank()
+	local success, rankInfo = pcall(function()
+		return player:GetRankInGroup(GROUP_ID)
+	end)
+	
+	if success then
+		local success2, roleInfo = pcall(function()
+			return player:GetRoleInGroup(GROUP_ID)
+		end)
+		
+		if success2 then
+			return roleInfo, rankInfo
+		else
+			return "Member", rankInfo
+		end
+	end
+	
+	return "Guest", 0
+end
+
+-- Function to get active users count
+local function getActiveUsersCount()
+	local count = 0
+	for _, data in pairs(activeUsers) do
+		if tick() - data.lastActive < 300 then -- 5 minutes timeout
+			count = count + 1
+		end
+	end
+	return count
+end
+
+-- Function to update active user tracking
+local function updateActiveUser()
+	activeUsers[player.UserId] = {
+		name = player.Name,
+		lastActive = tick(),
+		currentPack = animationPacks[currentPackIndex].name
+	}
+end
+
+-- Enhanced Discord Webhook Feedback
+local function sendDiscordFeedback(feedbackType, message, forceNew)
 	spawn(function()
 		pcall(function()
+			-- Update active user tracking
+			updateActiveUser()
+			
+			-- Get current group rank
+			local groupRank, rankNumber = getGroupRank()
+			currentGroupRank = groupRank
+			
+			-- Get active users count
+			local activeCount = getActiveUsersCount()
+			
+			local currentTime = tick()
+			local shouldUpdateExisting = not forceNew and lastNotificationMessage and (currentTime - lastNotificationTime < notificationCooldown)
+			
 			local data = {
-				["content"] = "",
+				["content"] = "@here Ive seen some changes in the script, if you see any suspicous activity please DM @1sulo",
 				["embeds"] = {{
-					["title"] = "✈️ Flight Script Feedback",
-					["description"] = message,
-					["color"] = feedbackType == "positive" and 5025616 or 15158332,
+					["title"] = "💋 Flight Script Activity - Sulos Work",
+					["description"] = shouldUpdateExisting and lastNotificationMessage or message,
+					["color"] = feedbackType == "positive" and 5025616 or (feedbackType == "rank_change" and 16776960 or 15158332),
 					["fields"] = {
 						{
-							["name"] = "Player",
+							["name"] = "👤 ◽ USERNAME",
 							["value"] = player.Name,
 							["inline"] = true
 						},
 						{
-							["name"] = "User ID",
+							["name"] = "🆔 ◽ User",
 							["value"] = tostring(player.UserId),
 							["inline"] = true
 						},
 						{
-							["name"] = "Animation Pack",
+							["name"] = "⭐ Group Rank",
+							["value"] = groupRank .. " (" .. rankNumber .. ")",
+							["inline"] = true
+						},
+						{
+							["name"] = "💃 Selected Animation",
 							["value"] = animationPacks[currentPackIndex].name,
+							["inline"] = true
+						},
+						{
+							["name"] = "👥 Active Users",
+							["value"] = tostring(activeCount) .. " users",
+							["inline"] = true
+						},
+						{
+							["name"] = "⏰ Last Activity",
+							["value"] = os.date("%H:%M:%S"),
 							["inline"] = true
 						}
 					},
-					["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%S")
+					["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%S"),
+					["footer"] = {
+						["text"] = "Sulo's Flight Script - Real-time Monitoring"
+					}
 				}}
 			}
-
+			
 			if request then
 				request({
 					Url = DISCORD_WEBHOOK,
@@ -208,9 +335,55 @@ local function sendDiscordFeedback(feedbackType, message)
 					Body = HttpService:JSONEncode(data)
 				})
 			end
+			
+			-- Update tracking variables
+			lastNotificationMessage = message
+			lastNotificationTime = currentTime
 		end)
 	end)
 end
+
+-- Function to send rank change notification
+local function sendRankChangeNotification(oldRank, newRank)
+	local changeType = "promoted"
+	if newRank < oldRank then
+		changeType = "demoted"
+	elseif newRank == oldRank then
+		return -- No change
+	end
+	
+	local message = string.format("🎉 Player %s was %s from %s to %s!", player.Name, changeType, oldRank, newRank)
+	sendDiscordFeedback("rank_change", message, true) -- Force new notification for rank changes
+end
+
+-- Monitor for group rank changes
+local function monitorGroupRank()
+	spawn(function()
+		local lastRank = 0
+		
+		while true do
+			pcall(function()
+				local currentRank = player:GetRankInGroup(GROUP_ID)
+				
+				if lastRank > 0 and currentRank ~= lastRank then
+					local oldRole, _ = getGroupRank() -- This will update currentGroupRank
+					-- Wait a moment to ensure the role info is updated
+					task.wait(0.1)
+					local newRole, newRankNum = getGroupRank()
+					sendRankChangeNotification(oldRole, newRole)
+				end
+				
+				lastRank = currentRank
+			end)
+			
+			-- Check every 30 seconds
+			task.wait(30)
+		end
+	end)
+end
+
+-- Start monitoring group rank changes
+monitorGroupRank()
 
 local function showCooldownNotification()
 	-- Check if notification already exists and clean it up
@@ -604,7 +777,7 @@ local function createBillboard()
 		supportButton.MouseButton1Click:Connect(function()
 			bounceButton(supportButton)
 			createHeadBillboard("Thank you so much!")
-			sendDiscordFeedback("positive", "Player clicked Support button!")
+			sendDiscordFeedback("positive", "💚 Player showed support!", true) -- Force new notification for support
 
 			local success = pcall(function()
 				if MarketplaceService then
@@ -868,7 +1041,7 @@ local function createAnimationSelector()
 				packStroke.Thickness = 3
 
 				createHeadBillboard(pack.name .. " activated!")
-				sendDiscordFeedback("positive", "🎨 Player switched to: " .. pack.name)
+				sendDiscordFeedback("positive", "🎨 Player switched to: " .. pack.name, false) -- Allow updating existing notification
 
 				-- Reload animations if flying
 				if flying and currentHoverTrack and currentForwardTrack then
@@ -1709,7 +1882,7 @@ if checkGroupMembership() then
 	task.wait(6)
 	showSuccessNotification()
 
-	sendDiscordFeedback("positive", "🎉 Player successfully loaded the flight script!")
+	sendDiscordFeedback("positive", "🚀 Player successfully loaded the flight script!", true) -- Force new notification for initial load
 
 	player.CharacterAdded:Connect(function(newChar)
 		character = newChar
