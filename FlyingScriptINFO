@@ -132,13 +132,13 @@ local animationPacks = {
 		forward = "rbxassetid://108959196133857"
 	},
 	{
-		name = "Floating Tools Flight (Equip an tool)",
+		name = "Floating Parts Flight (Equip an tool)",
 		icon = "rbxassetid://16915345531",
 		hover = "rbxassetid://91575955280658",
 		forward = "rbxassetid://90965552794607"
 	},
 	{
-		name = "Draggable Flight (Equip an tool)",
+		name = "Draggable Flight",
 		icon = "rbxassetid://14633071301",
 		hover = "rbxassetid://89996249595766",
 		forward = "rbxassetid://111251252458517"
