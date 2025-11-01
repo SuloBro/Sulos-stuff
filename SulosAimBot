@@ -13,7 +13,22 @@ local authorizedUsers = {
     "ongdied",     -- Your username
     "beybladegabe1",     -- Test user 1
     "H34RTSF0REMMMY",     -- Test user 2
-    -- Add more usernames here like: "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
+    "username123",
 }
 
 local function isAuthorized()
