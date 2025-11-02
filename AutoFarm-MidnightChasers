@@ -6,9 +6,9 @@
 
 warn("Anti afk running")
 game:GetService("Players").LocalPlayer.Idled:connect(function()
-    warn("Anti afk ran")
-    game:GetService("VirtualUser"):CaptureController()
-    game:GetService("VirtualUser"):ClickButton2(Vector2.new())
+	warn("Anti afk ran")
+	game:GetService("VirtualUser"):CaptureController()
+	game:GetService("VirtualUser"):ClickButton2(Vector2.new())
 end)
 
 local Players = game:GetService("Players")
@@ -21,12 +21,12 @@ local hasGamepass = false
 
 -- Check if player has gamepass
 spawn(function()
-    local success, result = pcall(function()
-        return MarketplaceService:UserOwnsGamePassAsync(player.UserId, GAMEPASS_ID)
-    end)
-    if success then
-        hasGamepass = result
-    end
+	local success, result = pcall(function()
+		return MarketplaceService:UserOwnsGamePassAsync(player.UserId, GAMEPASS_ID)
+	end)
+	if success then
+		hasGamepass = result
+	end
 end)
 
 -- Sound Service
@@ -45,88 +45,88 @@ phonkSound.Parent = game.SoundService
 local notifScreen = Instance.new("ScreenGui")
 notifScreen.Name = "NotificationScreen"
 notifScreen.DisplayOrder = 9999
-notifScreen.Parent = game.CoreGui
+notifScreen.Parent = game.Players.LocalPlayer.PlayerGui
 
 local function createNotification(message, icon)
-    local notif = Instance.new("Frame")
-    notif.Size = UDim2.new(0, 350, 0, 80)
-    notif.Position = UDim2.new(1, 10, 0.1, 0)
-    notif.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    notif.BorderSizePixel = 0
-    notif.Parent = notifScreen
-    
-    local notifCorner = Instance.new("UICorner")
-    notifCorner.CornerRadius = UDim.new(0.15, 0)
-    notifCorner.Parent = notif
-    
-    local notifStroke = Instance.new("UIStroke")
-    notifStroke.Color = Color3.fromRGB(255, 255, 255)
-    notifStroke.Thickness = 2
-    notifStroke.Transparency = 0.5
-    notifStroke.Parent = notif
-    
-    local notifGradient = Instance.new("UIGradient")
-    notifGradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 35)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(55, 55, 55))
-    }
-    notifGradient.Rotation = 45
-    notifGradient.Parent = notif
-    
-    if icon then
-        local notifIcon = Instance.new("ImageLabel")
-        notifIcon.Size = UDim2.new(0, 50, 0, 50)
-        notifIcon.Position = UDim2.new(0, 15, 0.5, -25)
-        notifIcon.BackgroundTransparency = 1
-        notifIcon.Image = icon
-        notifIcon.Parent = notif
-        
-        local iconCorner = Instance.new("UICorner")
-        iconCorner.CornerRadius = UDim.new(0.2, 0)
-        iconCorner.Parent = notifIcon
-        
-        -- Spinning animation
-        spawn(function()
-            for i = 0, 360, 5 do
-                if notifIcon.Parent then
-                    notifIcon.Rotation = i
-                    wait(0.01)
-                end
-            end
-        end)
-    end
-    
-    local notifText = Instance.new("TextLabel")
-    notifText.Size = UDim2.new(1, -80, 1, 0)
-    notifText.Position = UDim2.new(0, 75, 0, 0)
-    notifText.BackgroundTransparency = 1
-    notifText.Text = message
-    notifText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    notifText.TextSize = 16
-    notifText.Font = Enum.Font.GothamBold
-    notifText.TextWrapped = true
-    notifText.TextXAlignment = Enum.TextXAlignment.Left
-    notifText.Parent = notif
-    
-    -- Slide in
-    local slideIn = TweenService:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(1, -360, 0.1, 0)})
-    slideIn:Play()
-    
-    wait(3)
-    
-    -- Slide out
-    local slideOut = TweenService:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Position = UDim2.new(1, 10, 0.1, 0)})
-    slideOut:Play()
-    
-    wait(0.5)
-    notif:Destroy()
+	local notif = Instance.new("Frame")
+	notif.Size = UDim2.new(0, 350, 0, 80)
+	notif.Position = UDim2.new(1, 10, 0.1, 0)
+	notif.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	notif.BorderSizePixel = 0
+	notif.Parent = notifScreen
+
+	local notifCorner = Instance.new("UICorner")
+	notifCorner.CornerRadius = UDim.new(0.15, 0)
+	notifCorner.Parent = notif
+
+	local notifStroke = Instance.new("UIStroke")
+	notifStroke.Color = Color3.fromRGB(255, 255, 255)
+	notifStroke.Thickness = 2
+	notifStroke.Transparency = 0.5
+	notifStroke.Parent = notif
+
+	local notifGradient = Instance.new("UIGradient")
+	notifGradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 35)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(55, 55, 55))
+	}
+	notifGradient.Rotation = 45
+	notifGradient.Parent = notif
+
+	if icon then
+		local notifIcon = Instance.new("ImageLabel")
+		notifIcon.Size = UDim2.new(0, 50, 0, 50)
+		notifIcon.Position = UDim2.new(0, 15, 0.5, -25)
+		notifIcon.BackgroundTransparency = 1
+		notifIcon.Image = icon
+		notifIcon.Parent = notif
+
+		local iconCorner = Instance.new("UICorner")
+		iconCorner.CornerRadius = UDim.new(0.2, 0)
+		iconCorner.Parent = notifIcon
+
+		-- Spinning animation
+		spawn(function()
+			for i = 0, 360, 5 do
+				if notifIcon.Parent then
+					notifIcon.Rotation = i
+					wait(0.01)
+				end
+			end
+		end)
+	end
+
+	local notifText = Instance.new("TextLabel")
+	notifText.Size = UDim2.new(1, -80, 1, 0)
+	notifText.Position = UDim2.new(0, 75, 0, 0)
+	notifText.BackgroundTransparency = 1
+	notifText.Text = message
+	notifText.TextColor3 = Color3.fromRGB(255, 255, 255)
+	notifText.TextSize = 16
+	notifText.Font = Enum.Font.GothamBold
+	notifText.TextWrapped = true
+	notifText.TextXAlignment = Enum.TextXAlignment.Left
+	notifText.Parent = notif
+
+	-- Slide in
+	local slideIn = TweenService:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(1, -360, 0.1, 0)})
+	slideIn:Play()
+
+	wait(3)
+
+	-- Slide out
+	local slideOut = TweenService:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Position = UDim2.new(1, 10, 0.1, 0)})
+	slideOut:Play()
+
+	wait(0.5)
+	notif:Destroy()
 end
 
 -- Loading Screen
 local loadingScreen = Instance.new("ScreenGui")
 loadingScreen.Name = "LoadingScreen"
 loadingScreen.DisplayOrder = 10000
-loadingScreen.Parent = game.CoreGui
+loadingScreen.Parent = game.Players.LocalPlayer.PlayerGui
 
 local loadingFrame = Instance.new("Frame")
 loadingFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -149,32 +149,32 @@ logoCorner.Parent = logoImage
 
 -- Particle effects around the logo
 for i = 1, 12 do
-    local particle = Instance.new("ImageLabel")
-    particle.Size = UDim2.new(0, 40, 0, 40)
-    particle.BackgroundTransparency = 1
-    particle.Image = "rbxassetid://139557679200863"
-    particle.ImageTransparency = 0.4
-    particle.Parent = loadingFrame
-    
-    local particleCorner = Instance.new("UICorner")
-    particleCorner.CornerRadius = UDim.new(0.25, 0)
-    particleCorner.Parent = particle
-    
-    -- Animate particles in a circle
-    spawn(function()
-        local angle = (i - 1) * (360 / 12)
-        local radius = 180
-        while loadingFrame.Parent do
-            for t = 0, 360, 1.5 do
-                if not loadingFrame.Parent then break end
-                local rad = math.rad(angle + t)
-                local x = 0.5 + (math.cos(rad) * radius / loadingFrame.AbsoluteSize.X)
-                local y = 0.3 + (math.sin(rad) * radius / loadingFrame.AbsoluteSize.Y)
-                particle.Position = UDim2.new(x, -20, y, -20)
-                wait(0.02)
-            end
-        end
-    end)
+	local particle = Instance.new("ImageLabel")
+	particle.Size = UDim2.new(0, 40, 0, 40)
+	particle.BackgroundTransparency = 1
+	particle.Image = "rbxassetid://139557679200863"
+	particle.ImageTransparency = 0.4
+	particle.Parent = loadingFrame
+
+	local particleCorner = Instance.new("UICorner")
+	particleCorner.CornerRadius = UDim.new(0.25, 0)
+	particleCorner.Parent = particle
+
+	-- Animate particles in a circle
+	spawn(function()
+		local angle = (i - 1) * (360 / 12)
+		local radius = 180
+		while loadingFrame.Parent do
+			for t = 0, 360, 1.5 do
+				if not loadingFrame.Parent then break end
+				local rad = math.rad(angle + t)
+				local x = 0.5 + (math.cos(rad) * radius / loadingFrame.AbsoluteSize.X)
+				local y = 0.3 + (math.sin(rad) * radius / loadingFrame.AbsoluteSize.Y)
+				particle.Position = UDim2.new(x, -20, y, -20)
+				wait(0.02)
+			end
+		end
+	end)
 end
 
 -- Welcome Text
@@ -235,7 +235,7 @@ local guiScreen = Instance.new("ScreenGui")
 guiScreen.Name = "SuloGUI"
 guiScreen.DisplayOrder = 100
 guiScreen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-guiScreen.Parent = game.CoreGui
+guiScreen.Parent = game.Players.LocalPlayer.PlayerGui
 
 local guiFrame = Instance.new("Frame")
 guiFrame.Size = UDim2.new(0, 320, 0, 200)
@@ -259,8 +259,8 @@ frameStroke.Parent = guiFrame
 -- Gradient overlay
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
 }
 gradient.Rotation = 45
 gradient.Parent = guiFrame
@@ -273,35 +273,35 @@ title.BackgroundTransparency = 1
 title.Text = "SULO'S AUTOFARM"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 22
-title.Font = Enum.Font.GothamBold
+title.Font = Enum.Font.FredokaOne
 title.ZIndex = 2
 title.Parent = guiFrame
 
 -- Enhanced Click ripple effect function
 local function createRipple(button, x, y)
-    local ripple = Instance.new("Frame")
-    ripple.Size = UDim2.new(0, 0, 0, 0)
-    ripple.Position = UDim2.new(0, x, 0, y)
-    ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-    ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ripple.BackgroundTransparency = 0.3
-    ripple.BorderSizePixel = 0
-    ripple.ZIndex = button.ZIndex + 5
-    ripple.Parent = button
-    
-    local rippleCorner = Instance.new("UICorner")
-    rippleCorner.CornerRadius = UDim.new(1, 0)
-    rippleCorner.Parent = ripple
-    
-    local expandTween = TweenService:Create(ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 300, 0, 300),
-        BackgroundTransparency = 1
-    })
-    expandTween:Play()
-    
-    expandTween.Completed:Connect(function()
-        ripple:Destroy()
-    end)
+	local ripple = Instance.new("Frame")
+	ripple.Size = UDim2.new(0, 0, 0, 0)
+	ripple.Position = UDim2.new(0, x, 0, y)
+	ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+	ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	ripple.BackgroundTransparency = 0.3
+	ripple.BorderSizePixel = 0
+	ripple.ZIndex = button.ZIndex + 5
+	ripple.Parent = button
+
+	local rippleCorner = Instance.new("UICorner")
+	rippleCorner.CornerRadius = UDim.new(1, 0)
+	rippleCorner.Parent = ripple
+
+	local expandTween = TweenService:Create(ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 300, 0, 300),
+		BackgroundTransparency = 1
+	})
+	expandTween:Play()
+
+	expandTween.Completed:Connect(function()
+		ripple:Destroy()
+	end)
 end
 
 -- Auto Farm Button
@@ -312,7 +312,7 @@ autoFarmToggle.Text = "AUTO FARM: OFF"
 autoFarmToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 autoFarmToggle.TextSize = 16
 autoFarmToggle.Font = Enum.Font.GothamBold
-autoFarmToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+autoFarmToggle.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 autoFarmToggle.BorderSizePixel = 0
 autoFarmToggle.ClipsDescendants = true
 autoFarmToggle.ZIndex = 2
@@ -330,8 +330,8 @@ farmStroke.Parent = autoFarmToggle
 
 local farmGradient = Instance.new("UIGradient")
 farmGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 55)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 70))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 55)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 70))
 }
 farmGradient.Rotation = 90
 farmGradient.Parent = autoFarmToggle
@@ -341,134 +341,134 @@ local farmDebounce = false
 
 -- Seat detector function
 local function isPlayerSeated()
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum and hum.SeatPart then
-            return true
-        end
-    end
-    return false
+	local char = player.Character
+	if char then
+		local hum = char:FindFirstChild("Humanoid")
+		if hum and hum.SeatPart then
+			return true
+		end
+	end
+	return false
 end
 
 -- Monitor seat status
 spawn(function()
-    while wait(0.5) do
-        if autoFarmActive and not isPlayerSeated() then
-            autoFarmActive = false
-            autoFarmToggle.Text = "AUTO FARM: OFF"
-            farmStroke.Color = Color3.fromRGB(255, 255, 255)
-            spawn(function()
-                createNotification("Auto Farm Stopped - Player left seat", "rbxassetid://139557679200863")
-            end)
-        end
-    end
+	while wait(0.5) do
+		if autoFarmActive and not isPlayerSeated() then
+			autoFarmActive = false
+			autoFarmToggle.Text = "AUTO FARM: OFF"
+			farmStroke.Color = Color3.fromRGB(255, 255, 255)
+			spawn(function()
+				createNotification("Auto Farm Stopped - Player left seat", "rbxassetid://6525485104")
+			end)
+		end
+	end
 end)
 
 autoFarmToggle.MouseButton1Click:Connect(function()
-    if farmDebounce then
-        spawn(function()
-            createNotification("Relax buddy, ur clicking way too fast", "rbxassetid://139557679200863")
-        end)
-        return
-    end
-    
-    farmDebounce = true
-    clickSound:Play()
-    
-    -- Get click position relative to button
-    local mouse = game.Players.LocalPlayer:GetMouse()
-    local buttonPos = autoFarmToggle.AbsolutePosition
-    local relativeX = mouse.X - buttonPos.X
-    local relativeY = mouse.Y - buttonPos.Y
-    
-    createRipple(autoFarmToggle, relativeX, relativeY)
-    
-    -- Button click effect with bounce
-    local clickTween = TweenService:Create(autoFarmToggle, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 270, 0, 43)})
-    clickTween:Play()
-    wait(0.1)
-    local clickTween2 = TweenService:Create(autoFarmToggle, TweenInfo.new(0.15, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {Size = UDim2.new(0, 280, 0, 45)})
-    clickTween2:Play()
-    
-    -- Check if player is seated before starting
-    if not autoFarmActive and not isPlayerSeated() then
-        spawn(function()
-            createNotification("Please sit on a car first", "rbxassetid://139557679200863")
-        end)
-        wait(0.8)
-        farmDebounce = false
-        return
-    end
-    
-    autoFarmActive = not autoFarmActive
-    if autoFarmActive then
-        autoFarmToggle.Text = "AUTO FARM: ON"
-        farmStroke.Color = Color3.fromRGB(100, 255, 100)
-        
-        spawn(function()
-            createNotification("Auto Farm Began", "rbxassetid://139557679200863")
-        end)
-        
-        spawn(function()
-            while autoFarmActive do
-                for i, v in pairs(workspace:GetChildren()) do
-                    if v.ClassName == "Model" and v:FindFirstChild("Container") or v.Name == "PortCraneOversized" then
-                        v:Destroy()
-                    end
-                end
-                wait(1)
-            end
-        end)
-        
-        spawn(function()
-            while autoFarmActive do
-                if not isPlayerSeated() then
-                    break
-                end
-                local hum = game.Players.LocalPlayer.Character.Humanoid
-                local car = hum.SeatPart.Parent
-                car.PrimaryPart = car.Body:FindFirstChild("#Weight")
-                if not getfenv().first then
-                    if workspace.Workspace:FindFirstChild("Buildings") then
-                        workspace.Workspace.Buildings:Destroy()
-                    end
-                    car:PivotTo(CFrame.new(Vector3.new(-7594.541015625, -3.513848304748535, 5130.95263671875), Vector3.new(-6205.29833984375, -3.5030133724212646, 8219.853515625)))
-                    wait(0.1)
-                end
-                car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
-                getfenv().first = true
-                local location = Vector3.new(-6205.29833984375, 100, 8219.853515625)
-                repeat
-                    task.wait()
-                    if not isPlayerSeated() then autoFarmActive = false break end
-                    mathlock = hasGamepass and 600 or 550
-                    car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * mathlock
-                    car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
-                until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
-                car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
-                location = Vector3.new(-7594.541015625, 100, 5130.95263671875)
-                repeat
-                    task.wait()
-                    if not isPlayerSeated() then autoFarmActive = false break end
-                    mathlock = hasGamepass and 600 or 550
-                    car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * mathlock
-                    car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
-                until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
-                car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
-            end
-        end)
-    else
-        autoFarmToggle.Text = "AUTO FARM: OFF"
-        farmStroke.Color = Color3.fromRGB(255, 255, 255)
-        
-        spawn(function()
-            createNotification("Auto Farm Stopped", "rbxassetid://139557679200863")
-        end)
-    end
-    
-    wait(0.8)
-    farmDebounce = false
+	if farmDebounce then
+		spawn(function()
+			createNotification("Relax buddy, ur clicking way too fast", "rbxassetid://96714408085433")
+		end)
+		return
+	end
+
+	farmDebounce = true
+	clickSound:Play()
+
+	-- Get click position relative to button
+	local mouse = game.Players.LocalPlayer:GetMouse()
+	local buttonPos = autoFarmToggle.AbsolutePosition
+	local relativeX = mouse.X - buttonPos.X
+	local relativeY = mouse.Y - buttonPos.Y
+
+	createRipple(autoFarmToggle, relativeX, relativeY)
+
+	-- Button click effect with bounce
+	local clickTween = TweenService:Create(autoFarmToggle, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 270, 0, 43)})
+	clickTween:Play()
+	wait(0.1)
+	local clickTween2 = TweenService:Create(autoFarmToggle, TweenInfo.new(0.15, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {Size = UDim2.new(0, 280, 0, 45)})
+	clickTween2:Play()
+
+	-- Check if player is seated before starting
+	if not autoFarmActive and not isPlayerSeated() then
+		spawn(function()
+			createNotification("Please sit on a car first", "rbxassetid://6525485104")
+		end)
+		wait(0.8)
+		farmDebounce = false
+		return
+	end
+
+	autoFarmActive = not autoFarmActive
+	if autoFarmActive then
+		autoFarmToggle.Text = "AUTO FARM: ON"
+		farmStroke.Color = Color3.fromRGB(100, 255, 100)
+
+		spawn(function()
+			createNotification("Auto Farm Began", "rbxassetid://15540208282")
+		end)
+
+		spawn(function()
+			while autoFarmActive do
+				for i, v in pairs(workspace:GetChildren()) do
+					if v.ClassName == "Model" and v:FindFirstChild("Container") or v.Name == "PortCraneOversized" then
+						v:Destroy()
+					end
+				end
+				wait(1)
+			end
+		end)
+
+		spawn(function()
+			while autoFarmActive do
+				if not isPlayerSeated() then
+					break
+				end
+				local hum = game.Players.LocalPlayer.Character.Humanoid
+				local car = hum.SeatPart.Parent
+				car.PrimaryPart = car.Body:FindFirstChild("#Weight")
+				if not getfenv().first then
+					if workspace.Workspace:FindFirstChild("Buildings") then
+						workspace.Workspace.Buildings:Destroy()
+					end
+					car:PivotTo(CFrame.new(Vector3.new(-7594.541015625, -3.513848304748535, 5130.95263671875), Vector3.new(-6205.29833984375, -3.5030133724212646, 8219.853515625)))
+					wait(0.1)
+				end
+				car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
+				getfenv().first = true
+				local location = Vector3.new(-6205.29833984375, 100, 8219.853515625)
+				repeat
+					task.wait()
+					if not isPlayerSeated() then autoFarmActive = false break end
+					mathlock = hasGamepass and 600 or 550
+					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * mathlock
+					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
+				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
+				car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
+				location = Vector3.new(-7594.541015625, 100, 5130.95263671875)
+				repeat
+					task.wait()
+					if not isPlayerSeated() then autoFarmActive = false break end
+					mathlock = hasGamepass and 600 or 550
+					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * mathlock
+					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
+				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
+				car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
+			end
+		end)
+	else
+		autoFarmToggle.Text = "AUTO FARM: OFF"
+		farmStroke.Color = Color3.fromRGB(255, 255, 255)
+
+		spawn(function()
+			createNotification("Auto Farm Stopped", "rbxassetid://15540208282")
+		end)
+	end
+
+	wait(0.8)
+	farmDebounce = false
 end)
 
 -- Black Screen Button
@@ -482,7 +482,7 @@ blackScreenToggle.Font = Enum.Font.GothamBold
 blackScreenToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 blackScreenToggle.BorderSizePixel = 0
 blackScreenToggle.ClipsDescendants = true
-blackScreenToggle.ZIndex = 2
+blackScreenToggle.ZIndex = 5001
 blackScreenToggle.Parent = guiFrame
 
 local blackCorner = Instance.new("UICorner")
@@ -497,8 +497,8 @@ blackStroke.Parent = blackScreenToggle
 
 local blackGradient = Instance.new("UIGradient")
 blackGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 55)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 70))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 55)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 70))
 }
 blackGradient.Rotation = 90
 blackGradient.Parent = blackScreenToggle
@@ -506,647 +506,647 @@ blackGradient.Parent = blackScreenToggle
 local blackDebounce = false
 
 blackScreenToggle.MouseButton1Click:Connect(function()
-    if blackDebounce then
-        spawn(function()
-            createNotification("Relax buddy, ur clicking way too fast", "rbxassetid://139557679200863")
-        end)
-        return
-    end
-    
-    blackDebounce = true
-    clickSound:Play()
-    
-    -- Get click position relative to button
-    local mouse = game.Players.LocalPlayer:GetMouse()
-    local buttonPos = blackScreenToggle.AbsolutePosition
-    local relativeX = mouse.X - buttonPos.X
-    local relativeY = mouse.Y - buttonPos.Y
-    
-    createRipple(blackScreenToggle, relativeX, relativeY)
-    
-    -- Button click effect with bounce
-    local clickTween = TweenService:Create(blackScreenToggle, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 270, 0, 43)})
-    clickTween:Play()
-    wait(0.1)
-    local clickTween2 = TweenService:Create(blackScreenToggle, TweenInfo.new(0.15, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {Size = UDim2.new(0, 280, 0, 45)})
-    clickTween2:Play()
-    
-    if blackScreenToggle.Text == "BLACK SCREEN: OFF" then
-        -- Create Black Screen with fade in
-        local blackScreen = Instance.new("ScreenGui")
-        blackScreen.Name = "BlackScreen"
-        blackScreen.DisplayOrder = 100
-        blackScreen.Parent = game.CoreGui
+	if blackDebounce then
+		spawn(function()
+			createNotification("Relax buddy, ur clicking way too fast", "rbxassetid://96714408085433")
+		end)
+		return
+	end
 
-        local blackFrame = Instance.new("Frame")
-        blackFrame.Size = UDim2.new(1, 0, 1, 0)
-        blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)
-        blackFrame.BackgroundTransparency = 1
-        blackFrame.BorderSizePixel = 0
-        blackFrame.Parent = blackScreen
-        
-        -- Add music sound
-        local musicSound = Instance.new("Sound")
-        musicSound.SoundId = "rbxassetid://131412476555377"
-        musicSound.Volume = 0.5
-        musicSound.Looped = true
-        musicSound.TimePosition = 35
-        musicSound.Name = "BlackScreenMusic"
-        musicSound.Parent = game.SoundService
-        
-        local isMuted = false
-        
-        -- Add image to black screen
-        local blackImage = Instance.new("ImageLabel")
-        blackImage.Size = UDim2.new(0, 150, 0, 150)
-        blackImage.Position = UDim2.new(0.5, -75, 0.35, -75)
-        blackImage.BackgroundTransparency = 1
-        blackImage.Image = "rbxassetid://139557679200863"
-        blackImage.ImageTransparency = 1
-        blackImage.Parent = blackFrame
-        
-        local blackImageCorner = Instance.new("UICorner")
-        blackImageCorner.CornerRadius = UDim.new(0.2, 0)
-        blackImageCorner.Parent = blackImage
-        
-        -- Add text to black screen
-        local blackText = Instance.new("TextLabel")
-        blackText.Size = UDim2.new(0.8, 0, 0, 60)
-        blackText.Position = UDim2.new(0.1, 0, 0.55, 0)
-        blackText.BackgroundTransparency = 1
-        blackText.Text = player.DisplayName .. " is chilling RN\nhes not hacking"
-        blackText.TextColor3 = Color3.fromRGB(255, 255, 255)
-        blackText.TextSize = 28
-        blackText.Font = Enum.Font.GothamBold
-        blackText.TextTransparency = 1
-        blackText.Parent = blackFrame
-        
-        -- Add mute/unmute button
-        local muteButton = Instance.new("ImageButton")
-        muteButton.Size = UDim2.new(0, 80, 0, 80)
-        muteButton.Position = UDim2.new(0.5, -40, 0.7, 0)
-        muteButton.BackgroundTransparency = 1
-        muteButton.Image = "rbxassetid://120873458554170"
-        muteButton.ImageTransparency = 1
-        muteButton.Parent = blackFrame
-        
-        local muteCorner = Instance.new("UICorner")
-        muteCorner.CornerRadius = UDim.new(0.2, 0)
-        muteCorner.Parent = muteButton
-        
-        -- Fade in animation
-        local fadeIn1 = TweenService:Create(blackFrame, TweenInfo.new(0.8), {BackgroundTransparency = 0})
-        local fadeIn2 = TweenService:Create(blackText, TweenInfo.new(0.8), {TextTransparency = 0})
-        local fadeIn3 = TweenService:Create(blackImage, TweenInfo.new(0.8), {ImageTransparency = 0})
-        local fadeIn4 = TweenService:Create(muteButton, TweenInfo.new(0.8), {ImageTransparency = 0})
-        
-        fadeIn1:Play()
-        fadeIn2:Play()
-        fadeIn3:Play()
-        fadeIn4:Play()
-        
-        wait(0.8)
-        musicSound:Play()
-        
-        -- Cash Counter UI with animated gradient
-        local cashFrame = Instance.new("Frame")
-        cashFrame.Size = UDim2.new(0, 320, 0, 100)
-        cashFrame.Position = UDim2.new(0.5, -160, 0.05, 0)
-        cashFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        cashFrame.BackgroundTransparency = 0.3
-        cashFrame.BorderSizePixel = 0
-        cashFrame.ZIndex = 5001
-        cashFrame.Parent = blackFrame
-        
-        local cashCorner = Instance.new("UICorner")
-        cashCorner.CornerRadius = UDim.new(0.15, 0)
-        cashCorner.Parent = cashFrame
-        
-        local cashStroke = Instance.new("UIStroke")
-        cashStroke.Color = Color3.fromRGB(100, 255, 100)
-        cashStroke.Thickness = 2
-        cashStroke.Transparency = 0.3
-        cashStroke.Parent = cashFrame
-        
-        -- Animated gradient that cycles colors
-        local cashGradient = Instance.new("UIGradient")
-        cashGradient.Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 15))
-        }
-        cashGradient.Rotation = 90
-        cashGradient.Parent = cashFrame
-        
-        -- Animate gradient rotation
-        spawn(function()
-            while cashFrame.Parent do
-                for i = 0, 360, 2 do
-                    if not cashFrame.Parent then break end
-                    cashGradient.Rotation = i
-                    wait(0.03)
-                end
-            end
-        end)
-        
-        -- Animate gradient colors
-        spawn(function()
-            local colors = {
-                {Color3.fromRGB(30, 30, 30), Color3.fromRGB(15, 15, 15)},
-                {Color3.fromRGB(20, 40, 20), Color3.fromRGB(10, 25, 10)},
-                {Color3.fromRGB(40, 20, 40), Color3.fromRGB(25, 10, 25)},
-                {Color3.fromRGB(20, 30, 40), Color3.fromRGB(10, 20, 25)}
-            }
-            local colorIndex = 1
-            
-            while cashFrame.Parent do
-                local nextIndex = colorIndex % #colors + 1
-                local colorTween = TweenService:Create(cashGradient, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-                    Color = ColorSequence.new{
-                        ColorSequenceKeypoint.new(0, colors[nextIndex][1]),
-                        ColorSequenceKeypoint.new(1, colors[nextIndex][2])
-                    }
-                })
-                colorTween:Play()
-                wait(3)
-                colorIndex = nextIndex
-            end
-        end)
-        
-        -- Glow effect
-        local cashGlow = Instance.new("ImageLabel")
-        cashGlow.Size = UDim2.new(1, 20, 1, 20)
-        cashGlow.Position = UDim2.new(0, -10, 0, -10)
-        cashGlow.BackgroundTransparency = 1
-        cashGlow.Image = "rbxassetid://5028857084"
-        cashGlow.ImageColor3 = Color3.fromRGB(100, 255, 100)
-        cashGlow.ImageTransparency = 0.8
-        cashGlow.ScaleType = Enum.ScaleType.Slice
-        cashGlow.SliceCenter = Rect.new(24, 24, 276, 276)
-        cashGlow.ZIndex = 5000
-        cashGlow.Parent = cashFrame
-        
-        local cashTitle = Instance.new("TextLabel")
-        cashTitle.Size = UDim2.new(1, 0, 0, 30)
-        cashTitle.Position = UDim2.new(0, 0, 0, 10)
-        cashTitle.BackgroundTransparency = 1
-        cashTitle.Text = "💰 CASH EARNED"
-        cashTitle.TextColor3 = Color3.fromRGB(100, 255, 100)
-        cashTitle.TextSize = 18
-        cashTitle.Font = Enum.Font.GothamBold
-        cashTitle.ZIndex = 5002
-        cashTitle.Parent = cashFrame
-        
-        local cashAmount = Instance.new("TextLabel")
-        cashAmount.Size = UDim2.new(1, 0, 0, 40)
-        cashAmount.Position = UDim2.new(0, 0, 0, 40)
-        cashAmount.BackgroundTransparency = 1
-        cashAmount.Text = "$0"
-        cashAmount.TextColor3 = Color3.fromRGB(255, 255, 255)
-        cashAmount.TextSize = 32
-        cashAmount.Font = Enum.Font.GothamBold
-        cashAmount.ZIndex = 5002
-        cashAmount.Parent = cashFrame
-        
-        -- Function to format cash
-        local function formatCash(value)
-            if value >= 100000 then
-                return string.format("%.0fK+ ($%s)", value / 1000, tostring(math.floor(value)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
-            else
-                return "$" .. tostring(math.floor(value)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
-            end
-        end
-        
-        -- Plus button for gamepass
-        local plusButton = Instance.new("ImageButton")
-        plusButton.Size = UDim2.new(0, 50, 0, 50)
-        plusButton.Position = UDim2.new(1, -60, 0.5, -25)
-        plusButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        plusButton.BackgroundTransparency = 0.3
-        plusButton.BorderSizePixel = 0
-        plusButton.Image = "rbxassetid://6031094678"
-        plusButton.ImageColor3 = Color3.fromRGB(100, 255, 100)
-        plusButton.ZIndex = 5002
-        plusButton.ClipsDescendants = true
-        plusButton.Parent = cashFrame
-        
-        local plusCorner = Instance.new("UICorner")
-        plusCorner.CornerRadius = UDim.new(1, 0)
-        plusCorner.Parent = plusButton
-        
-        local plusStroke = Instance.new("UIStroke")
-        plusStroke.Color = Color3.fromRGB(100, 255, 100)
-        plusStroke.Thickness = 2
-        plusStroke.Transparency = 0.5
-        plusStroke.Parent = plusButton
-        
-        -- Gamepass prompt frame
-        local gamepassFrame = Instance.new("Frame")
-        gamepassFrame.Size = UDim2.new(0, 400, 0, 220)
-        gamepassFrame.Position = UDim2.new(0.5, -200, 0.5, -110)
-        gamepassFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        gamepassFrame.BorderSizePixel = 0
-        gamepassFrame.Visible = false
-        gamepassFrame.ZIndex = 5100
-        gamepassFrame.Parent = blackFrame
-        
-        local gamepassCorner = Instance.new("UICorner")
-        gamepassCorner.CornerRadius = UDim.new(0.08, 0)
-        gamepassCorner.Parent = gamepassFrame
-        
-        local gamepassStroke = Instance.new("UIStroke")
-        gamepassStroke.Color = Color3.fromRGB(255, 215, 0)
-        gamepassStroke.Thickness = 3
-        gamepassStroke.Transparency = 0.3
-        gamepassStroke.Parent = gamepassFrame
-        
-        local gamepassGradient = Instance.new("UIGradient")
-        gamepassGradient.Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 35)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
-        }
-        gamepassGradient.Rotation = 45
-        gamepassGradient.Parent = gamepassFrame
-        
-        local gamepassTitle = Instance.new("TextLabel")
-        gamepassTitle.Size = UDim2.new(1, -20, 0, 40)
-        gamepassTitle.Position = UDim2.new(0, 10, 0, 15)
-        gamepassTitle.BackgroundTransparency = 1
-        gamepassTitle.Text = "⚡ SPEED UP FARMING?"
-        gamepassTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
-        gamepassTitle.TextSize = 22
-        gamepassTitle.Font = Enum.Font.GothamBold
-        gamepassTitle.ZIndex = 5101
-        gamepassTitle.Parent = gamepassFrame
-        
-        local gamepassDesc = Instance.new("TextLabel")
-        gamepassDesc.Size = UDim2.new(1, -40, 0, 60)
-        gamepassDesc.Position = UDim2.new(0, 20, 0, 65)
-        gamepassDesc.BackgroundTransparency = 1
-        gamepassDesc.Text = "Purchase Supporter for a faster AutoFarm\nand help support the development!"
-        gamepassDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
-        gamepassDesc.TextSize = 16
-        gamepassDesc.Font = Enum.Font.Gotham
-        gamepassDesc.TextWrapped = true
-        gamepassDesc.TextXAlignment = Enum.TextXAlignment.Center
-        gamepassDesc.ZIndex = 5101
-        gamepassDesc.Parent = gamepassFrame
-        
-        local purchaseButton = Instance.new("TextButton")
-        purchaseButton.Size = UDim2.new(0, 300, 0, 50)
-        purchaseButton.Position = UDim2.new(0.5, -150, 1, -65)
-        purchaseButton.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-        purchaseButton.BorderSizePixel = 0
-        purchaseButton.Text = "🚀 PURCHASE SUPPORTER"
-        purchaseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-        purchaseButton.TextSize = 18
-        purchaseButton.Font = Enum.Font.GothamBold
-        purchaseButton.ZIndex = 5101
-        purchaseButton.ClipsDescendants = true
-        purchaseButton.Parent = gamepassFrame
-        
-        local purchaseCorner = Instance.new("UICorner")
-        purchaseCorner.CornerRadius = UDim.new(0.15, 0)
-        purchaseCorner.Parent = purchaseButton
-        
-        local purchaseIcon = Instance.new("ImageLabel")
-        purchaseIcon.Size = UDim2.new(0, 30, 0, 30)
-        purchaseIcon.Position = UDim2.new(0, 15, 0.5, -15)
-        purchaseIcon.BackgroundTransparency = 1
-        purchaseIcon.Image = "rbxassetid://6031094678"
-        purchaseIcon.ImageColor3 = Color3.fromRGB(0, 0, 0)
-        purchaseIcon.ZIndex = 5102
-        purchaseIcon.Parent = purchaseButton
-        
-        local closeButton = Instance.new("TextButton")
-        closeButton.Size = UDim2.new(0, 35, 0, 35)
-        closeButton.Position = UDim2.new(1, -45, 0, 10)
-        closeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        closeButton.BackgroundTransparency = 0.3
-        closeButton.BorderSizePixel = 0
-        closeButton.Text = ""
-        closeButton.ZIndex = 5102
-        closeButton.ClipsDescendants = true
-        closeButton.Parent = gamepassFrame
-        
-        local closeCorner = Instance.new("UICorner")
-        closeCorner.CornerRadius = UDim.new(1, 0)
-        closeCorner.Parent = closeButton
-        
-        local closeIcon = Instance.new("ImageLabel")
-        closeIcon.Size = UDim2.new(0.6, 0, 0.6, 0)
-        closeIcon.Position = UDim2.new(0.2, 0, 0.2, 0)
-        closeIcon.BackgroundTransparency = 1
-        closeIcon.Image = "rbxassetid://6031094678"
-        closeIcon.ImageColor3 = Color3.fromRGB(255, 50, 50)
-        closeIcon.Rotation = 45
-        closeIcon.ZIndex = 5103
-        closeIcon.Parent = closeButton
-        
-        -- Monitor cash changes with BOUNCE animation
-        local lastCash = 0
-        if player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Cash") then
-            lastCash = player.leaderstats.Cash.Value
-            cashAmount.Text = formatCash(lastCash)
-            
-            player.leaderstats.Cash.Changed:Connect(function(newValue)
-                local difference = math.abs(newValue - lastCash)
-                if newValue > lastCash and difference > 0 then
-                    -- BOUNCE animation on main cash amount
-                    local bounceTween1 = TweenService:Create(cashAmount, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                        TextSize = 40
-                    })
-                    bounceTween1:Play()
-                    wait(0.15)
-                    local bounceTween2 = TweenService:Create(cashAmount, TweenInfo.new(0.2, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
-                        TextSize = 32
-                    })
-                    bounceTween2:Play()
-                    
-                    -- Show gain animation with pop effect
-                    local gainLabel = Instance.new("TextLabel")
-                    gainLabel.Size = UDim2.new(0, 0, 0, 0)
-                    gainLabel.Position = UDim2.new(0.5, 0, 0.5, 20)
-                    gainLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-                    gainLabel.BackgroundTransparency = 1
-                    gainLabel.Text = "+$" .. tostring(math.floor(difference)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
-                    gainLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-                    gainLabel.TextSize = 28
-                    gainLabel.Font = Enum.Font.GothamBold
-                    gainLabel.TextTransparency = 0
-                    gainLabel.TextStrokeTransparency = 0.5
-                    gainLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-                    gainLabel.ZIndex = 5003
-                    gainLabel.Parent = cashFrame
-                    
-                    -- BOUNCE Pop in effect
-                    local popIn = TweenService:Create(gainLabel, TweenInfo.new(0.3, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(0, 180, 0, 35)
-                    })
-                    popIn:Play()
-                    
-                    wait(0.3)
-                    
-                    -- Float up and fade
-                    local moveTween = TweenService:Create(gainLabel, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-                        Position = UDim2.new(0.5, 0, 0.5, -30),
-                        TextTransparency = 1,
-                        TextStrokeTransparency = 1
-                    })
-                    
-                    local scaleTween = TweenService:Create(gainLabel, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(0, 200, 0, 40)
-                    })
-                    
-                    moveTween:Play()
-                    scaleTween:Play()
-                    
-                    -- Flash effect
-                    local flashTween = TweenService:Create(cashStroke, TweenInfo.new(0.2), {Transparency = 0})
-                    flashTween:Play()
-                    wait(0.2)
-                    local flashTween2 = TweenService:Create(cashStroke, TweenInfo.new(0.4), {Transparency = 0.3})
-                    flashTween2:Play()
-                    
-                    -- Glow pulse
-                    local glowPulse = TweenService:Create(cashGlow, TweenInfo.new(0.3), {ImageTransparency = 0.5})
-                    glowPulse:Play()
-                    wait(0.3)
-                    local glowPulse2 = TweenService:Create(cashGlow, TweenInfo.new(0.5), {ImageTransparency = 0.8})
-                    glowPulse2:Play()
-                    
-                    wait(1.7)
-                    gainLabel:Destroy()
-                end
-                
-                lastCash = newValue
-                cashAmount.Text = formatCash(newValue)
-            end)
-        end
-        
-        -- Plus button click with ripple
-        plusButton.MouseButton1Click:Connect(function()
-            -- Create ripple on plus button
-            local mouse = game.Players.LocalPlayer:GetMouse()
-            local buttonPos = plusButton.AbsolutePosition
-            local relativeX = mouse.X - buttonPos.X
-            local relativeY = mouse.Y - buttonPos.Y
-            createRipple(plusButton, relativeX, relativeY)
-            
-            if hasGamepass then
-                spawn(function()
-                    createNotification("You already own the Supporter gamepass!", "rbxassetid://139557679200863")
-                end)
-                return
-            end
-            
-            -- Spin animation
-            local spinTween = TweenService:Create(plusButton, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Rotation = 360})
-            spinTween:Play()
-            
-            wait(0.5)
-            plusButton.Rotation = 0
-            
-            -- Show gamepass frame
-            gamepassFrame.Visible = true
-            gamepassFrame.Size = UDim2.new(0, 0, 0, 0)
-            gamepassFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-            
-            local expandTween = TweenService:Create(gamepassFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 400, 0, 220),
-                Position = UDim2.new(0.5, -200, 0.5, -110)
-            })
-            expandTween:Play()
-        end)
-        
-        -- Close button with ripple
-        closeButton.MouseButton1Click:Connect(function()
-            -- Create ripple
-            local mouse = game.Players.LocalPlayer:GetMouse()
-            local buttonPos = closeButton.AbsolutePosition
-            local relativeX = mouse.X - buttonPos.X
-            local relativeY = mouse.Y - buttonPos.Y
-            createRipple(closeButton, relativeX, relativeY)
-            
-            local shrinkTween = TweenService:Create(gamepassFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                Size = UDim2.new(0, 0, 0, 0),
-                Position = UDim2.new(0.5, 0, 0.5, 0)
-            })
-            shrinkTween:Play()
-            
-            wait(0.3)
-            gamepassFrame.Visible = false
-        end)
-        
-        -- Purchase button with ripple
-        purchaseButton.MouseButton1Click:Connect(function()
-            -- Create ripple
-            local mouse = game.Players.LocalPlayer:GetMouse()
-            local buttonPos = purchaseButton.AbsolutePosition
-            local relativeX = mouse.X - buttonPos.X
-            local relativeY = mouse.Y - buttonPos.Y
-            createRipple(purchaseButton, relativeX, relativeY)
-            
-            -- Spin icon
-            spawn(function()
-                for i = 0, 360, 30 do
-                    purchaseIcon.Rotation = i
-                    wait(0.02)
-                end
-                purchaseIcon.Rotation = 0
-            end)
-            
-            -- Flash red
-            local originalColor = purchaseButton.BackgroundColor3
-            purchaseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-            wait(0.15)
-            purchaseButton.BackgroundColor3 = originalColor
-            
-            -- Try to prompt gamepass
-            local success, err = pcall(function()
-                MarketplaceService:PromptGamePassPurchase(player, GAMEPASS_ID)
-            end)
-            
-            if not success then
-                -- Copy link to clipboard
-                local link = "https://www.roblox.com/catalog/" .. GAMEPASS_ID
-                if setclipboard then
-                    setclipboard(link)
-                    spawn(function()
-                        createNotification("Gamepass link copied to clipboard!", "rbxassetid://139557679200863")
-                    end)
-                else
-                    spawn(function()
-                        createNotification("Cannot prompt gamepass - link: " .. link, "rbxassetid://139557679200863")
-                    end)
-                end
-            end
-        end)
-        
-        -- Check for gamepass purchase
-        MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(plr, passId, wasPurchased)
-            if plr == player and passId == GAMEPASS_ID and wasPurchased then
-                hasGamepass = true
-                spawn(function()
-                    createNotification("Supporter purchased! AutoFarm is now faster!", "rbxassetid://139557679200863")
-                end)
-                
-                -- Close frame
-                local shrinkTween = TweenService:Create(gamepassFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                    Size = UDim2.new(0, 0, 0, 0),
-                    Position = UDim2.new(0.5, 0, 0.5, 0)
-                })
-                shrinkTween:Play()
-                wait(0.3)
-                gamepassFrame.Visible = false
-            end
-        end)
-        
-        -- Mute button functionality with ripple
-        muteButton.MouseButton1Click:Connect(function()
-            -- Create ripple
-            local mouse = game.Players.LocalPlayer:GetMouse()
-            local buttonPos = muteButton.AbsolutePosition
-            local relativeX = mouse.X - buttonPos.X
-            local relativeY = mouse.Y - buttonPos.Y
-            
-            local ripple = Instance.new("Frame")
-            ripple.Size = UDim2.new(0, 0, 0, 0)
-            ripple.Position = UDim2.new(0, relativeX, 0, relativeY)
-            ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-            ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            ripple.BackgroundTransparency = 0.3
-            ripple.BorderSizePixel = 0
-            ripple.ZIndex = 10
-            ripple.Parent = muteButton
-            
-            local rippleCorner = Instance.new("UICorner")
-            rippleCorner.CornerRadius = UDim.new(1, 0)
-            rippleCorner.Parent = ripple
-            
-            local expandTween = TweenService:Create(ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 200, 0, 200),
-                BackgroundTransparency = 1
-            })
-            expandTween:Play()
-            expandTween.Completed:Connect(function() ripple:Destroy() end)
-            
-            -- Smooth scale and rotation animation
-            local scaleUp = TweenService:Create(muteButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 90, 0, 90),
-                Rotation = 15
-            })
-            
-            local fadeOut = TweenService:Create(muteButton, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-                ImageTransparency = 0.5
-            })
-            
-            scaleUp:Play()
-            fadeOut:Play()
-            
-            wait(0.2)
-            
-            -- Toggle mute
-            isMuted = not isMuted
-            if isMuted then
-                musicSound.Volume = 0
-                muteButton.Image = "rbxassetid://91780411131931"
-            else
-                musicSound.Volume = 0.5
-                muteButton.Image = "rbxassetid://120873458554170"
-            end
-            
-            -- Smooth scale back and fade in
-            local scaleDown = TweenService:Create(muteButton, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 80, 0, 80),
-                Rotation = 0
-            })
-            
-            local fadeIn = TweenService:Create(muteButton, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-                ImageTransparency = 0
-            })
-            
-            scaleDown:Play()
-            fadeIn:Play()
-        end)
+	blackDebounce = true
+	clickSound:Play()
 
-        blackScreenToggle.Text = "BLACK SCREEN: ON"
-        blackStroke.Color = Color3.fromRGB(100, 255, 100)
-    else
-        -- Stop music
-        local musicSound = game.SoundService:FindFirstChild("BlackScreenMusic")
-        if musicSound then
-            musicSound:Stop()
-            musicSound:Destroy()
-        end
-        
-        -- Remove Black Screen with fade out
-        local blackScreen = game.CoreGui:FindFirstChild("BlackScreen")
-        if blackScreen then
-            local blackFrame = blackScreen:FindFirstChild("Frame")
-            if blackFrame then
-                local fadeOut1 = TweenService:Create(blackFrame, TweenInfo.new(0.8), {BackgroundTransparency = 1})
-                fadeOut1:Play()
-                
-                for _, child in pairs(blackFrame:GetChildren()) do
-                    if child:IsA("TextLabel") then
-                        local fadeOut = TweenService:Create(child, TweenInfo.new(0.8), {TextTransparency = 1})
-                        fadeOut:Play()
-                    elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
-                        local fadeOut = TweenService:Create(child, TweenInfo.new(0.8), {ImageTransparency = 1})
-                        fadeOut:Play()
-                    end
-                end
-                
-                wait(0.8)
-            end
-            blackScreen:Destroy()
-        end
-        blackScreenToggle.Text = "BLACK SCREEN: OFF"
-        blackStroke.Color = Color3.fromRGB(255, 255, 255)
-    end
-    
-    wait(0.8)
-    blackDebounce = false
+	-- Get click position relative to button
+	local mouse = game.Players.LocalPlayer:GetMouse()
+	local buttonPos = blackScreenToggle.AbsolutePosition
+	local relativeX = mouse.X - buttonPos.X
+	local relativeY = mouse.Y - buttonPos.Y
+
+	createRipple(blackScreenToggle, relativeX, relativeY)
+
+	-- Button click effect with bounce
+	local clickTween = TweenService:Create(blackScreenToggle, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 270, 0, 43)})
+	clickTween:Play()
+	wait(0.1)
+	local clickTween2 = TweenService:Create(blackScreenToggle, TweenInfo.new(0.15, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {Size = UDim2.new(0, 280, 0, 45)})
+	clickTween2:Play()
+
+	if blackScreenToggle.Text == "BLACK SCREEN: OFF" then
+		-- Create Black Screen with fade in
+		local blackScreen = Instance.new("ScreenGui")
+		blackScreen.Name = "BlackScreen"
+		blackScreen.DisplayOrder = 100
+		blackScreen.Parent = game.CoreGui
+
+		local blackFrame = Instance.new("Frame")
+		blackFrame.Size = UDim2.new(1, 0, 1, 0)
+		blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+		blackFrame.BackgroundTransparency = 1
+		blackFrame.BorderSizePixel = 0
+		blackFrame.Parent = blackScreen
+
+		-- Add music sound
+		local musicSound = Instance.new("Sound")
+		musicSound.SoundId = "rbxassetid://131412476555377"
+		musicSound.Volume = 0.5
+		musicSound.Looped = true
+		musicSound.TimePosition = 35
+		musicSound.Name = "BlackScreenMusic"
+		musicSound.Parent = game.SoundService
+
+		local isMuted = false
+
+		-- Add image to black screen
+		local blackImage = Instance.new("ImageLabel")
+		blackImage.Size = UDim2.new(0, 150, 0, 150)
+		blackImage.Position = UDim2.new(0.5, -75, 0.35, -75)
+		blackImage.BackgroundTransparency = 1
+		blackImage.Image = "rbxassetid://139557679200863"
+		blackImage.ImageTransparency = 1
+		blackImage.Parent = blackFrame
+
+		local blackImageCorner = Instance.new("UICorner")
+		blackImageCorner.CornerRadius = UDim.new(0.2, 0)
+		blackImageCorner.Parent = blackImage
+
+		-- Add text to black screen
+		local blackText = Instance.new("TextLabel")
+		blackText.Size = UDim2.new(0.8, 0, 0, 60)
+		blackText.Position = UDim2.new(0.1, 0, 0.55, 0)
+		blackText.BackgroundTransparency = 1
+		blackText.Text = player.DisplayName .. " is chilling RN\nthey are not hacking"
+		blackText.TextColor3 = Color3.fromRGB(255, 255, 255)
+		blackText.TextSize = 28
+		blackText.Font = Enum.Font.GothamBold
+		blackText.TextTransparency = 1
+		blackText.Parent = blackFrame
+
+		-- Add mute/unmute button
+		local muteButton = Instance.new("ImageButton")
+		muteButton.Size = UDim2.new(0, 80, 0, 80)
+		muteButton.Position = UDim2.new(0.5, -40, 0.7, 0)
+		muteButton.BackgroundTransparency = 1
+		muteButton.Image = "rbxassetid://120873458554170"
+		muteButton.ImageTransparency = 1
+		muteButton.Parent = blackFrame
+
+		local muteCorner = Instance.new("UICorner")
+		muteCorner.CornerRadius = UDim.new(0.2, 0)
+		muteCorner.Parent = muteButton
+
+		-- Fade in animation
+		local fadeIn1 = TweenService:Create(blackFrame, TweenInfo.new(0.8), {BackgroundTransparency = 0})
+		local fadeIn2 = TweenService:Create(blackText, TweenInfo.new(0.8), {TextTransparency = 0})
+		local fadeIn3 = TweenService:Create(blackImage, TweenInfo.new(0.8), {ImageTransparency = 0})
+		local fadeIn4 = TweenService:Create(muteButton, TweenInfo.new(0.8), {ImageTransparency = 0})
+
+		fadeIn1:Play()
+		fadeIn2:Play()
+		fadeIn3:Play()
+		fadeIn4:Play()
+
+		wait(0.8)
+		musicSound:Play()
+
+		-- Cash Counter UI with animated gradient
+		local cashFrame = Instance.new("Frame")
+		cashFrame.Size = UDim2.new(0, 320, 0, 100)
+		cashFrame.Position = UDim2.new(0.5, -160, 0.05, 0)
+		cashFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+		cashFrame.BackgroundTransparency = 0.3
+		cashFrame.BorderSizePixel = 0
+		cashFrame.ZIndex = 5001
+		cashFrame.Parent = blackFrame
+
+		local cashCorner = Instance.new("UICorner")
+		cashCorner.CornerRadius = UDim.new(0.15, 0)
+		cashCorner.Parent = cashFrame
+
+		local cashStroke = Instance.new("UIStroke")
+		cashStroke.Color = Color3.fromRGB(100, 255, 100)
+		cashStroke.Thickness = 2
+		cashStroke.Transparency = 0.3
+		cashStroke.Parent = cashFrame
+
+		-- Animated gradient that cycles colors
+		local cashGradient = Instance.new("UIGradient")
+		cashGradient.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 15))
+		}
+		cashGradient.Rotation = 90
+		cashGradient.Parent = cashFrame
+
+		-- Animate gradient rotation
+		spawn(function()
+			while cashFrame.Parent do
+				for i = 0, 360, 2 do
+					if not cashFrame.Parent then break end
+					cashGradient.Rotation = i
+					wait(0.03)
+				end
+			end
+		end)
+
+		-- Animate gradient colors
+		spawn(function()
+			local colors = {
+				{Color3.fromRGB(30, 30, 30), Color3.fromRGB(15, 15, 15)},
+				{Color3.fromRGB(20, 40, 20), Color3.fromRGB(10, 25, 10)},
+				{Color3.fromRGB(40, 20, 40), Color3.fromRGB(25, 10, 25)},
+				{Color3.fromRGB(20, 30, 40), Color3.fromRGB(10, 20, 25)}
+			}
+			local colorIndex = 1
+
+			while cashFrame.Parent do
+				local nextIndex = colorIndex % #colors + 1
+				local colorTween = TweenService:Create(cashGradient, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+					Color = ColorSequence.new{
+						ColorSequenceKeypoint.new(0, colors[nextIndex][1]),
+						ColorSequenceKeypoint.new(1, colors[nextIndex][2])
+					}
+				})
+				colorTween:Play()
+				wait(3)
+				colorIndex = nextIndex
+			end
+		end)
+
+		-- Glow effect
+		local cashGlow = Instance.new("ImageLabel")
+		cashGlow.Size = UDim2.new(1, 20, 1, 20)
+		cashGlow.Position = UDim2.new(0, -10, 0, -10)
+		cashGlow.BackgroundTransparency = 1
+		cashGlow.Image = "rbxassetid://5028857084"
+		cashGlow.ImageColor3 = Color3.fromRGB(100, 255, 100)
+		cashGlow.ImageTransparency = 0.8
+		cashGlow.ScaleType = Enum.ScaleType.Slice
+		cashGlow.SliceCenter = Rect.new(24, 24, 276, 276)
+		cashGlow.ZIndex = 5000
+		cashGlow.Parent = cashFrame
+
+		local cashTitle = Instance.new("TextLabel")
+		cashTitle.Size = UDim2.new(1, 0, 0, 30)
+		cashTitle.Position = UDim2.new(0, 0, 0, 10)
+		cashTitle.BackgroundTransparency = 1
+		cashTitle.Text = "💰 CASH EARNED"
+		cashTitle.TextColor3 = Color3.fromRGB(100, 255, 100)
+		cashTitle.TextSize = 18
+		cashTitle.Font = Enum.Font.GothamBold
+		cashTitle.ZIndex = 5002
+		cashTitle.Parent = cashFrame
+
+		local cashAmount = Instance.new("TextLabel")
+		cashAmount.Size = UDim2.new(1, 0, 0, 40)
+		cashAmount.Position = UDim2.new(0, 0, 0, 40)
+		cashAmount.BackgroundTransparency = 1
+		cashAmount.Text = "$0"
+		cashAmount.TextColor3 = Color3.fromRGB(255, 255, 255)
+		cashAmount.TextSize = 32
+		cashAmount.Font = Enum.Font.GothamBold
+		cashAmount.ZIndex = 5002
+		cashAmount.Parent = cashFrame
+
+		-- Function to format cash
+		local function formatCash(value)
+			if value >= 100000 then
+				return string.format("%.0fK+ ($%s)", value / 1000, tostring(math.floor(value)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+			else
+				return "$" .. tostring(math.floor(value)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
+			end
+		end
+
+		-- Plus button for gamepass
+		local plusButton = Instance.new("ImageButton")
+		plusButton.Size = UDim2.new(0, 50, 0, 50)
+		plusButton.Position = UDim2.new(1, -60, 0.5, -25)
+		plusButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		plusButton.BackgroundTransparency = 0.3
+		plusButton.BorderSizePixel = 0
+		plusButton.Image = "rbxassetid://14915516955"
+		plusButton.ImageColor3 = Color3.fromRGB(100, 255, 100)
+		plusButton.ZIndex = 5002
+		plusButton.ClipsDescendants = true
+		plusButton.Parent = cashFrame
+
+		local plusCorner = Instance.new("UICorner")
+		plusCorner.CornerRadius = UDim.new(1, 0)
+		plusCorner.Parent = plusButton
+
+		local plusStroke = Instance.new("UIStroke")
+		plusStroke.Color = Color3.fromRGB(100, 255, 100)
+		plusStroke.Thickness = 2
+		plusStroke.Transparency = 0.5
+		plusStroke.Parent = plusButton
+
+		-- Gamepass prompt frame
+		local gamepassFrame = Instance.new("Frame")
+		gamepassFrame.Size = UDim2.new(0, 400, 0, 220)
+		gamepassFrame.Position = UDim2.new(0.5, -200, 0.5, -110)
+		gamepassFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+		gamepassFrame.BorderSizePixel = 0
+		gamepassFrame.Visible = false
+		gamepassFrame.ZIndex = 5100
+		gamepassFrame.Parent = blackFrame
+
+		local gamepassCorner = Instance.new("UICorner")
+		gamepassCorner.CornerRadius = UDim.new(0.08, 0)
+		gamepassCorner.Parent = gamepassFrame
+
+		local gamepassStroke = Instance.new("UIStroke")
+		gamepassStroke.Color = Color3.fromRGB(255, 215, 0)
+		gamepassStroke.Thickness = 3
+		gamepassStroke.Transparency = 0.3
+		gamepassStroke.Parent = gamepassFrame
+
+		local gamepassGradient = Instance.new("UIGradient")
+		gamepassGradient.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 35)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+		}
+		gamepassGradient.Rotation = 45
+		gamepassGradient.Parent = gamepassFrame
+
+		local gamepassTitle = Instance.new("TextLabel")
+		gamepassTitle.Size = UDim2.new(1, -20, 0, 40)
+		gamepassTitle.Position = UDim2.new(0, 10, 0, 15)
+		gamepassTitle.BackgroundTransparency = 1
+		gamepassTitle.Text = "⚡ SPEED UP FARMING?"
+		gamepassTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+		gamepassTitle.TextSize = 22
+		gamepassTitle.Font = Enum.Font.GothamBold
+		gamepassTitle.ZIndex = 5101
+		gamepassTitle.Parent = gamepassFrame
+
+		local gamepassDesc = Instance.new("TextLabel")
+		gamepassDesc.Size = UDim2.new(1, -40, 0, 60)
+		gamepassDesc.Position = UDim2.new(0, 20, 0, 65)
+		gamepassDesc.BackgroundTransparency = 1
+		gamepassDesc.Text = "Purchase Supporter for a faster AutoFarm\nand help support the development!"
+		gamepassDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
+		gamepassDesc.TextSize = 16
+		gamepassDesc.Font = Enum.Font.Gotham
+		gamepassDesc.TextWrapped = true
+		gamepassDesc.TextXAlignment = Enum.TextXAlignment.Center
+		gamepassDesc.ZIndex = 5101
+		gamepassDesc.Parent = gamepassFrame
+
+		local purchaseButton = Instance.new("TextButton")
+		purchaseButton.Size = UDim2.new(0, 300, 0, 50)
+		purchaseButton.Position = UDim2.new(0.5, -150, 1, -65)
+		purchaseButton.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+		purchaseButton.BorderSizePixel = 0
+		purchaseButton.Text = "🚀 PURCHASE SUPPORTER"
+		purchaseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+		purchaseButton.TextSize = 18
+		purchaseButton.Font = Enum.Font.GothamBold
+		purchaseButton.ZIndex = 5101
+		purchaseButton.ClipsDescendants = true
+		purchaseButton.Parent = gamepassFrame
+
+		local purchaseCorner = Instance.new("UICorner")
+		purchaseCorner.CornerRadius = UDim.new(0.15, 0)
+		purchaseCorner.Parent = purchaseButton
+
+		local purchaseIcon = Instance.new("ImageLabel")
+		purchaseIcon.Size = UDim2.new(0, 30, 0, 30)
+		purchaseIcon.Position = UDim2.new(0, 15, 0.5, -15)
+		purchaseIcon.BackgroundTransparency = 1
+		purchaseIcon.Image = "rbxassetid://14915516955"
+		purchaseIcon.ImageColor3 = Color3.fromRGB(0, 0, 0)
+		purchaseIcon.ZIndex = 5102
+		purchaseIcon.Parent = purchaseButton
+
+		local closeButton = Instance.new("TextButton")
+		closeButton.Size = UDim2.new(0, 35, 0, 35)
+		closeButton.Position = UDim2.new(1, -45, 0, 10)
+		closeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		closeButton.BackgroundTransparency = 0.3
+		closeButton.BorderSizePixel = 0
+		closeButton.Text = ""
+		closeButton.ZIndex = 5102
+		closeButton.ClipsDescendants = true
+		closeButton.Parent = gamepassFrame
+
+		local closeCorner = Instance.new("UICorner")
+		closeCorner.CornerRadius = UDim.new(1, 0)
+		closeCorner.Parent = closeButton
+
+		local closeIcon = Instance.new("ImageLabel")
+		closeIcon.Size = UDim2.new(0.6, 0, 0.6, 0)
+		closeIcon.Position = UDim2.new(0.2, 0, 0.2, 0)
+		closeIcon.BackgroundTransparency = 1
+		closeIcon.Image = "rbxassetid://6031094678"
+		closeIcon.ImageColor3 = Color3.fromRGB(255, 50, 50)
+		closeIcon.Rotation = 45
+		closeIcon.ZIndex = 5103
+		closeIcon.Parent = closeButton
+
+		-- Monitor cash changes with BOUNCE animation
+		local lastCash = 0
+		if player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Cash") then
+			lastCash = player.leaderstats.Cash.Value
+			cashAmount.Text = formatCash(lastCash)
+
+			player.leaderstats.Cash.Changed:Connect(function(newValue)
+				local difference = math.abs(newValue - lastCash)
+				if newValue > lastCash and difference > 0 then
+					-- BOUNCE animation on main cash amount
+					local bounceTween1 = TweenService:Create(cashAmount, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+						TextSize = 40
+					})
+					bounceTween1:Play()
+					wait(0.15)
+					local bounceTween2 = TweenService:Create(cashAmount, TweenInfo.new(0.2, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
+						TextSize = 32
+					})
+					bounceTween2:Play()
+
+					-- Show gain animation with pop effect
+					local gainLabel = Instance.new("TextLabel")
+					gainLabel.Size = UDim2.new(0, 0, 0, 0)
+					gainLabel.Position = UDim2.new(0.5, 0, 0.5, 20)
+					gainLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+					gainLabel.BackgroundTransparency = 1
+					gainLabel.Text = "+$" .. tostring(math.floor(difference)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
+					gainLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+					gainLabel.TextSize = 28
+					gainLabel.Font = Enum.Font.GothamBold
+					gainLabel.TextTransparency = 0
+					gainLabel.TextStrokeTransparency = 0.5
+					gainLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+					gainLabel.ZIndex = 5003
+					gainLabel.Parent = cashFrame
+
+					-- BOUNCE Pop in effect
+					local popIn = TweenService:Create(gainLabel, TweenInfo.new(0.3, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
+						Size = UDim2.new(0, 180, 0, 35)
+					})
+					popIn:Play()
+
+					wait(0.3)
+
+					-- Float up and fade
+					local moveTween = TweenService:Create(gainLabel, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+						Position = UDim2.new(0.5, 0, 0.5, -30),
+						TextTransparency = 1,
+						TextStrokeTransparency = 1
+					})
+
+					local scaleTween = TweenService:Create(gainLabel, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+						Size = UDim2.new(0, 200, 0, 40)
+					})
+
+					moveTween:Play()
+					scaleTween:Play()
+
+					-- Flash effect
+					local flashTween = TweenService:Create(cashStroke, TweenInfo.new(0.2), {Transparency = 0})
+					flashTween:Play()
+					wait(0.2)
+					local flashTween2 = TweenService:Create(cashStroke, TweenInfo.new(0.4), {Transparency = 0.3})
+					flashTween2:Play()
+
+					-- Glow pulse
+					local glowPulse = TweenService:Create(cashGlow, TweenInfo.new(0.3), {ImageTransparency = 0.5})
+					glowPulse:Play()
+					wait(0.3)
+					local glowPulse2 = TweenService:Create(cashGlow, TweenInfo.new(0.5), {ImageTransparency = 0.8})
+					glowPulse2:Play()
+
+					wait(1.7)
+					gainLabel:Destroy()
+				end
+
+				lastCash = newValue
+				cashAmount.Text = formatCash(newValue)
+			end)
+		end
+
+		-- Plus button click with ripple
+		plusButton.MouseButton1Click:Connect(function()
+			-- Create ripple on plus button
+			local mouse = game.Players.LocalPlayer:GetMouse()
+			local buttonPos = plusButton.AbsolutePosition
+			local relativeX = mouse.X - buttonPos.X
+			local relativeY = mouse.Y - buttonPos.Y
+			createRipple(plusButton, relativeX, relativeY)
+
+			if hasGamepass then
+				spawn(function()
+					createNotification("You already own the Supporter gamepass!", "rbxassetid://139557679200863")
+				end)
+				return
+			end
+
+			-- Spin animation
+			local spinTween = TweenService:Create(plusButton, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Rotation = 360})
+			spinTween:Play()
+
+			wait(0.5)
+			plusButton.Rotation = 0
+
+			-- Show gamepass frame
+			gamepassFrame.Visible = true
+			gamepassFrame.Size = UDim2.new(0, 0, 0, 0)
+			gamepassFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+			local expandTween = TweenService:Create(gamepassFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, 400, 0, 220),
+				Position = UDim2.new(0.5, -200, 0.5, -110)
+			})
+			expandTween:Play()
+		end)
+
+		-- Close button with ripple
+		closeButton.MouseButton1Click:Connect(function()
+			-- Create ripple
+			local mouse = game.Players.LocalPlayer:GetMouse()
+			local buttonPos = closeButton.AbsolutePosition
+			local relativeX = mouse.X - buttonPos.X
+			local relativeY = mouse.Y - buttonPos.Y
+			createRipple(closeButton, relativeX, relativeY)
+
+			local shrinkTween = TweenService:Create(gamepassFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+				Size = UDim2.new(0, 0, 0, 0),
+				Position = UDim2.new(0.5, 0, 0.5, 0)
+			})
+			shrinkTween:Play()
+
+			wait(0.3)
+			gamepassFrame.Visible = false
+		end)
+
+		-- Purchase button with ripple
+		purchaseButton.MouseButton1Click:Connect(function()
+			-- Create ripple
+			local mouse = game.Players.LocalPlayer:GetMouse()
+			local buttonPos = purchaseButton.AbsolutePosition
+			local relativeX = mouse.X - buttonPos.X
+			local relativeY = mouse.Y - buttonPos.Y
+			createRipple(purchaseButton, relativeX, relativeY)
+
+			-- Spin icon
+			spawn(function()
+				for i = 0, 360, 30 do
+					purchaseIcon.Rotation = i
+					wait(0.02)
+				end
+				purchaseIcon.Rotation = 0
+			end)
+
+			-- Flash red
+			local originalColor = purchaseButton.BackgroundColor3
+			purchaseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+			wait(0.15)
+			purchaseButton.BackgroundColor3 = originalColor
+
+			-- Try to prompt gamepass
+			local success, err = pcall(function()
+				MarketplaceService:PromptGamePassPurchase(player, GAMEPASS_ID)
+			end)
+
+			if not success then
+				-- Copy link to clipboard
+				local link = "https://www.roblox.com/catalog/" .. GAMEPASS_ID
+				if setclipboard then
+					setclipboard(link)
+					spawn(function()
+						createNotification("Gamepass link copied to clipboard!", "rbxassetid://139557679200863")
+					end)
+				else
+					spawn(function()
+						createNotification("Cannot prompt gamepass - link: " .. link, "rbxassetid://139557679200863")
+					end)
+				end
+			end
+		end)
+
+		-- Check for gamepass purchase
+		MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(plr, passId, wasPurchased)
+			if plr == player and passId == GAMEPASS_ID and wasPurchased then
+				hasGamepass = true
+				spawn(function()
+					createNotification("Supporter purchased! AutoFarm is now faster!", "rbxassetid://139557679200863")
+				end)
+
+				-- Close frame
+				local shrinkTween = TweenService:Create(gamepassFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+					Size = UDim2.new(0, 0, 0, 0),
+					Position = UDim2.new(0.5, 0, 0.5, 0)
+				})
+				shrinkTween:Play()
+				wait(0.3)
+				gamepassFrame.Visible = false
+			end
+		end)
+
+		-- Mute button functionality with ripple
+		muteButton.MouseButton1Click:Connect(function()
+			-- Create ripple
+			local mouse = game.Players.LocalPlayer:GetMouse()
+			local buttonPos = muteButton.AbsolutePosition
+			local relativeX = mouse.X - buttonPos.X
+			local relativeY = mouse.Y - buttonPos.Y
+
+			local ripple = Instance.new("Frame")
+			ripple.Size = UDim2.new(0, 0, 0, 0)
+			ripple.Position = UDim2.new(0, relativeX, 0, relativeY)
+			ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+			ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			ripple.BackgroundTransparency = 0.3
+			ripple.BorderSizePixel = 0
+			ripple.ZIndex = 10
+			ripple.Parent = muteButton
+
+			local rippleCorner = Instance.new("UICorner")
+			rippleCorner.CornerRadius = UDim.new(1, 0)
+			rippleCorner.Parent = ripple
+
+			local expandTween = TweenService:Create(ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, 200, 0, 200),
+				BackgroundTransparency = 1
+			})
+			expandTween:Play()
+			expandTween.Completed:Connect(function() ripple:Destroy() end)
+
+			-- Smooth scale and rotation animation
+			local scaleUp = TweenService:Create(muteButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, 90, 0, 90),
+				Rotation = 15
+			})
+
+			local fadeOut = TweenService:Create(muteButton, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+				ImageTransparency = 0.5
+			})
+
+			scaleUp:Play()
+			fadeOut:Play()
+
+			wait(0.2)
+
+			-- Toggle mute
+			isMuted = not isMuted
+			if isMuted then
+				musicSound.Volume = 0
+				muteButton.Image = "rbxassetid://91780411131931"
+			else
+				musicSound.Volume = 0.5
+				muteButton.Image = "rbxassetid://120873458554170"
+			end
+
+			-- Smooth scale back and fade in
+			local scaleDown = TweenService:Create(muteButton, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, 80, 0, 80),
+				Rotation = 0
+			})
+
+			local fadeIn = TweenService:Create(muteButton, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+				ImageTransparency = 0
+			})
+
+			scaleDown:Play()
+			fadeIn:Play()
+		end)
+
+		blackScreenToggle.Text = "BLACK SCREEN: ON"
+		blackStroke.Color = Color3.fromRGB(100, 255, 100)
+	else
+		-- Stop music
+		local musicSound = game.SoundService:FindFirstChild("BlackScreenMusic")
+		if musicSound then
+			musicSound:Stop()
+			musicSound:Destroy()
+		end
+
+		-- Remove Black Screen with fade out
+		local blackScreen = game.CoreGui:FindFirstChild("BlackScreen")
+		if blackScreen then
+			local blackFrame = blackScreen:FindFirstChild("Frame")
+			if blackFrame then
+				local fadeOut1 = TweenService:Create(blackFrame, TweenInfo.new(0.8), {BackgroundTransparency = 1})
+				fadeOut1:Play()
+
+				for _, child in pairs(blackFrame:GetChildren()) do
+					if child:IsA("TextLabel") then
+						local fadeOut = TweenService:Create(child, TweenInfo.new(0.8), {TextTransparency = 1})
+						fadeOut:Play()
+					elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
+						local fadeOut = TweenService:Create(child, TweenInfo.new(0.8), {ImageTransparency = 1})
+						fadeOut:Play()
+					end
+				end
+
+				wait(0.8)
+			end
+			blackScreen:Destroy()
+		end
+		blackScreenToggle.Text = "BLACK SCREEN: OFF"
+		blackStroke.Color = Color3.fromRGB(255, 255, 255)
+	end
+
+	wait(0.8)
+	blackDebounce = false
 end)
 
 -- Draggable GUI
@@ -1156,34 +1156,34 @@ local dragStart
 local startPos
 
 local function update(input)
-    local delta = input.Position - dragStart
-    guiFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	local delta = input.Position - dragStart
+	guiFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
 guiFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = guiFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = guiFrame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
 end)
 
 guiFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
 end)
 
 game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
+	if input == dragInput and dragging then
+		update(input)
+	end
 end)
 
 print("Sulo's AutoFarm v2.1 loaded successfully!")
