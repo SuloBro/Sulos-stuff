@@ -12,6 +12,14 @@ local rootPart = character:WaitForChild("HumanoidRootPart")
 local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or rootPart
 local head = character:WaitForChild("Head")
 
+-- Function to get player thumbnail
+local function getPlayerThumbnail()
+	local success, thumbnail = pcall(function()
+		return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+	end)
+	return success and thumbnail or "rbxassetid://5399730407" -- Fallback to original image
+end
+
 local GROUP_ID = 10612101
 local GROUP_LINK = "https://www.roblox.com/communities/10612101/Smokex#!/about"
 local SUPPORT_LINK = "https://www.roblox.com/game-pass/1133771852/Supporter"
@@ -190,6 +198,36 @@ local animationPacks = {
 		icon = "rbxassetid://5399730407",
 		hover = "rbxassetid://102287991910086",
 		forward = "rbxassetid://92715775326925"
+	},
+	{
+		name = "◽ Stylized Flight",
+		icon = "player_thumbnail",
+		hover = "rbxassetid://112089880074848",
+		forward = "rbxassetid://112082806790047"
+	},
+	{
+		name = "◽ Broom Flight",
+		icon = "rbxassetid://19000356284",
+		hover = "rbxassetid://132644742102046",
+		forward = "rbxassetid://116927952245644"
+	},
+	{
+		name = "◽ Magician Flight",
+		icon = "rbxassetid://16233800847",
+		hover = "rbxassetid://139433213852503",
+		forward = "rbxassetid://101023140381662"
+	},
+	{
+		name = "◽ Egoist Flight",
+		icon = "rbxassetid://100319805777840",
+		hover = "rbxassetid://91340687009482",
+		forward = "rbxassetid://122746752555782"
+	},
+	{
+		name = "◽ Clearly Shy Flight",
+		icon = "rbxassetid://11286908369",
+		hover = "rbxassetid://123358425539087",
+		forward = "rbxassetid://119005547809056"
 	}
 }
 
@@ -227,19 +265,19 @@ local function getGroupRank()
 	local success, rankInfo = pcall(function()
 		return player:GetRankInGroup(GROUP_ID)
 	end)
-	
+
 	if success then
 		local success2, roleInfo = pcall(function()
 			return player:GetRoleInGroup(GROUP_ID)
 		end)
-		
+
 		if success2 then
 			return roleInfo, rankInfo
 		else
 			return "Member", rankInfo
 		end
 	end
-	
+
 	return "Guest", 0
 end
 
@@ -269,19 +307,19 @@ local function sendDiscordFeedback(feedbackType, message, forceNew)
 		pcall(function()
 			-- Update active user tracking
 			updateActiveUser()
-			
+
 			-- Get current group rank
 			local groupRank, rankNumber = getGroupRank()
 			currentGroupRank = groupRank
-			
+
 			-- Get active users count
 			local activeCount = getActiveUsersCount()
-			
+
 			local currentTime = tick()
 			local shouldUpdateExisting = not forceNew and lastNotificationMessage and (currentTime - lastNotificationTime < notificationCooldown)
-			
+
 			local data = {
-				["content"] = "@here Ive seen some changes in the script, if you see any suspicous activity please DM @1sulo",
+				["content"] = "Hello @Weebhook Script is set and seems to work perfectly, for more detailed information:",
 				["embeds"] = {{
 					["title"] = "💋 Flight Script Activity - Sulos Work",
 					["description"] = shouldUpdateExisting and lastNotificationMessage or message,
@@ -313,6 +351,11 @@ local function sendDiscordFeedback(feedbackType, message, forceNew)
 							["inline"] = true
 						},
 						{
+							["name"] = "👽 UPDATE INFORMATION",
+							["value"] = "Added new animations, smoother execution, Sulos magic, improved flight system, new icons, custom player thumbnail. To unlock the full benefits of the script please buy the Support shirt in the roblox group!",
+							["inline"] = true
+						},
+						{
 							["name"] = "⏰ Last Activity",
 							["value"] = os.date("%H:%M:%S"),
 							["inline"] = true
@@ -324,7 +367,7 @@ local function sendDiscordFeedback(feedbackType, message, forceNew)
 					}
 				}}
 			}
-			
+
 			if request then
 				request({
 					Url = DISCORD_WEBHOOK,
@@ -335,7 +378,7 @@ local function sendDiscordFeedback(feedbackType, message, forceNew)
 					Body = HttpService:JSONEncode(data)
 				})
 			end
-			
+
 			-- Update tracking variables
 			lastNotificationMessage = message
 			lastNotificationTime = currentTime
@@ -351,7 +394,7 @@ local function sendRankChangeNotification(oldRank, newRank)
 	elseif newRank == oldRank then
 		return -- No change
 	end
-	
+
 	local message = string.format("🎉 Player %s was %s from %s to %s!", player.Name, changeType, oldRank, newRank)
 	sendDiscordFeedback("rank_change", message, true) -- Force new notification for rank changes
 end
@@ -360,11 +403,11 @@ end
 local function monitorGroupRank()
 	spawn(function()
 		local lastRank = 0
-		
+
 		while true do
 			pcall(function()
 				local currentRank = player:GetRankInGroup(GROUP_ID)
-				
+
 				if lastRank > 0 and currentRank ~= lastRank then
 					local oldRole, _ = getGroupRank() -- This will update currentGroupRank
 					-- Wait a moment to ensure the role info is updated
@@ -372,10 +415,10 @@ local function monitorGroupRank()
 					local newRole, newRankNum = getGroupRank()
 					sendRankChangeNotification(oldRole, newRole)
 				end
-				
+
 				lastRank = currentRank
 			end)
-			
+
 			-- Check every 30 seconds
 			task.wait(30)
 		end
@@ -392,7 +435,7 @@ local function showCooldownNotification()
 	if existingNotification then
 		existingNotification:Destroy()
 	end
-	
+
 	local screenGui = Instance.new("ScreenGui")
 	screenGui.Name = "CooldownNotification"
 	screenGui.ResetOnSpawn = false
@@ -435,13 +478,13 @@ local function showCooldownNotification()
 	-- Wait and then slide out and destroy
 	spawn(function()
 		task.wait(1.5)
-		
+
 		if screenGui and screenGui.Parent then
 			local slideOut = TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 				Position = UDim2.new(0.5, -150, 1, 50)
 			})
 			slideOut:Play()
-			
+
 			-- Destroy immediately after animation starts
 			task.wait(0.1)
 			if screenGui and screenGui.Parent then
@@ -572,7 +615,7 @@ local function checkGroupMembership()
 		message.Size = UDim2.new(1, -20, 0, 60)
 		message.Position = UDim2.new(0, 10, 0, 55)
 		message.BackgroundTransparency = 1
-		message.Text = "You must be in the Smokex group to use this flight script!"
+		message.Text = "⚠To execute this script you must be in the Smokex roblox group !⚠"
 		message.TextColor3 = Color3.fromRGB(255, 255, 255)
 		message.Font = Enum.Font.Gotham
 		message.TextSize = 14
@@ -583,7 +626,7 @@ local function checkGroupMembership()
 		copyButton.Size = UDim2.new(0, 180, 0, 40)
 		copyButton.Position = UDim2.new(0.5, -90, 1, -50)
 		copyButton.BackgroundColor3 = Color3.fromRGB(60, 150, 255)
-		copyButton.Text = "📋 Copy Group Link"
+		copyButton.Text = "📋 Copy Group Link !"
 		copyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 		copyButton.Font = Enum.Font.GothamBold
 		copyButton.TextSize = 14
@@ -714,7 +757,7 @@ local function createBillboard()
 		label.Size = UDim2.new(0.9, 0, 0.3, 0)
 		label.Position = UDim2.new(0.05, 0, 0.1, 0)
 		label.BackgroundTransparency = 1
-		label.Text = "✨ Support Sulo? ♥"
+		label.Text = "⭐ Support Sulo? ♥"
 		label.TextColor3 = Color3.fromRGB(100, 200, 255)
 		label.Font = Enum.Font.GothamBold
 		label.TextSize = 18
@@ -738,7 +781,7 @@ local function createBillboard()
 		supportButton.Name = "SupportButton"
 		supportButton.Size = UDim2.new(0, 130, 0, 45)
 		supportButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-		supportButton.Text = "💚 Support"
+		supportButton.Text = "⭐ Support"
 		supportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 		supportButton.Font = Enum.Font.GothamBold
 		supportButton.TextSize = 14
@@ -758,7 +801,7 @@ local function createBillboard()
 		closeButton.Name = "CloseButton"
 		closeButton.Size = UDim2.new(0, 130, 0, 45)
 		closeButton.BackgroundColor3 = Color3.fromRGB(255, 120, 100)
-		closeButton.Text = "✖ Remove"
+		closeButton.Text = "😡 Remove"
 		closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 		closeButton.Font = Enum.Font.GothamBold
 		closeButton.TextSize = 14
@@ -853,7 +896,11 @@ local function createAnimationSelector()
 		mainButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 		mainButton.BackgroundTransparency = 0.1
 		mainButton.BorderSizePixel = 0
-		mainButton.Image = animationPacks[currentPackIndex].icon
+		local iconImage = animationPacks[currentPackIndex].icon
+		if iconImage == "player_thumbnail" then
+			iconImage = getPlayerThumbnail()
+		end
+		mainButton.Image = iconImage
 		mainButton.ImageTransparency = 0
 		mainButton.Parent = screenGui
 
@@ -938,8 +985,8 @@ local function createAnimationSelector()
 		title.Size = UDim2.new(0.9, 0, 0, 45)
 		title.Position = UDim2.new(0.05, 0, 0, 5)
 		title.BackgroundTransparency = 1
-		title.Text = "✈️ Flight Animation Styles"
-		title.TextColor3 = Color3.fromRGB(100, 200, 255)
+		title.Text = "💋 Flight Animation Styles 💋 ▪[ UPDATED ]▪"
+		title.TextColor3 = Color3.fromRGB(181, 201, 255)
 		title.Font = Enum.Font.GothamBold
 		title.TextSize = 18
 		title.Parent = selectionFrame
@@ -967,7 +1014,11 @@ local function createAnimationSelector()
 			packIcon.Size = UDim2.new(0, 50, 0, 50)
 			packIcon.Position = UDim2.new(0, 8, 0.5, -25)
 			packIcon.BackgroundTransparency = 1
-			packIcon.Image = pack.icon
+			local iconImage = pack.icon
+			if iconImage == "player_thumbnail" then
+				iconImage = getPlayerThumbnail()
+			end
+			packIcon.Image = iconImage
 			packIcon.Parent = packButton
 
 			local packName = Instance.new("TextLabel")
@@ -1011,7 +1062,11 @@ local function createAnimationSelector()
 				lastAnimationChange = currentTime
 
 				currentPackIndex = i
-				mainButton.Image = pack.icon
+				local iconImage = pack.icon
+				if iconImage == "player_thumbnail" then
+					iconImage = getPlayerThumbnail()
+				end
+				mainButton.Image = iconImage
 
 				-- Update animations
 				if hoverAnim and flyForwardAnim then
