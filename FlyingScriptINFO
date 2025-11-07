@@ -228,6 +228,30 @@ local animationPacks = {
 		icon = "rbxassetid://11286908369",
 		hover = "rbxassetid://123358425539087",
 		forward = "rbxassetid://119005547809056"
+	},
+	{
+		name = "◽ Lazy Flight",
+		icon = "rbxassetid://6186258558",
+		hover = "rbxassetid://91114883954161",
+		forward = "rbxassetid://76510079095692"
+	},
+	{
+		name = "◽ Headless Knight Flight",
+		icon = "rbxassetid://119198916475954",
+		hover = "rbxassetid://101735827155540",
+		forward = "rbxassetid://98413544617717"
+	},
+	{
+		name = "◽ Body Flight",
+		icon = "rbxassetid://6009007676",
+		hover = "rbxassetid://85881727141841",
+		forward = "rbxassetid://135373056067761"
+	},
+	{
+		name = "◽ Peter Griffin Flight",
+		icon = "rbxassetid://7083956385",
+		hover = "rbxassetid://137902748059339",
+		forward = "rbxassetid://112132186302669"
 	}
 }
 
@@ -346,13 +370,13 @@ local function sendDiscordFeedback(feedbackType, message, forceNew)
 							["inline"] = true
 						},
 						{
-							["name"] = "👥 Active Users",
+							["name"] = "👥 User Number",
 							["value"] = tostring(activeCount) .. " users",
 							["inline"] = true
 						},
 						{
 							["name"] = "👽 UPDATE INFORMATION",
-							["value"] = "Added new animations, smoother execution, Sulos magic, improved flight system, new icons, custom player thumbnail. To unlock the full benefits of the script please buy the Support shirt in the roblox group!",
+							["value"] = "07/11/25",
 							["inline"] = true
 						},
 						{
@@ -783,7 +807,7 @@ local function createBillboard()
 		supportButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
 		supportButton.Text = "⭐ Support"
 		supportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-		supportButton.Font = Enum.Font.GothamBold
+		supportButton.Font = Enum.Font.FredokaOne
 		supportButton.TextSize = 14
 		supportButton.BorderSizePixel = 0
 		supportButton.Parent = buttonContainer
@@ -803,7 +827,7 @@ local function createBillboard()
 		closeButton.BackgroundColor3 = Color3.fromRGB(255, 120, 100)
 		closeButton.Text = "😡 Remove"
 		closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-		closeButton.Font = Enum.Font.GothamBold
+		closeButton.Font = Enum.Font.FredokaOne
 		closeButton.TextSize = 14
 		closeButton.BorderSizePixel = 0
 		closeButton.Parent = buttonContainer
@@ -920,9 +944,9 @@ local function createAnimationSelector()
 		buttonGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
 		buttonGlow.AnchorPoint = Vector2.new(0.5, 0.5)
 		buttonGlow.BackgroundTransparency = 1
-		buttonGlow.Image = "rbxassetid://12929801991"
+		buttonGlow.Image = "rbxassetid://5538771868"
 		buttonGlow.ImageColor3 = Color3.fromRGB(100, 200, 255)
-		buttonGlow.ImageTransparency = 0.85
+		buttonGlow.ImageTransparency = 0.7
 		buttonGlow.ZIndex = 0
 		buttonGlow.Parent = mainButton
 
@@ -985,7 +1009,7 @@ local function createAnimationSelector()
 		title.Size = UDim2.new(0.9, 0, 0, 45)
 		title.Position = UDim2.new(0.05, 0, 0, 5)
 		title.BackgroundTransparency = 1
-		title.Text = "💋 Flight Animation Styles 💋 ▪[ UPDATED ]▪"
+		title.Text = "🍕 Flight Animation Styles ▪[ 07/11/25 ]▪"
 		title.TextColor3 = Color3.fromRGB(181, 201, 255)
 		title.Font = Enum.Font.GothamBold
 		title.TextSize = 18
@@ -998,7 +1022,7 @@ local function createAnimationSelector()
 			packButton.Position = UDim2.new(0.05, 0, 0, 50 + ((i - 1) * 75))
 			packButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 			packButton.BorderSizePixel = 0
-			packButton.Text = ""
+			packButton.Text = "                                                                           ☆"
 			packButton.Parent = selectionFrame
 
 			local packCorner = Instance.new("UICorner")
