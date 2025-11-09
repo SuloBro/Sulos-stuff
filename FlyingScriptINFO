@@ -859,8 +859,11 @@ local function createBillboard()
 
 		closeButton.MouseButton1Click:Connect(function()
 			bounceButton(closeButton)
-			createHeadBillboard("Enjoy using Sulo's Flight")
-			task.wait(0.3)
+			-- Start the billboard but don't wait for it
+			spawn(function()
+				createHeadBillboard("Enjoy using Sulo's Flight")
+			end)
+			-- Immediately close the frame
 			mainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.3, true)
 			wait(0.3)
 			screenGui:Destroy()
@@ -1009,7 +1012,7 @@ local function createAnimationSelector()
 		title.Size = UDim2.new(0.9, 0, 0, 45)
 		title.Position = UDim2.new(0.05, 0, 0, 5)
 		title.BackgroundTransparency = 1
-		title.Text = "🍕 Flight Animation Styles ▪[ 07/11/25 ]▪"
+		title.Text = "🍕 Flight Animation Styles ▪[ 09/11/25 ]▪"
 		title.TextColor3 = Color3.fromRGB(181, 201, 255)
 		title.Font = Enum.Font.GothamBold
 		title.TextSize = 18
@@ -1092,12 +1095,6 @@ local function createAnimationSelector()
 				end
 				mainButton.Image = iconImage
 
-				-- Update animations
-				if hoverAnim and flyForwardAnim then
-					hoverAnim.AnimationId = pack.hover
-					flyForwardAnim.AnimationId = pack.forward
-				end
-
 				-- Update all buttons
 				for _, child in ipairs(selectionFrame:GetChildren()) do
 					if child:IsA("TextButton") then
@@ -1120,27 +1117,50 @@ local function createAnimationSelector()
 				packStroke.Thickness = 3
 
 				createHeadBillboard(pack.name .. " activated!")
-				sendDiscordFeedback("positive", "🎨 Player switched to: " .. pack.name, false) -- Allow updating existing notification
+				sendDiscordFeedback("positive", "🎨 Player switched to: " .. pack.name, false)
 
-				-- Reload animations if flying
-				if flying and currentHoverTrack and currentForwardTrack then
+				-- INSTANT animation swap if flying
+				if flying then
 					pcall(function()
-						if currentAnimTrack == currentHoverTrack then
-							currentHoverTrack:Stop()
-							currentHoverTrack = humanoid:LoadAnimation(hoverAnim)
-							currentHoverTrack.Priority = Enum.AnimationPriority.Action
-							currentHoverTrack.Looped = true
-							currentHoverTrack:Play(0.3)
-							currentAnimTrack = currentHoverTrack
-						elseif currentAnimTrack == currentForwardTrack then
-							currentForwardTrack:Stop()
-							currentForwardTrack = humanoid:LoadAnimation(flyForwardAnim)
-							currentForwardTrack.Priority = Enum.AnimationPriority.Action
-							currentForwardTrack.Looped = true
-							currentForwardTrack:Play(0.3)
+						-- Check which animation is currently playing
+						local isMovingForward = (currentAnimTrack == currentForwardTrack)
+
+						-- STOP ALL ANIMATIONS IMMEDIATELY
+						if currentHoverTrack then
+							currentHoverTrack:Stop(0)
+							currentHoverTrack:Destroy()
+						end
+						if currentForwardTrack then
+							currentForwardTrack:Stop(0)
+							currentForwardTrack:Destroy()
+						end
+
+						-- Update animation IDs
+						hoverAnim.AnimationId = pack.hover
+						flyForwardAnim.AnimationId = pack.forward
+
+						-- Load NEW animations
+						currentHoverTrack = humanoid:LoadAnimation(hoverAnim)
+						currentHoverTrack.Priority = Enum.AnimationPriority.Action
+						currentHoverTrack.Looped = true
+
+						currentForwardTrack = humanoid:LoadAnimation(flyForwardAnim)
+						currentForwardTrack.Priority = Enum.AnimationPriority.Action
+						currentForwardTrack.Looped = true
+
+						-- Play the correct one INSTANTLY
+						if isMovingForward then
+							currentForwardTrack:Play(0)
 							currentAnimTrack = currentForwardTrack
+						else
+							currentHoverTrack:Play(0)
+							currentAnimTrack = currentHoverTrack
 						end
 					end)
+				else
+					-- Not flying, just update the animation objects
+					hoverAnim.AnimationId = pack.hover
+					flyForwardAnim.AnimationId = pack.forward
 				end
 			end)
 
