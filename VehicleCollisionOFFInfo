@@ -1,15 +1,388 @@
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SuloScriptUI"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+-- Rain Effect Container (inside support frame)
+local rainContainer = Instance.new("Frame")
+rainContainer.Name = "RainEffect"
+rainContainer.Size = UDim2.new(1, 0, 1, 0)
+rainContainer.Position = UDim2.new(0, 0, 0, 0)
+rainContainer.BackgroundTransparency = 1
+rainContainer.ZIndex = 15
+rainContainer.ClipsDescendants = true
+rainContainer.Parent = supportFrame
+
+-- Function to create rain drops
+local function createRainDrop()
+	if not supportFrame.Visible then return end
+
+	local drop = Instance.new("Frame")
+	drop.Size = UDim2.new(0, 2, 0, math.random(20, 40))
+	drop.Position = UDim2.new(math.random(), 0, -0.1, 0)
+	drop.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+	drop.BackgroundTransparency = 0.3
+	drop.BorderSizePixel = 0
+	drop.ZIndex = 15
+	drop.Parent = rainContainer
+
+	local gradient = Instance.new("UIGradient")
+	gradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.8),
+		NumberSequenceKeypoint.new(0.5, 0.3),
+		NumberSequenceKeypoint.new(1, 1)
+	})
+	gradient.Rotation = 90
+	gradient.Parent = drop
+
+	local tweenInfo = TweenInfo.new(
+		math.random(15, 25) / 10,
+		Enum.EasingStyle.Linear,
+		Enum.EasingDirection.In
+	)
+
+	local tween = TweenService:Create(drop, tweenInfo, {
+		Position = UDim2.new(drop.Position.X.Scale, 0, 1.1, 0)
+	})
+
+	tween:Play()
+	tween.Completed:Connect(function()
+		drop:Destroy()
+	end)
+end
+
+-- Spawn rain drops continuously (only when support frame is visible)
+spawn(function()
+	while wait(0.1) do
+		if supportFrame.Visible then
+			createRainDrop()
+		end
+	end
+end)
+
+-- Loading Notification
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Name = "LoadingNotification"
+loadingFrame.Size = UDim2.new(0, 400, 0, 150)
+loadingFrame.Position = UDim2.new(0.5, -200, 0.5, -75)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+loadingFrame.BorderSizePixel = 0
+loadingFrame.ZIndex = 10
+loadingFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 15)
+corner.Parent = loadingFrame
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(100, 150, 255)
+stroke.Thickness = 2
+stroke.Transparency = 0
+stroke.Parent = loadingFrame
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 150, 255)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 100, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 150, 255))
+})
+gradient.Parent = stroke
+
+-- Animate gradient
+spawn(function()
+	while loadingFrame.Parent do
+		gradient.Rotation = (gradient.Rotation + 2) % 360
+		wait(0.03)
+	end
+end)
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -40, 0, 40)
+titleLabel.Position = UDim2.new(0, 20, 0, 20)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Car Collision DISABLED!"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 24
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+titleLabel.ZIndex = 11
+titleLabel.Parent = loadingFrame
+
+local messageLabel = Instance.new("TextLabel")
+messageLabel.Size = UDim2.new(1, -40, 0, 60)
+messageLabel.Position = UDim2.new(0, 20, 0, 65)
+messageLabel.BackgroundTransparency = 1
+messageLabel.Text = "Brought to you by: Sulo!\nScript loaded, Everything is ready to go!"
+messageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+messageLabel.TextSize = 16
+messageLabel.Font = Enum.Font.Gotham
+messageLabel.TextXAlignment = Enum.TextXAlignment.Center
+messageLabel.TextYAlignment = Enum.TextYAlignment.Top
+messageLabel.TextWrapped = true
+messageLabel.ZIndex = 11
+messageLabel.Parent = loadingFrame
+
+-- Animate loading frame entrance
+loadingFrame.Size = UDim2.new(0, 0, 0, 0)
+local entranceTween = TweenService:Create(loadingFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	Size = UDim2.new(0, 400, 0, 150)
+})
+entranceTween:Play()
+
+-- Remove loading notification after 3 seconds
+wait(5)
+local exitTween = TweenService:Create(loadingFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+	Size = UDim2.new(0, 0, 0, 0)
+})
+exitTween:Play()
+exitTween.Completed:Connect(function()
+	loadingFrame:Destroy()
+end)
+
+-- Support Button (permanent)
+local supportButton = Instance.new("TextButton")
+supportButton.Name = "SupportButton"
+supportButton.Size = UDim2.new(0, 60, 0, 60)
+supportButton.Position = UDim2.new(1, -80, 0, 20)
+supportButton.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+supportButton.BorderSizePixel = 0
+supportButton.Text = "💎"
+supportButton.TextSize = 30
+supportButton.Font = Enum.Font.GothamBold
+supportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+supportButton.ZIndex = 10
+supportButton.Parent = screenGui
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(1, 0)
+buttonCorner.Parent = supportButton
+
+local buttonStroke = Instance.new("UIStroke")
+buttonStroke.Color = Color3.fromRGB(100, 150, 255)
+buttonStroke.Thickness = 2
+buttonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+buttonStroke.Parent = supportButton
+
+-- Support Frame (shows when button is clicked)
+local supportFrame = Instance.new("Frame")
+supportFrame.Name = "SupportFrame"
+supportFrame.Size = UDim2.new(0, 350, 0, 250)
+supportFrame.Position = UDim2.new(0.5, -175, 0.5, -125)
+supportFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+supportFrame.BorderSizePixel = 0
+supportFrame.Visible = false
+supportFrame.ZIndex = 15
+supportFrame.Parent = screenGui
+
+local supportCorner = Instance.new("UICorner")
+supportCorner.CornerRadius = UDim.new(0, 15)
+supportCorner.Parent = supportFrame
+
+local supportStroke = Instance.new("UIStroke")
+supportStroke.Color = Color3.fromRGB(100, 150, 255)
+supportStroke.Thickness = 2
+supportStroke.Parent = supportFrame
+
+local supportTitle = Instance.new("TextLabel")
+supportTitle.Size = UDim2.new(1, -40, 0, 40)
+supportTitle.Position = UDim2.new(0, 20, 0, 15)
+supportTitle.BackgroundTransparency = 1
+supportTitle.Text = "💎PREMIUM ( Support )"
+supportTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+supportTitle.TextSize = 20
+supportTitle.Font = Enum.Font.GothamBold
+supportTitle.TextXAlignment = Enum.TextXAlignment.Left
+supportTitle.ZIndex = 16
+supportTitle.Parent = supportFrame
+
+local supportDescription = Instance.new("TextLabel")
+supportDescription.Size = UDim2.new(1, -40, 0, 80)
+supportDescription.Position = UDim2.new(0, 20, 0, 60)
+supportDescription.BackgroundTransparency = 1
+supportDescription.Text = "Support the script by purchasing the official shirt!\n\n💎 Exclusive Benefit: Make vehicle parts invisible\n(Lets you're car move freely and faster!)"
+supportDescription.TextColor3 = Color3.fromRGB(200, 200, 200)
+supportDescription.TextSize = 14
+supportDescription.Font = Enum.Font.Gotham
+supportDescription.TextXAlignment = Enum.TextXAlignment.Left
+supportDescription.TextYAlignment = Enum.TextYAlignment.Top
+supportDescription.TextWrapped = true
+supportDescription.ZIndex = 16
+supportDescription.Parent = supportFrame
+
+local purchaseButton = Instance.new("TextButton")
+purchaseButton.Size = UDim2.new(1, -40, 0, 45)
+purchaseButton.Position = UDim2.new(0, 20, 0, 150)
+purchaseButton.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+purchaseButton.BorderSizePixel = 0
+purchaseButton.Text = "🛒 15 R$"
+purchaseButton.TextSize = 18
+purchaseButton.Font = Enum.Font.FredokaOne
+purchaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+purchaseButton.ZIndex = 16
+purchaseButton.Parent = supportFrame
+
+local purchaseCorner = Instance.new("UICorner")
+purchaseCorner.CornerRadius = UDim.new(0, 10)
+purchaseCorner.Parent = purchaseButton
+
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(1, -40, 0, 35)
+closeButton.Position = UDim2.new(0, 20, 0, 205)
+closeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+closeButton.BorderSizePixel = 0
+closeButton.Text = "Close"
+closeButton.TextSize = 16
+closeButton.Font = Enum.Font.FredokaOne
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.ZIndex = 16
+closeButton.Parent = supportFrame
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 10)
+closeCorner.Parent = closeButton
+
+-- Enhanced button hover and click effects
+local function addEnhancedButtonEffects(button, normalColor, hoverColor, glowColor)
+	-- Create UIStroke for glow effect
+	local buttonGlow = Instance.new("UIStroke")
+	buttonGlow.Color = glowColor or Color3.fromRGB(150, 200, 255)
+	buttonGlow.Thickness = 3
+	buttonGlow.Transparency = 1
+	buttonGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	buttonGlow.Parent = button
+
+	local isHovering = false
+	local originalSize = button.Size
+
+	-- Hover enter
+	button.MouseEnter:Connect(function()
+		isHovering = true
+		-- Size up smoothly
+		TweenService:Create(button, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Size = UDim2.new(originalSize.X.Scale * 1.05, originalSize.X.Offset * 1.05, originalSize.Y.Scale * 1.05, originalSize.Y.Offset * 1.05),
+			BackgroundColor3 = hoverColor
+		}):Play()
+
+		-- Fade in glow
+		TweenService:Create(buttonGlow, TweenInfo.new(0.3), {
+			Transparency = 0
+		}):Play()
+	end)
+
+	-- Hover leave
+	button.MouseLeave:Connect(function()
+		isHovering = false
+		-- Size back to normal
+		TweenService:Create(button, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Size = originalSize,
+			BackgroundColor3 = normalColor
+		}):Play()
+
+		-- Fade out glow
+		TweenService:Create(buttonGlow, TweenInfo.new(0.3), {
+			Transparency = 1
+		}):Play()
+	end)
+
+	-- Click effect
+	button.MouseButton1Down:Connect(function()
+		-- Shrink slightly on press
+		TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = UDim2.new(originalSize.X.Scale * 0.95, originalSize.X.Offset * 0.95, originalSize.Y.Scale * 0.95, originalSize.Y.Offset * 0.95)
+		}):Play()
+
+		-- Pulse glow effect
+		local pulseTween = TweenService:Create(buttonGlow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Thickness = 6,
+			Transparency = 0
+		})
+		pulseTween:Play()
+
+		pulseTween.Completed:Connect(function()
+			TweenService:Create(buttonGlow, TweenInfo.new(0.2), {
+				Thickness = 3
+			}):Play()
+		end)
+	end)
+
+	button.MouseButton1Up:Connect(function()
+		-- Return to hover size if still hovering, otherwise normal
+		local targetSize = isHovering and UDim2.new(originalSize.X.Scale * 1.05, originalSize.X.Offset * 1.05, originalSize.Y.Scale * 1.05, originalSize.Y.Offset * 1.05) or originalSize
+		TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Size = targetSize
+		}):Play()
+	end)
+end
+
+addEnhancedButtonEffects(supportButton, Color3.fromRGB(30, 30, 40), Color3.fromRGB(50, 50, 60), Color3.fromRGB(100, 150, 255))
+addEnhancedButtonEffects(purchaseButton, Color3.fromRGB(100, 150, 255), Color3.fromRGB(120, 170, 255), Color3.fromRGB(150, 200, 255))
+addEnhancedButtonEffects(closeButton, Color3.fromRGB(60, 60, 70), Color3.fromRGB(80, 80, 90), Color3.fromRGB(120, 120, 140))
+
+-- Support button click
+supportButton.MouseButton1Click:Connect(function()
+	supportFrame.Visible = true
+	supportFrame.Size = UDim2.new(0, 0, 0, 0)
+	local openTween = TweenService:Create(supportFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 350, 0, 250)
+	})
+	openTween:Play()
+end)
+
+-- Close button click
+closeButton.MouseButton1Click:Connect(function()
+	local closeTween = TweenService:Create(supportFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+		Size = UDim2.new(0, 0, 0, 0)
+	})
+	closeTween:Play()
+	closeTween.Completed:Connect(function()
+		supportFrame.Visible = false
+	end)
+end)
+
+-- Purchase button click (replace with your shirt asset ID)
+purchaseButton.MouseButton1Click:Connect(function()
+	local SHIRT_ASSET_ID = 132268448125497
+	local MarketplaceService = game:GetService("MarketplaceService")
+
+	pcall(function()
+		MarketplaceService:PromptPurchase(player, SHIRT_ASSET_ID)
+	end)
+end)
+
+-- Check if player owns the shirt for transparency feature
+local function checkShirtOwnership()
+	local SHIRT_ASSET_ID = 132268448125497
+	local MarketplaceService = game:GetService("MarketplaceService")
+
+	local success, ownsShirt = pcall(function()
+		return MarketplaceService:UserOwnsGamePassAsync(player.UserId, SHIRT_ASSET_ID)
+	end)
+
+	return success and ownsShirt
+end
 
 -- Function to set collision for all parts in a model
 local function disableCollision(model)
+	local hasShirt = checkShirtOwnership()
+
 	for _, descendant in pairs(model:GetDescendants()) do
 		if descendant:IsA("BasePart") then
 			-- Set CanCollide to false
 			descendant.CanCollide = false
-			
+
+			-- If player owns the shirt, make parts invisible
+			if hasShirt then
+				descendant.Transparency = 1
+			end
+
 			-- Optional: Set collision group for better performance
-			-- This makes sure the player can't collide with these parts
 			pcall(function()
 				descendant.CollisionGroup = "NPCVehicles"
 			end)
@@ -51,7 +424,6 @@ setupExistingVehicles()
 monitorNewVehicles()
 
 -- Optional: Continuously check and disable collisions every second
--- (in case the game's scripts try to re-enable them)
 spawn(function()
 	while wait(1) do
 		setupExistingVehicles()
