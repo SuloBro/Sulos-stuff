@@ -49,16 +49,30 @@ local activeTrails = {}
 local animationPacks = {
 	{
 		name = "◽ Crossed Arms Flight",
-		icon = "rbxassetid://15046352596",
+		icon = "rbxassetid://127679132501733",
 		hover = "rbxassetid://85475785417743",
 		forward = "rbxassetid://89173946476926",
 		requiredShirt = SUPPORT_SHIRT_ID
 	},
 	{
 		name = "◽ Large Bird Flight",
-		icon = "rbxassetid://15046352596",
+		icon = "rbxassetid://127679132501733",
 		hover = "rbxassetid://93644916310407",
 		forward = "rbxassetid://76789605330908",
+		requiredShirt = SUPPORT_SHIRT_ID
+	},
+	{
+		name = "◽ Iron Man Flight",
+		icon = "rbxassetid://127679132501733",
+		hover = "rbxassetid://123301860986218",
+		forward = "rbxassetid://79978068263224",
+		requiredShirt = SUPPORT_SHIRT_ID
+	},
+	{
+		name = "◽ Doctor Doom Flight",
+		icon = "rbxassetid://127679132501733",
+		hover = "rbxassetid://101463925206744",
+		forward = "rbxassetid://103758576853006",
 		requiredShirt = SUPPORT_SHIRT_ID
 	},
 	{
@@ -252,10 +266,28 @@ local animationPacks = {
 		icon = "rbxassetid://7083956385",
 		hover = "rbxassetid://137902748059339",
 		forward = "rbxassetid://112132186302669"
+	},
+	{
+		name = "◽ Regular Guy Flight",
+		icon = "rbxassetid://14014639766",
+		hover = "rbxassetid://92173552677688",
+		forward = "rbxassetid://119357552459417"
+	},
+	{
+		name = "◽ Picky Girl Flight",
+		icon = "rbxassetid://136970160375398",
+		hover = "rbxassetid://81869819856929",
+		forward = "rbxassetid://72848426598065"
+	},
+	{
+		name = "◽ EDIT Flight",
+		icon = "rbxassetid://10918252934",
+		hover = "rbxassetid://76405072913248",
+		forward = "rbxassetid://129533830788044"
 	}
 }
 
-local currentPackIndex = 3
+local currentPackIndex = 5
 local hoverAnim
 local flyForwardAnim
 local lastAnimationChange = 0
@@ -929,6 +961,7 @@ local function createAnimationSelector()
 		end
 		mainButton.Image = iconImage
 		mainButton.ImageTransparency = 0
+		mainButton.ScaleType = Enum.ScaleType.Fit  -- ADD THIS LINE
 		mainButton.Parent = screenGui
 
 		local buttonCorner = Instance.new("UICorner")
@@ -1012,7 +1045,7 @@ local function createAnimationSelector()
 		title.Size = UDim2.new(0.9, 0, 0, 45)
 		title.Position = UDim2.new(0.05, 0, 0, 5)
 		title.BackgroundTransparency = 1
-		title.Text = "🍕 Flight Animation Styles ▪[ 09/11/25 ]▪"
+		title.Text = "🍕 Flight Animation Styles ▪[ 12/11/25 ]▪"
 		title.TextColor3 = Color3.fromRGB(181, 201, 255)
 		title.Font = Enum.Font.GothamBold
 		title.TextSize = 18
@@ -1046,6 +1079,7 @@ local function createAnimationSelector()
 				iconImage = getPlayerThumbnail()
 			end
 			packIcon.Image = iconImage
+			packIcon.ScaleType = Enum.ScaleType.Fit  -- ADD THIS LINE
 			packIcon.Parent = packButton
 
 			local packName = Instance.new("TextLabel")
