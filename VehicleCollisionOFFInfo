@@ -1,0 +1,59 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Function to set collision for all parts in a model
+local function disableCollision(model)
+	for _, descendant in pairs(model:GetDescendants()) do
+		if descendant:IsA("BasePart") then
+			-- Set CanCollide to false
+			descendant.CanCollide = false
+			
+			-- Optional: Set collision group for better performance
+			-- This makes sure the player can't collide with these parts
+			pcall(function()
+				descendant.CollisionGroup = "NPCVehicles"
+			end)
+		end
+	end
+end
+
+-- Function to setup no collision for existing vehicles
+local function setupExistingVehicles()
+	local npcVehiclesFolder = workspace:FindFirstChild("NPCVehicles")
+	if npcVehiclesFolder then
+		local vehiclesFolder = npcVehiclesFolder:FindFirstChild("Vehicles")
+		if vehiclesFolder then
+			for _, vehicle in pairs(vehiclesFolder:GetChildren()) do
+				if vehicle:IsA("Model") or vehicle:IsA("Folder") then
+					disableCollision(vehicle)
+				end
+			end
+		end
+	end
+end
+
+-- Function to monitor for new vehicles being added
+local function monitorNewVehicles()
+	local npcVehiclesFolder = workspace:FindFirstChild("NPCVehicles")
+	if npcVehiclesFolder then
+		local vehiclesFolder = npcVehiclesFolder:FindFirstChild("Vehicles")
+		if vehiclesFolder then
+			vehiclesFolder.ChildAdded:Connect(function(child)
+				wait(0.1) -- Small delay to ensure all parts are loaded
+				disableCollision(child)
+			end)
+		end
+	end
+end
+
+-- Run the script
+setupExistingVehicles()
+monitorNewVehicles()
+
+-- Optional: Continuously check and disable collisions every second
+-- (in case the game's scripts try to re-enable them)
+spawn(function()
+	while wait(1) do
+		setupExistingVehicles()
+	end
+end)
