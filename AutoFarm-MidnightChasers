@@ -738,9 +738,6 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 				car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
 				getfenv().first = true
 
-				-- Set speed based on gamepass ownership
-				local carSpeed = hasGamepass and 550 or 510
-
 				local location = Vector3.new(-6205.29833984375, 100, 8219.853515625)
 				repeat
 					task.wait()
@@ -748,6 +745,8 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 						autoFarmActive = false 
 						break 
 					end
+					-- Check speed EVERY frame based on current gamepass status
+					local carSpeed = hasGamepass and 620 or 510
 					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * carSpeed
 					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
 				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
@@ -761,6 +760,8 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 						autoFarmActive = false 
 						break 
 					end
+					-- Check speed EVERY frame based on current gamepass status
+					local carSpeed = hasGamepass and 620 or 510
 					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * carSpeed
 					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
 				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
