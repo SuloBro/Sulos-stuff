@@ -1,7 +1,8 @@
 --[[
-	Sulo's AutoFarm - Enhanced Version v2.1
+	Sulo's AutoFarm - Enhanced Version v2.2
 	Made with love by Sulo
 	Features: Ripple effects, bounce animations, animated gradients
+	FIXED: Black screen toggle, cash formatting (1M+), mobile scaling, premium speed boost
 ]]
 
 warn("Anti afk running")
@@ -120,43 +121,6 @@ spawn(function()
 				createDiamondBillboard(char)
 			end)
 		end
-	end
-end)
-
--- Check if player owns the premium shirt
-local function checkPremiumShirt()
-	local success, ownsShirt = pcall(function()
-		return MarketplaceService:PlayerOwnsAsset(player, PREMIUM_SHIRT_ID)
-	end)
-
-	if success then
-		hasGamepass = ownsShirt
-		print("Premium Shirt Check:", hasGamepass)
-		return ownsShirt
-	else
-		print("Failed to check shirt ownership:", ownsShirt)
-		return false
-	end
-end
-
--- Initial check
-spawn(function()
-	wait(1) -- Wait a moment for player to load
-	checkPremiumShirt()
-
-	if hasGamepass then
-		print(player.Name .. " owns the premium shirt!")
-		-- Create diamond for current character
-		if player.Character then
-			createDiamondBillboard(player.Character)
-		end
-
-		-- Create diamond on respawn
-		player.CharacterAdded:Connect(function(char)
-			createDiamondBillboard(char)
-		end)
-	else
-		print(player.Name .. " does NOT own the premium shirt")
 	end
 end)
 
@@ -658,6 +622,13 @@ spawn(function()
 	end
 end)
 
+-- Constantly check and update premium status in the background
+spawn(function()
+	while wait(5) do
+		checkPremiumShirt()
+	end
+end)
+
 autoFarmToggle.MouseButton1Click:Connect(function()
 	if farmDebounce then
 		spawn(function()
@@ -745,8 +716,8 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 						autoFarmActive = false 
 						break 
 					end
-					-- Check speed EVERY frame based on current gamepass status
-					local carSpeed = hasGamepass and 620 or 510
+					-- CONSTANTLY check premium status in real-time EVERY frame
+					local carSpeed = hasGamepass and 700 or 510
 					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * carSpeed
 					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
 				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
@@ -760,8 +731,8 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 						autoFarmActive = false 
 						break 
 					end
-					-- Check speed EVERY frame based on current gamepass status
-					local carSpeed = hasGamepass and 620 or 510
+					-- CONSTANTLY check premium status in real-time EVERY frame
+					local carSpeed = hasGamepass and 700 or 510
 					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * carSpeed
 					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
 				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
@@ -793,7 +764,7 @@ blackScreenToggle.Font = Enum.Font.GothamBold
 blackScreenToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 blackScreenToggle.BorderSizePixel = 0
 blackScreenToggle.ClipsDescendants = true
-blackScreenToggle.ZIndex = 5001
+blackScreenToggle.ZIndex = 2
 blackScreenToggle.Parent = guiFrame
 
 local blackCorner = Instance.new("UICorner")
@@ -851,10 +822,10 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 	clickTween2:Play()
 
 	if blackScreenToggle.Text == "BLACK SCREEN: OFF" then
-		-- Create Black Screen with fade in
+		-- Create Black Screen with fade in (LOWERED ZINDEX TO 99)
 		local blackScreen = Instance.new("ScreenGui")
 		blackScreen.Name = "BlackScreen"
-		blackScreen.DisplayOrder = 100
+		blackScreen.DisplayOrder = 99
 		blackScreen.Parent = game.CoreGui
 
 		local blackFrame = Instance.new("Frame")
@@ -934,7 +905,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		cashFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 		cashFrame.BackgroundTransparency = 0.3
 		cashFrame.BorderSizePixel = 0
-		cashFrame.ZIndex = 5001
+		cashFrame.ZIndex = 1
 		cashFrame.Parent = blackFrame
 
 		local cashCorner = Instance.new("UICorner")
@@ -1001,7 +972,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		cashGlow.ImageTransparency = 0.8
 		cashGlow.ScaleType = Enum.ScaleType.Slice
 		cashGlow.SliceCenter = Rect.new(24, 24, 276, 276)
-		cashGlow.ZIndex = 5000
+		cashGlow.ZIndex = 1
 		cashGlow.Parent = cashFrame
 
 		local cashTitle = Instance.new("TextLabel")
@@ -1012,7 +983,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		cashTitle.TextColor3 = Color3.fromRGB(100, 255, 100)
 		cashTitle.TextSize = 18
 		cashTitle.Font = Enum.Font.GothamBold
-		cashTitle.ZIndex = 5002
+		cashTitle.ZIndex = 1
 		cashTitle.Parent = cashFrame
 
 		local cashAmount = Instance.new("TextLabel")
@@ -1023,14 +994,19 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		cashAmount.TextColor3 = Color3.fromRGB(255, 255, 255)
 		cashAmount.TextSize = 32
 		cashAmount.Font = Enum.Font.GothamBold
-		cashAmount.ZIndex = 5002
+		cashAmount.ZIndex = 1
 		cashAmount.Parent = cashFrame
 
-		-- Function to format cash
+		-- FIXED Function to format cash (now shows 1M+ instead of 1000K+)
 		local function formatCash(value)
-			if value >= 100000 then
+			if value >= 1000000 then
+				-- Format for millions
+				return string.format("%.1fM+ ($%s)", value / 1000000, tostring(math.floor(value)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+			elseif value >= 100000 then
+				-- Format for hundreds of thousands
 				return string.format("%.0fK+ ($%s)", value / 1000, tostring(math.floor(value)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
 			else
+				-- Format normally
 				return "$" .. tostring(math.floor(value)):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
 			end
 		end
@@ -1044,7 +1020,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		plusButton.BorderSizePixel = 0
 		plusButton.Image = "rbxassetid://14915516955"
 		plusButton.ImageColor3 = Color3.fromRGB(100, 255, 100)
-		plusButton.ZIndex = 5002
+		plusButton.ZIndex = 1
 		plusButton.ClipsDescendants = true
 		plusButton.Parent = cashFrame
 
@@ -1457,6 +1433,27 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 					elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
 						local fadeOut = TweenService:Create(child, TweenInfo.new(0.8), {ImageTransparency = 1})
 						fadeOut:Play()
+					elseif child:IsA("Frame") then
+						-- Fade out the cash frame and gamepass frame
+						local fadeOutFrame = TweenService:Create(child, TweenInfo.new(0.8), {BackgroundTransparency = 1})
+						fadeOutFrame:Play()
+						
+						-- Fade out all children
+						for _, subChild in pairs(child:GetChildren()) do
+							if subChild:IsA("TextLabel") then
+								local fadeOut = TweenService:Create(subChild, TweenInfo.new(0.8), {TextTransparency = 1})
+								fadeOut:Play()
+							elseif subChild:IsA("ImageLabel") or subChild:IsA("ImageButton") or subChild:IsA("TextButton") then
+								if subChild:IsA("ImageLabel") or subChild:IsA("ImageButton") then
+									local fadeOut = TweenService:Create(subChild, TweenInfo.new(0.8), {ImageTransparency = 1})
+									fadeOut:Play()
+								end
+								if subChild:IsA("TextButton") then
+									local fadeOut = TweenService:Create(subChild, TweenInfo.new(0.8), {BackgroundTransparency = 1, TextTransparency = 1})
+									fadeOut:Play()
+								end
+							end
+						end
 					end
 				end
 
@@ -1509,4 +1506,4 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
 	end
 end)
 
-print("Sulo's AutoFarm v2.1 loaded successfully!")
+print("Sulo's AutoFarm v2.2 loaded successfully!")
