@@ -1,9 +1,10 @@
 --[[
-	Sulo's AutoFarm - Enhanced Version v2.3 (Group Rank Edition)
+	Sulo's AutoFarm - Enhanced Version v2.4 (Group Rank + Shirt Edition)
 	Made with love by Sulo
 	Features: Ripple effects, bounce animations, animated gradients
-	CHANGED: Now uses Group Rank 6+ instead of premium shirt
+	CHANGED: Now checks BOTH Group Rank 6+ AND Premium Shirt ownership
 	Group ID: 10612101 | Required Rank: 6 (Supporter) or above
+	Shirt ID: 132268448125497
 ]]
 
 warn("Anti afk running")
@@ -15,12 +16,29 @@ end)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local GroupService = game:GetService("GroupService")
+local MarketplaceService = game:GetService("MarketplaceService")
 local player = Players.LocalPlayer
 
 local GROUP_ID = 10612101
 local REQUIRED_RANK = 6
+local SHIRT_ID = 132268448125497
+local SHIRT_LINK = "https://www.roblox.com/catalog/132268448125497/PREMIUM-Support"
 local hasGamepass = false
+
+-- Check if player owns the shirt
+local function checkShirtOwnership()
+	local success, ownsShirt = pcall(function()
+		return MarketplaceService:PlayerOwnsAsset(player, SHIRT_ID)
+	end)
+	
+	if success then
+		print("Shirt Check - Owns Shirt:", ownsShirt)
+		return ownsShirt
+	else
+		print("Failed to check shirt ownership:", ownsShirt)
+		return false
+	end
+end
 
 -- Check if player has rank 6 or above in the group
 local function checkGroupRank()
@@ -29,22 +47,37 @@ local function checkGroupRank()
 	end)
 
 	if success then
-		hasGamepass = (rank >= REQUIRED_RANK)
-		print("Group Rank Check - Rank:", rank, "| Has Premium:", hasGamepass)
-		return hasGamepass
+		print("Group Rank Check - Rank:", rank, "| Has Required Rank:", rank >= REQUIRED_RANK)
+		return rank >= REQUIRED_RANK
 	else
 		print("Failed to check group rank:", rank)
 		return false
 	end
 end
 
+-- Check if player has EITHER group rank OR shirt
+local function checkPremiumStatus()
+	local hasRank = checkGroupRank()
+	local hasShirt = checkShirtOwnership()
+	
+	hasGamepass = hasRank or hasShirt
+	
+	print("=== PREMIUM STATUS ===")
+	print("Has Group Rank:", hasRank)
+	print("Has Shirt:", hasShirt)
+	print("Premium Active:", hasGamepass)
+	print("=====================")
+	
+	return hasGamepass
+end
+
 -- Initial check
 spawn(function()
 	wait(1) -- Wait a moment for player to load
-	checkGroupRank()
+	checkPremiumStatus()
 
 	if hasGamepass then
-		print(player.Name .. " has rank " .. REQUIRED_RANK .. "+ in the group!")
+		print(player.Name .. " has premium access!")
 		-- Create diamond for current character
 		if player.Character then
 			createDiamondBillboard(player.Character)
@@ -55,7 +88,7 @@ spawn(function()
 			createDiamondBillboard(char)
 		end)
 	else
-		print(player.Name .. " does NOT have rank " .. REQUIRED_RANK .. "+ in the group")
+		print(player.Name .. " does NOT have premium access")
 	end
 end)
 
@@ -373,9 +406,9 @@ statusGradient.Color = ColorSequence.new{
 }
 statusGradient.Parent = statusText
 
--- Update status based on group rank
+-- Update status based on premium status
 spawn(function()
-	wait(2) -- Wait for group rank check to complete
+	wait(2) -- Wait for premium check to complete
 
 	if hasGamepass then
 		statusText.Text = "Status: " .. player.Name .. " • 2x Cash PREMIUM"
@@ -602,10 +635,10 @@ spawn(function()
 	end
 end)
 
--- Constantly check and update group rank in the background
+-- Constantly check and update premium status in the background
 spawn(function()
 	while wait(5) do
-		checkGroupRank()
+		checkPremiumStatus()
 	end
 end)
 
@@ -696,7 +729,7 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 						autoFarmActive = false 
 						break 
 					end
-					-- CONSTANTLY check group rank in real-time EVERY frame
+					-- CONSTANTLY check premium status in real-time EVERY frame
 					local carSpeed = hasGamepass and 700 or 510
 					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * carSpeed
 					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
@@ -711,7 +744,7 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 						autoFarmActive = false 
 						break 
 					end
-					-- CONSTANTLY check group rank in real-time EVERY frame
+					-- CONSTANTLY check premium status in real-time EVERY frame
 					local carSpeed = hasGamepass and 700 or 510
 					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * carSpeed
 					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
@@ -991,7 +1024,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 			end
 		end
 
-		-- Plus button for group rank
+		-- Plus button for premium
 		local plusButton = Instance.new("ImageButton")
 		plusButton.Size = UDim2.new(0, 50, 0, 50)
 		plusButton.Position = UDim2.new(1, -60, 0.5, -25)
@@ -1014,7 +1047,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		plusStroke.Transparency = 0.5
 		plusStroke.Parent = plusButton
 
-		-- Group rank prompt frame
+		-- Premium prompt frame
 		local gamepassFrame = Instance.new("Frame")
 		gamepassFrame.Size = UDim2.new(0, 400, 0, 220)
 		gamepassFrame.Position = UDim2.new(0.5, -200, 0.5, -110)
@@ -1057,7 +1090,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		gamepassDesc.Size = UDim2.new(1, -40, 0, 60)
 		gamepassDesc.Position = UDim2.new(0, 20, 0, 65)
 		gamepassDesc.BackgroundTransparency = 1
-		gamepassDesc.Text = "Join the group and get rank 6+ (Supporter)\nfor faster AutoFarm and premium features!"
+		gamepassDesc.Text = "You will be getting up to 460-500$ Per Second by owning the shirt! ( Support )\nJoin the group to be roled as an supporter(optional)"
 		gamepassDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
 		gamepassDesc.TextSize = 16
 		gamepassDesc.Font = Enum.Font.Gotham
@@ -1071,7 +1104,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		purchaseButton.Position = UDim2.new(0.5, -150, 1, -65)
 		purchaseButton.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
 		purchaseButton.BorderSizePixel = 0
-		purchaseButton.Text = "🚀 JOIN GROUP"
+		purchaseButton.Text = "🚀 Copy Shirt Link"
 		purchaseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 		purchaseButton.TextSize = 18
 		purchaseButton.Font = Enum.Font.GothamBold
@@ -1209,7 +1242,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 
 			if hasGamepass then
 				spawn(function()
-					createNotification("You already have rank 6+ in the group!", "rbxassetid://139557679200863")
+					createNotification("You already have premium access!", "rbxassetid://139557679200863")
 				end)
 				return
 			end
@@ -1221,7 +1254,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 			wait(0.5)
 			plusButton.Rotation = 0
 
-			-- Show group frame
+			-- Show premium frame
 			gamepassFrame.Visible = true
 			gamepassFrame.Size = UDim2.new(0, 0, 0, 0)
 			gamepassFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -1252,7 +1285,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 			gamepassFrame.Visible = false
 		end)
 
-		-- Purchase button with ripple (opens group page)
+		-- Purchase button with ripple (copies shirt link)
 		purchaseButton.MouseButton1Click:Connect(function()
 			-- Create ripple
 			local mouse = game.Players.LocalPlayer:GetMouse()
@@ -1276,28 +1309,27 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 			wait(0.15)
 			purchaseButton.BackgroundColor3 = originalColor
 
-			-- Open group page
-			local groupLink = "https://www.roblox.com/groups/" .. GROUP_ID
+			-- Copy shirt link to clipboard
 			if setclipboard then
-				setclipboard(groupLink)
+				setclipboard(SHIRT_LINK)
 				spawn(function()
-					createNotification("Group link copied to clipboard!", "rbxassetid://139557679200863")
+					createNotification("Shirt link copied to clipboard!", "rbxassetid://139557679200863")
 				end)
 			else
 				spawn(function()
-					createNotification("Group ID: " .. GROUP_ID, "rbxassetid://139557679200863")
+					createNotification("Shirt ID: " .. SHIRT_ID, "rbxassetid://139557679200863")
 				end)
 			end
 		end)
 
-		-- Check for group rank (poll every 5 seconds)
+		-- Check for premium status (poll every 5 seconds)
 		spawn(function()
 			while gamepassFrame.Parent do
 				wait(5)
-				if checkGroupRank() and not hasGamepass then
+				if checkPremiumStatus() and not hasGamepass then
 					hasGamepass = true
 					spawn(function()
-						createNotification("Group rank achieved! AutoFarm is now faster!", "rbxassetid://139557679200863")
+						createNotification("Premium achieved! AutoFarm is now faster!", "rbxassetid://139557679200863")
 					end)
 
 					-- Close frame
@@ -1479,5 +1511,7 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
 	end
 end)
 
-print("Sulo's AutoFarm v2.3 (Group Rank Edition) loaded successfully!")
+print("Sulo's AutoFarm v2.4 (Group Rank + Shirt Edition) loaded successfully!")
 print("Group ID:", GROUP_ID, "| Required Rank:", REQUIRED_RANK)
+print("Shirt ID:", SHIRT_ID)
+print("Shirt Link:", SHIRT_LINK)
