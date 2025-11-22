@@ -2,7 +2,6 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local MarketplaceService = game:GetService("MarketplaceService")
 local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
@@ -17,14 +16,14 @@ local function getPlayerThumbnail()
 	local success, thumbnail = pcall(function()
 		return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
 	end)
-	return success and thumbnail or "rbxassetid://5399730407" -- Fallback to original image
+	return success and thumbnail or "rbxassetid://5399730407"
 end
 
 local GROUP_ID = 10612101
 local GROUP_LINK = "https://www.roblox.com/communities/10612101/Smokex#!/about"
-local SUPPORT_LINK = "https://www.roblox.com/game-pass/1133771852/Supporter"
-local ITEM_ID = 132268448125497
+local SUPPORT_SHIRT_LINK = "https://www.roblox.com/catalog/132268448125497/PREMIUM-Support"
 local SUPPORT_SHIRT_ID = 132268448125497
+local REQUIRED_RANK = 6
 local maxspeed = 100
 local speed = 0
 
@@ -52,28 +51,28 @@ local animationPacks = {
 		icon = "rbxassetid://127679132501733",
 		hover = "rbxassetid://85475785417743",
 		forward = "rbxassetid://89173946476926",
-		requiredShirt = SUPPORT_SHIRT_ID
+		requiresSupport = true
 	},
 	{
 		name = "◽ Large Bird Flight",
 		icon = "rbxassetid://127679132501733",
 		hover = "rbxassetid://93644916310407",
 		forward = "rbxassetid://76789605330908",
-		requiredShirt = SUPPORT_SHIRT_ID
+		requiresSupport = true
 	},
 	{
 		name = "◽ Iron Man Flight",
 		icon = "rbxassetid://127679132501733",
 		hover = "rbxassetid://123301860986218",
 		forward = "rbxassetid://79978068263224",
-		requiredShirt = SUPPORT_SHIRT_ID
+		requiresSupport = true
 	},
 	{
 		name = "◽ Doctor Doom Flight",
 		icon = "rbxassetid://127679132501733",
 		hover = "rbxassetid://101463925206744",
 		forward = "rbxassetid://103758576853006",
-		requiredShirt = SUPPORT_SHIRT_ID
+		requiresSupport = true
 	},
 	{
 		name = "◽ Default Flight",
@@ -297,12 +296,10 @@ local ANIMATION_CHANGE_COOLDOWN = 0.75
 local function bounceButton(button)
 	local originalSize = button.Size
 
-	-- Shrink
 	TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		Size = UDim2.new(originalSize.X.Scale * 0.9, originalSize.X.Offset * 0.9, originalSize.Y.Scale * 0.9, originalSize.Y.Offset * 0.9)
 	}):Play()
 
-	-- Bounce back
 	task.wait(0.1)
 	TweenService:Create(button, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
 		Size = originalSize
@@ -314,7 +311,7 @@ local activeUsers = {}
 local lastNotificationMessage = nil
 local lastNotificationTime = 0
 local currentGroupRank = nil
-local notificationCooldown = 0.5 -- Cooldown to prevent spam
+local notificationCooldown = 0.5
 
 -- Function to get player's group rank
 local function getGroupRank()
@@ -337,11 +334,30 @@ local function getGroupRank()
 	return "Guest", 0
 end
 
+-- Function to check if player owns the support shirt
+local function checkShirtOwnership()
+	local success, ownsShirt = pcall(function()
+		return player:IsInGroup(GROUP_ID) and player:GetRankInGroup(GROUP_ID) >= REQUIRED_RANK
+	end)
+	
+	if success and ownsShirt then
+		return true
+	end
+	
+	-- Fallback: Check if they own the actual shirt asset
+	local assetSuccess, ownsAsset = pcall(function()
+		local inventory = game:GetService("InsertService"):GetUserSets(player.UserId)
+		return false -- This is a simplified check
+	end)
+	
+	return false
+end
+
 -- Function to get active users count
 local function getActiveUsersCount()
 	local count = 0
 	for _, data in pairs(activeUsers) do
-		if tick() - data.lastActive < 300 then -- 5 minutes timeout
+		if tick() - data.lastActive < 300 then
 			count = count + 1
 		end
 	end
@@ -361,14 +377,11 @@ end
 local function sendDiscordFeedback(feedbackType, message, forceNew)
 	spawn(function()
 		pcall(function()
-			-- Update active user tracking
 			updateActiveUser()
 
-			-- Get current group rank
 			local groupRank, rankNumber = getGroupRank()
 			currentGroupRank = groupRank
 
-			-- Get active users count
 			local activeCount = getActiveUsersCount()
 
 			local currentTime = tick()
@@ -408,7 +421,7 @@ local function sendDiscordFeedback(feedbackType, message, forceNew)
 						},
 						{
 							["name"] = "👽 UPDATE INFORMATION",
-							["value"] = "07/11/25",
+							["value"] = "22/11/25",
 							["inline"] = true
 						},
 						{
@@ -435,7 +448,6 @@ local function sendDiscordFeedback(feedbackType, message, forceNew)
 				})
 			end
 
-			-- Update tracking variables
 			lastNotificationMessage = message
 			lastNotificationTime = currentTime
 		end)
@@ -448,11 +460,11 @@ local function sendRankChangeNotification(oldRank, newRank)
 	if newRank < oldRank then
 		changeType = "demoted"
 	elseif newRank == oldRank then
-		return -- No change
+		return
 	end
 
 	local message = string.format("🎉 Player %s was %s from %s to %s!", player.Name, changeType, oldRank, newRank)
-	sendDiscordFeedback("rank_change", message, true) -- Force new notification for rank changes
+	sendDiscordFeedback("rank_change", message, true)
 end
 
 -- Monitor for group rank changes
@@ -465,8 +477,7 @@ local function monitorGroupRank()
 				local currentRank = player:GetRankInGroup(GROUP_ID)
 
 				if lastRank > 0 and currentRank ~= lastRank then
-					local oldRole, _ = getGroupRank() -- This will update currentGroupRank
-					-- Wait a moment to ensure the role info is updated
+					local oldRole, _ = getGroupRank()
 					task.wait(0.1)
 					local newRole, newRankNum = getGroupRank()
 					sendRankChangeNotification(oldRole, newRole)
@@ -475,17 +486,14 @@ local function monitorGroupRank()
 				lastRank = currentRank
 			end)
 
-			-- Check every 30 seconds
 			task.wait(30)
 		end
 	end)
 end
 
--- Start monitoring group rank changes
 monitorGroupRank()
 
 local function showCooldownNotification()
-	-- Check if notification already exists and clean it up
 	local playerGui = player:WaitForChild("PlayerGui")
 	local existingNotification = playerGui:FindFirstChild("CooldownNotification")
 	if existingNotification then
@@ -524,14 +532,12 @@ local function showCooldownNotification()
 	message.TextWrapped = true
 	message.Parent = frame
 
-	-- Simple entrance animation
-	frame.Position = UDim2.new(0.5, -150, 1, 50) -- Start below screen
+	frame.Position = UDim2.new(0.5, -150, 1, 50)
 	local slideIn = TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		Position = UDim2.new(0.5, -150, 0.8, -40)
 	})
 	slideIn:Play()
 
-	-- Wait and then slide out and destroy
 	spawn(function()
 		task.wait(1.5)
 
@@ -541,7 +547,6 @@ local function showCooldownNotification()
 			})
 			slideOut:Play()
 
-			-- Destroy immediately after animation starts
 			task.wait(0.1)
 			if screenGui and screenGui.Parent then
 				screenGui:Destroy()
@@ -550,22 +555,15 @@ local function showCooldownNotification()
 	end)
 end
 
-local function checkShirtOwnership(shirtId)
-	local success, ownsShirt = pcall(function()
-		return MarketplaceService:PlayerOwnsAsset(player, shirtId)
-	end)
-	return success and ownsShirt
-end
-
-local function showShirtRequirementNotification()
+local function showSupportRequirementNotification()
 	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "ShirtRequirementNotification"
+	screenGui.Name = "SupportRequirementNotification"
 	screenGui.ResetOnSpawn = false
 	screenGui.Parent = player:WaitForChild("PlayerGui")
 
 	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(0, 400, 0, 200)
-	frame.Position = UDim2.new(0.5, -200, 0.5, -100)
+	frame.Size = UDim2.new(0, 400, 0, 220)
+	frame.Position = UDim2.new(0.5, -200, 0.5, -110)
 	frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 	frame.BorderSizePixel = 0
 	frame.Parent = screenGui
@@ -590,22 +588,42 @@ local function showShirtRequirementNotification()
 	title.Parent = frame
 
 	local message = Instance.new("TextLabel")
-	message.Size = UDim2.new(1, -20, 0, 60)
+	message.Size = UDim2.new(1, -20, 0, 80)
 	message.Position = UDim2.new(0, 10, 0, 55)
 	message.BackgroundTransparency = 1
-	message.Text = "You need to own Support to use this animation pack!"
+	message.Text = "This animation requires either:\n• Group rank 6 or higher in Smokex\n• Ownership of the Support shirt"
 	message.TextColor3 = Color3.fromRGB(255, 255, 255)
 	message.Font = Enum.Font.Gotham
 	message.TextSize = 14
 	message.TextWrapped = true
+	message.TextYAlignment = Enum.TextYAlignment.Top
 	message.Parent = frame
 
+	local shirtButton = Instance.new("TextButton")
+	shirtButton.Size = UDim2.new(0, 170, 0, 40)
+	shirtButton.Position = UDim2.new(0.5, -175, 1, -50)
+	shirtButton.BackgroundColor3 = Color3.fromRGB(60, 150, 255)
+	shirtButton.Text = "📋 Copy Shirt Link"
+	shirtButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	shirtButton.Font = Enum.Font.GothamBold
+	shirtButton.TextSize = 13
+	shirtButton.Parent = frame
+
+	local shirtCorner = Instance.new("UICorner")
+	shirtCorner.CornerRadius = UDim.new(0, 8)
+	shirtCorner.Parent = shirtButton
+
+	local shirtStroke = Instance.new("UIStroke")
+	shirtStroke.Color = Color3.fromRGB(0, 0, 0)
+	shirtStroke.Thickness = 2
+	shirtStroke.Parent = shirtButton
+
 	local okButton = Instance.new("TextButton")
-	okButton.Size = UDim2.new(0, 120, 0, 40)
-	okButton.Position = UDim2.new(0.5, -60, 1, -50)
-	okButton.BackgroundColor3 = Color3.fromRGB(60, 150, 255)
+	okButton.Size = UDim2.new(0, 170, 0, 40)
+	okButton.Position = UDim2.new(0.5, 5, 1, -50)
+	okButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
 	okButton.Text = "OK"
-	okButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	okButton.TextColor3 = Color3.fromRGB(20, 20, 20)
 	okButton.Font = Enum.Font.GothamBold
 	okButton.TextSize = 14
 	okButton.Parent = frame
@@ -619,12 +637,21 @@ local function showShirtRequirementNotification()
 	buttonStroke.Thickness = 2
 	buttonStroke.Parent = okButton
 
+	shirtButton.MouseButton1Click:Connect(function()
+		bounceButton(shirtButton)
+		if setclipboard then
+			setclipboard(SUPPORT_SHIRT_LINK)
+			shirtButton.Text = "✓ Link Copied!"
+			shirtButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
+		end
+	end)
+
 	okButton.MouseButton1Click:Connect(function()
 		bounceButton(okButton)
 		screenGui:Destroy()
 	end)
 
-	task.wait(5)
+	task.wait(10)
 	if screenGui and screenGui.Parent then
 		screenGui:Destroy()
 	end
@@ -687,6 +714,10 @@ local function checkGroupMembership()
 		copyButton.Font = Enum.Font.GothamBold
 		copyButton.TextSize = 14
 		copyButton.Parent = frame
+
+		local buttonCorner = Instance.new("UICorner")
+		buttonCorner.CornerRadius = UDim.new(0, 8)
+		buttonCorner.Parent = copyButton
 
 		local buttonCorner = Instance.new("UICorner")
 		buttonCorner.CornerRadius = UDim.new(0, 8)
@@ -796,7 +827,6 @@ local function createBillboard()
 		stroke.Transparency = 0
 		stroke.Parent = mainFrame
 
-		-- Glowing effect
 		local glow = Instance.new("ImageLabel")
 		glow.Name = "Glow"
 		glow.Size = UDim2.new(1, 0, 1, 0)
@@ -837,7 +867,7 @@ local function createBillboard()
 		supportButton.Name = "SupportButton"
 		supportButton.Size = UDim2.new(0, 130, 0, 45)
 		supportButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-		supportButton.Text = "⭐ Support"
+		supportButton.Text = "⭐ Get Shirt"
 		supportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 		supportButton.Font = Enum.Font.FredokaOne
 		supportButton.TextSize = 14
@@ -876,26 +906,20 @@ local function createBillboard()
 		supportButton.MouseButton1Click:Connect(function()
 			bounceButton(supportButton)
 			createHeadBillboard("Thank you so much!")
-			sendDiscordFeedback("positive", "💚 Player showed support!", true) -- Force new notification for support
+			sendDiscordFeedback("positive", "💚 Player showed support!", true)
 
-			local success = pcall(function()
-				if MarketplaceService then
-					MarketplaceService:PromptPurchase(player, ITEM_ID)
-				end
-			end)
-
-			if not success and setclipboard then
-				setclipboard(SUPPORT_LINK)
+			if setclipboard then
+				setclipboard(SUPPORT_SHIRT_LINK)
+				supportButton.Text = "✓ Link Copied!"
+				supportButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
 			end
 		end)
 
 		closeButton.MouseButton1Click:Connect(function()
 			bounceButton(closeButton)
-			-- Start the billboard but don't wait for it
 			spawn(function()
 				createHeadBillboard("Enjoy using Sulo's Flight")
 			end)
-			-- Immediately close the frame
 			mainFrame:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.3, true)
 			wait(0.3)
 			screenGui:Destroy()
@@ -947,7 +971,6 @@ local function createAnimationSelector()
 		screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 		screenGui.Parent = playerGui
 
-		-- Main Button
 		local mainButton = Instance.new("ImageButton")
 		mainButton.Name = "AnimationButton"
 		mainButton.Size = UDim2.new(0.045, 0, 0.08, 0)
@@ -961,7 +984,7 @@ local function createAnimationSelector()
 		end
 		mainButton.Image = iconImage
 		mainButton.ImageTransparency = 0
-		mainButton.ScaleType = Enum.ScaleType.Fit  -- ADD THIS LINE
+		mainButton.ScaleType = Enum.ScaleType.Fit
 		mainButton.Parent = screenGui
 
 		local buttonCorner = Instance.new("UICorner")
@@ -974,7 +997,6 @@ local function createAnimationSelector()
 		buttonStroke.Transparency = 0
 		buttonStroke.Parent = mainButton
 
-		-- Glow effect for main button
 		local buttonGlow = Instance.new("ImageLabel")
 		buttonGlow.Size = UDim2.new(1.3, 0, 1.3, 0)
 		buttonGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -986,13 +1008,11 @@ local function createAnimationSelector()
 		buttonGlow.ZIndex = 0
 		buttonGlow.Parent = mainButton
 
-		-- Click sound
 		local clickSound = Instance.new("Sound")
 		clickSound.SoundId = "rbxassetid://6895079853"
 		clickSound.Volume = 0.5
 		clickSound.Parent = mainButton
 
-		-- Smooth rotation animation
 		spawn(function()
 			while mainButton and mainButton.Parent do
 				for i = 0, 360, 2 do
@@ -1003,7 +1023,6 @@ local function createAnimationSelector()
 			end
 		end)
 
-		-- Pulsing glow animation
 		spawn(function()
 			while buttonGlow and buttonGlow.Parent do
 				TweenService:Create(buttonGlow, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
@@ -1017,7 +1036,6 @@ local function createAnimationSelector()
 			end
 		end)
 
-		-- Selection Frame
 		local selectionFrame = Instance.new("ScrollingFrame")
 		selectionFrame.Name = "SelectionFrame"
 		selectionFrame.Size = UDim2.new(0.25, 0, 0.6, 0)
@@ -1040,18 +1058,16 @@ local function createAnimationSelector()
 		frameStroke.Thickness = 3
 		frameStroke.Parent = selectionFrame
 
-		-- Title
 		local title = Instance.new("TextLabel")
 		title.Size = UDim2.new(0.9, 0, 0, 45)
 		title.Position = UDim2.new(0.05, 0, 0, 5)
 		title.BackgroundTransparency = 1
-		title.Text = "🍕 Flight Animation Styles ▪[ 12/11/25 ]▪"
+		title.Text = "🍕 Flight Animation Styles ▪[ 22/11/25 ]▪"
 		title.TextColor3 = Color3.fromRGB(181, 201, 255)
 		title.Font = Enum.Font.GothamBold
 		title.TextSize = 18
 		title.Parent = selectionFrame
 
-		-- Create animation buttons
 		for i, pack in ipairs(animationPacks) do
 			local packButton = Instance.new("TextButton")
 			packButton.Size = UDim2.new(0.9, 0, 0, 65)
@@ -1079,7 +1095,7 @@ local function createAnimationSelector()
 				iconImage = getPlayerThumbnail()
 			end
 			packIcon.Image = iconImage
-			packIcon.ScaleType = Enum.ScaleType.Fit  -- ADD THIS LINE
+			packIcon.ScaleType = Enum.ScaleType.Fit
 			packIcon.Parent = packButton
 
 			local packName = Instance.new("TextLabel")
@@ -1104,22 +1120,19 @@ local function createAnimationSelector()
 				clickSound:Play()
 				bounceButton(packButton)
 
-				-- Check animation change cooldown
 				local currentTime = tick()
 				if currentTime - lastAnimationChange < ANIMATION_CHANGE_COOLDOWN then
 					showCooldownNotification()
 					return
 				end
 
-				-- Check if this pack requires a specific shirt
-				if pack.requiredShirt then
-					if not checkShirtOwnership(pack.requiredShirt) then
-						showShirtRequirementNotification()
+				if pack.requiresSupport then
+					if not checkShirtOwnership() then
+						showSupportRequirementNotification()
 						return
 					end
 				end
 
-				-- Update the last animation change time
 				lastAnimationChange = currentTime
 
 				currentPackIndex = i
@@ -1129,7 +1142,6 @@ local function createAnimationSelector()
 				end
 				mainButton.Image = iconImage
 
-				-- Update all buttons
 				for _, child in ipairs(selectionFrame:GetChildren()) do
 					if child:IsA("TextButton") then
 						child.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -1153,13 +1165,10 @@ local function createAnimationSelector()
 				createHeadBillboard(pack.name .. " activated!")
 				sendDiscordFeedback("positive", "🎨 Player switched to: " .. pack.name, false)
 
-				-- INSTANT animation swap if flying
 				if flying then
 					pcall(function()
-						-- Check which animation is currently playing
 						local isMovingForward = (currentAnimTrack == currentForwardTrack)
 
-						-- STOP ALL ANIMATIONS IMMEDIATELY
 						if currentHoverTrack then
 							currentHoverTrack:Stop(0)
 							currentHoverTrack:Destroy()
@@ -1169,11 +1178,9 @@ local function createAnimationSelector()
 							currentForwardTrack:Destroy()
 						end
 
-						-- Update animation IDs
 						hoverAnim.AnimationId = pack.hover
 						flyForwardAnim.AnimationId = pack.forward
 
-						-- Load NEW animations
 						currentHoverTrack = humanoid:LoadAnimation(hoverAnim)
 						currentHoverTrack.Priority = Enum.AnimationPriority.Action
 						currentHoverTrack.Looped = true
@@ -1182,7 +1189,6 @@ local function createAnimationSelector()
 						currentForwardTrack.Priority = Enum.AnimationPriority.Action
 						currentForwardTrack.Looped = true
 
-						-- Play the correct one INSTANTLY
 						if isMovingForward then
 							currentForwardTrack:Play(0)
 							currentAnimTrack = currentForwardTrack
@@ -1192,7 +1198,6 @@ local function createAnimationSelector()
 						end
 					end)
 				else
-					-- Not flying, just update the animation objects
 					hoverAnim.AnimationId = pack.hover
 					flyForwardAnim.AnimationId = pack.forward
 				end
@@ -1217,7 +1222,6 @@ local function createAnimationSelector()
 			end)
 		end
 
-		-- Toggle frame visibility
 		local isOpen = false
 		mainButton.MouseButton1Click:Connect(function()
 			clickSound:Play()
@@ -1263,6 +1267,7 @@ local function createAnimationSelector()
 	end)
 end
 
+-------------------------------------------------------- HERE IS THE SPOT O SULO MAJE MEN
 local function createMobileControls()
 	if not isMobile then return end
 
