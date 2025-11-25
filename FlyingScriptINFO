@@ -74,6 +74,13 @@ local animationPacks = {
 		forward = "rbxassetid://103758576853006",
 		requiresSupport = true
 	},
+{
+		name = "◽ Bouncy Flight",
+		icon = "rbxassetid://127679132501733",
+		hover = "rbxassetid://111272262660539",
+		forward = "rbxassetid://97813644250703",
+		requiresSupport = true
+	},
 	{
 		name = "◽ Default Flight",
 		icon = "rbxassetid://12285970187",
@@ -286,7 +293,7 @@ local animationPacks = {
 	}
 }
 
-local currentPackIndex = 5
+local currentPackIndex = 6
 local hoverAnim
 local flyForwardAnim
 local lastAnimationChange = 0
