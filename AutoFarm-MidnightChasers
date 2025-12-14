@@ -1,9 +1,7 @@
 --[[
-	Sulo's AutoFarm - Enhanced Version v2.4 (Group Rank + Shirt Edition)
+	Sulo's AutoFarm - Enhanced improved systems !
 	Made with love by Sulo
-	Features: Ripple effects, bounce animations, animated gradients
-	CHANGED: Now checks BOTH Group Rank 6+ AND Premium Shirt ownership
-	Group ID: 10612101 | Required Rank: 6 (Supporter) or above
+	Group ID: 10612101 | @1sulo
 	Shirt ID: 132268448125497
 ]]
 
@@ -1090,7 +1088,7 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		gamepassDesc.Size = UDim2.new(1, -40, 0, 60)
 		gamepassDesc.Position = UDim2.new(0, 20, 0, 65)
 		gamepassDesc.BackgroundTransparency = 1
-		gamepassDesc.Text = "You will be getting up to 460-500$ Per Second by owning the shirt! ( Support )\nJoin the group to be roled as an supporter(optional)"
+		gamepassDesc.Text = "you will get 50% more cash instead from regular users, Premium gives you higher money if you also own VIP in-game\nVIP:400-500$/s\nNoVIP:190-250$/s ( With Support )\nJoin the group to be roled as an supporter(optional)"
 		gamepassDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
 		gamepassDesc.TextSize = 16
 		gamepassDesc.Font = Enum.Font.Gotham
