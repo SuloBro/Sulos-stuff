@@ -10,10 +10,10 @@ local LocalPlayer = Players.LocalPlayer
 
 
 local authorizedUsers = {
-    "ongdied",     -- Your username
-    "beybladegabe1",     -- Test user 1
-    "H34RTSF0REMMMY",     -- Test user 2
-    "06UVB",
+    "ongdied", 
+    "beybladegabe1", 
+    "06UV",
+    "Usernametest123",
     "username123",
     "username123",
     "username123",
