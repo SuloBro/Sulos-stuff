@@ -1,4 +1,6 @@
 --[[
+	Sulo's AutoFarm!
+	Made with love by Sulo
 	Group ID: 10612101 | @1sulo
 	Shirt ID: 132268448125497
 ]]
@@ -313,46 +315,103 @@ phonkSound:Stop()
 local guiScreen = Instance.new("ScreenGui")
 guiScreen.Name = "SuloGUI"
 guiScreen.DisplayOrder = 100
+guiScreen.ResetOnSpawn = false
 guiScreen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 guiScreen.Parent = game.Players.LocalPlayer.PlayerGui
 
 local guiFrame = Instance.new("Frame")
-guiFrame.Size = UDim2.new(0, 320, 0, 230)
-guiFrame.Position = UDim2.new(0.5, -160, 0.5, -115)
-guiFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+guiFrame.Size = UDim2.new(0, 340, 0, 250)
+guiFrame.Position = UDim2.new(0.5, -170, 0.5, -125)
+guiFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+guiFrame.BackgroundTransparency = 0.15
 guiFrame.BorderSizePixel = 0
 guiFrame.ClipsDescendants = false
 guiFrame.ZIndex = 1
 guiFrame.Parent = guiScreen
 
 local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0.08, 0)
+frameCorner.CornerRadius = UDim.new(0, 20)
 frameCorner.Parent = guiFrame
 
 local frameStroke = Instance.new("UIStroke")
 frameStroke.Color = Color3.fromRGB(255, 255, 255)
-frameStroke.Thickness = 2
-frameStroke.Transparency = 0.7
+frameStroke.Thickness = 1
+frameStroke.Transparency = 0.85
+frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 frameStroke.Parent = guiFrame
+
+local blurEffect = Instance.new("ImageLabel")
+blurEffect.Size = UDim2.new(1, 0, 1, 0)
+blurEffect.BackgroundTransparency = 1
+blurEffect.Image = "rbxassetid://8992230677"
+blurEffect.ImageColor3 = Color3.fromRGB(255, 255, 255)
+blurEffect.ImageTransparency = 0.7
+blurEffect.ScaleType = Enum.ScaleType.Tile
+blurEffect.TileSize = UDim2.new(0, 128, 0, 128)
+blurEffect.ZIndex = 0
+blurEffect.Parent = guiFrame
+
+local blurCorner = Instance.new("UICorner")
+blurCorner.CornerRadius = UDim.new(0, 20)
+blurCorner.Parent = blurEffect
 
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 30)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
 }
-gradient.Rotation = 45
+gradient.Rotation = 135
 gradient.Parent = guiFrame
 
+spawn(function()
+	while guiFrame.Parent do
+		for i = 0, 360, 1 do
+			if not guiFrame.Parent then break end
+			gradient.Rotation = i
+			wait(0.05)
+		end
+	end
+end)
+
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 40)
-title.Position = UDim2.new(0, 0, 0, 0)
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Position = UDim2.new(0, 0, 0, 5)
 title.BackgroundTransparency = 1
 title.Text = "SULO'S AUTOFARM"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 22
+title.TextSize = 24
 title.Font = Enum.Font.FredokaOne
+title.TextStrokeTransparency = 0.5
+title.TextStrokeColor3 = Color3.fromRGB(79, 179, 235)
 title.ZIndex = 2
 title.Parent = guiFrame
+
+local titleGlow = Instance.new("ImageLabel")
+titleGlow.Size = UDim2.new(1, 20, 0, 60)
+titleGlow.Position = UDim2.new(0, -10, 0, -5)
+titleGlow.BackgroundTransparency = 1
+titleGlow.Image = "rbxassetid://5028857084"
+titleGlow.ImageColor3 = Color3.fromRGB(79, 179, 235)
+titleGlow.ImageTransparency = 0.7
+titleGlow.ScaleType = Enum.ScaleType.Slice
+titleGlow.SliceCenter = Rect.new(24, 24, 276, 276)
+titleGlow.ZIndex = 1
+titleGlow.Parent = title
+
+spawn(function()
+	while titleGlow.Parent do
+		local pulseTween = TweenService:Create(titleGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+			ImageTransparency = 0.85
+		})
+		pulseTween:Play()
+		wait(2)
+		local pulseTween2 = TweenService:Create(titleGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+			ImageTransparency = 0.7
+		})
+		pulseTween2:Play()
+		wait(2)
+	end
+end)
 
 local statusText = Instance.new("TextLabel")
 statusText.Size = UDim2.new(1, -20, 0, 25)
@@ -522,32 +581,34 @@ local function pulseStroke(hoverStroke)
 end
 
 local autoFarmToggle = Instance.new("TextButton")
-autoFarmToggle.Size = UDim2.new(0, 280, 0, 45)
-autoFarmToggle.Position = UDim2.new(0.5, -140, 0, 55)
+autoFarmToggle.Size = UDim2.new(0, 300, 0, 50)
+autoFarmToggle.Position = UDim2.new(0.5, -150, 0, 65)
 autoFarmToggle.Text = "AUTO FARM: OFF"
 autoFarmToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoFarmToggle.TextSize = 16
+autoFarmToggle.TextSize = 17
 autoFarmToggle.Font = Enum.Font.GothamBold
-autoFarmToggle.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+autoFarmToggle.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+autoFarmToggle.BackgroundTransparency = 0.3
 autoFarmToggle.BorderSizePixel = 0
 autoFarmToggle.ClipsDescendants = true
 autoFarmToggle.ZIndex = 2
 autoFarmToggle.Parent = guiFrame
 
 local farmCorner = Instance.new("UICorner")
-farmCorner.CornerRadius = UDim.new(0.15, 0)
+farmCorner.CornerRadius = UDim.new(0, 12)
 farmCorner.Parent = autoFarmToggle
 
 local farmStroke = Instance.new("UIStroke")
 farmStroke.Color = Color3.fromRGB(255, 255, 255)
-farmStroke.Thickness = 2
-farmStroke.Transparency = 0.6
+farmStroke.Thickness = 1
+farmStroke.Transparency = 0.8
+farmStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 farmStroke.Parent = autoFarmToggle
 
 local farmGradient = Instance.new("UIGradient")
 farmGradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 55)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 70))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 40)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 30))
 }
 farmGradient.Rotation = 90
 farmGradient.Parent = autoFarmToggle
@@ -609,10 +670,10 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 		pulseStroke(autoFarmHoverStroke)
 	end)
 
-	local clickTween = TweenService:Create(autoFarmToggle, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 270, 0, 43)})
+	local clickTween = TweenService:Create(autoFarmToggle, TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 290, 0, 48)})
 	clickTween:Play()
-	wait(0.1)
-	local clickTween2 = TweenService:Create(autoFarmToggle, TweenInfo.new(0.15, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {Size = UDim2.new(0, 280, 0, 45)})
+	wait(0.15)
+	local clickTween2 = TweenService:Create(autoFarmToggle, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {Size = UDim2.new(0, 300, 0, 50)})
 	clickTween2:Play()
 
 	if not autoFarmActive and not isPlayerSeated() then
@@ -657,26 +718,51 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 					if workspace.Workspace:FindFirstChild("Buildings") then
 						workspace.Workspace.Buildings:Destroy()
 					end
-					car:PivotTo(CFrame.new(Vector3.new(-5494, 84, 518), Vector3.new(-5787, 83, -901)))
-					wait(0.1)
+					car:PivotTo(CFrame.new(Vector3.new(-8533, 110, -4443), Vector3.new(-7224, 110, -2364)))
+					wait(0.5)
 				end
+				
+				for _, part in pairs(car:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5, 100, 1)
+					end
+				end
+				
 				car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
+				car.PrimaryPart.RotVelocity = Vector3.new(0, 0, 0)
 				getfenv().first = true
 
-				local location = Vector3.new(-5787, 100, -901)
+				local location = Vector3.new(-7224, 120, -2364)
 				repeat
 					task.wait()
 					if not isPlayerSeated() then 
 						autoFarmActive = false 
 						break 
 					end
-					local carSpeed = hasGamepass and 700 or 510
-					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * carSpeed
-					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
-				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
+					
+					local currentPos = car.PrimaryPart.Position
+					local targetPos = location
+					local direction = (targetPos - currentPos).Unit
+					
+					local carSpeed = hasGamepass and 500 or 400
+					
+					car.PrimaryPart.AssemblyLinearVelocity = direction * carSpeed
+					car.PrimaryPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+					
+					local targetCFrame = CFrame.new(currentPos, currentPos + direction)
+					car.PrimaryPart.CFrame = car.PrimaryPart.CFrame:Lerp(targetCFrame, 0.1)
+					
+					if currentPos.Y < 50 then
+						car.PrimaryPart.CFrame = CFrame.new(currentPos.X, 120, currentPos.Z)
+					end
+					
+				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 80 or not autoFarmActive
 
 				car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
-				location = Vector3.new(-5494, 100, 518)
+				car.PrimaryPart.RotVelocity = Vector3.new(0, 0, 0)
+				wait(0.3)
+				
+				location = Vector3.new(-8533, 120, -4443)
 
 				repeat
 					task.wait()
@@ -684,12 +770,28 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 						autoFarmActive = false 
 						break 
 					end
-					local carSpeed = hasGamepass and 700 or 510
-					car.PrimaryPart.Velocity = car.PrimaryPart.CFrame.LookVector * carSpeed
-					car:PivotTo(CFrame.new(car.PrimaryPart.Position, location))
-				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 50 or not autoFarmActive
+					
+					local currentPos = car.PrimaryPart.Position
+					local targetPos = location
+					local direction = (targetPos - currentPos).Unit
+					
+					local carSpeed = hasGamepass and 500 or 400
+					
+					car.PrimaryPart.AssemblyLinearVelocity = direction * carSpeed
+					car.PrimaryPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+					
+					local targetCFrame = CFrame.new(currentPos, currentPos + direction)
+					car.PrimaryPart.CFrame = car.PrimaryPart.CFrame:Lerp(targetCFrame, 0.1)
+					
+					if currentPos.Y < 50 then
+						car.PrimaryPart.CFrame = CFrame.new(currentPos.X, 120, currentPos.Z)
+					end
+					
+				until game.Players.LocalPlayer:DistanceFromCharacter(location) < 80 or not autoFarmActive
 
 				car.PrimaryPart.Velocity = Vector3.new(0, 0, 0)
+				car.PrimaryPart.RotVelocity = Vector3.new(0, 0, 0)
+				wait(0.3)
 			end
 		end)
 	else
@@ -706,32 +808,34 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 end)
 
 local blackScreenToggle = Instance.new("TextButton")
-blackScreenToggle.Size = UDim2.new(0, 280, 0, 45)
-blackScreenToggle.Position = UDim2.new(0.5, -140, 0, 115)
+blackScreenToggle.Size = UDim2.new(0, 300, 0, 50)
+blackScreenToggle.Position = UDim2.new(0.5, -150, 0, 130)
 blackScreenToggle.Text = "BLACK SCREEN: OFF"
 blackScreenToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-blackScreenToggle.TextSize = 16
+blackScreenToggle.TextSize = 17
 blackScreenToggle.Font = Enum.Font.GothamBold
-blackScreenToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+blackScreenToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+blackScreenToggle.BackgroundTransparency = 0.3
 blackScreenToggle.BorderSizePixel = 0
 blackScreenToggle.ClipsDescendants = true
 blackScreenToggle.ZIndex = 2
 blackScreenToggle.Parent = guiFrame
 
 local blackCorner = Instance.new("UICorner")
-blackCorner.CornerRadius = UDim.new(0.15, 0)
+blackCorner.CornerRadius = UDim.new(0, 12)
 blackCorner.Parent = blackScreenToggle
 
 local blackStroke = Instance.new("UIStroke")
 blackStroke.Color = Color3.fromRGB(255, 255, 255)
-blackStroke.Thickness = 2
-blackStroke.Transparency = 0.6
+blackStroke.Thickness = 1
+blackStroke.Transparency = 0.8
+blackStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 blackStroke.Parent = blackScreenToggle
 
 local blackGradient = Instance.new("UIGradient")
 blackGradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 55)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 70, 70))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 45)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 35))
 }
 blackGradient.Rotation = 90
 blackGradient.Parent = blackScreenToggle
@@ -762,10 +866,10 @@ blackScreenToggle.MouseButton1Click:Connect(function()
 		pulseStroke(blackScreenHoverStroke)
 	end)
 
-	local clickTween = TweenService:Create(blackScreenToggle, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 270, 0, 43)})
+	local clickTween = TweenService:Create(blackScreenToggle, TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 290, 0, 48)})
 	clickTween:Play()
-	wait(0.1)
-	local clickTween2 = TweenService:Create(blackScreenToggle, TweenInfo.new(0.15, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {Size = UDim2.new(0, 280, 0, 45)})
+	wait(0.15)
+	local clickTween2 = TweenService:Create(blackScreenToggle, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {Size = UDim2.new(0, 300, 0, 50)})
 	clickTween2:Play()
 
 	if blackScreenToggle.Text == "BLACK SCREEN: OFF" then
@@ -1398,8 +1502,10 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
 	end
 end)
 
-print("@1sulo")
-print("Loaded Entry")
-print("Preparing...")
-print("Loaded.")
+print("Sulo's AutoFarm v2.6 Loaded.")
+print("Status: Working")
+print("Player Status loading")
+print("Player Status loaded.")
+print("@1sulo, Report problems in server!")
+print("Script is hand-made")
 print("Premium:", SHIRT_ID)
