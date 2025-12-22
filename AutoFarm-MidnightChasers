@@ -1,5 +1,5 @@
 --[[
-	Sulo's AutoFarm!
+	Sulo's AutoFarm - Enhanced improved systems !
 	Made with love by Sulo
 	Group ID: 10612101 | @1sulo
 	Shirt ID: 132268448125497
@@ -718,8 +718,12 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 					if workspace.Workspace:FindFirstChild("Buildings") then
 						workspace.Workspace.Buildings:Destroy()
 					end
-					car:PivotTo(CFrame.new(Vector3.new(-8533, 110, -4443), Vector3.new(-7224, 110, -2364)))
-					wait(0.5)
+					
+					car.PrimaryPart.Anchored = true
+					car:PivotTo(CFrame.new(Vector3.new(-8533, 120, -4443), Vector3.new(-7224, 120, -2364)))
+					wait(0.3)
+					car.PrimaryPart.Anchored = false
+					wait(0.2)
 				end
 				
 				for _, part in pairs(car:GetDescendants()) do
@@ -1502,10 +1506,10 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
 	end
 end)
 
-print("Sulo's AutoFarm v2.6 Loaded.")
-print("Status: Working")
-print("Player Status loading")
-print("Player Status loaded.")
-print("@1sulo, Report problems in server!")
-print("Script is hand-made")
+print("Loaded")
+print("Status: Updated")
+print("Version 2")
+print("v2 @1sulo - single dev")
+print("Fixed Cash error!")
+print("Working")
 print("Premium:", SHIRT_ID)
