@@ -1,743 +1,2248 @@
--- Advanced Auto Claim & Free Gems! ( Sulo made this - Superior )
+local CONFIG = {
+	Vignette = true,
+	DayLength = 159,
+	NightLength = 279,
+	StartTime = 7,
+	EnableDynamicFog = true,
+	EnableVolumetricLighting = true,
+	EnableDepthOfField = true
+}
 
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Configuration
-local WHITELISTED_USERS = {"ongdied"}
-local TARGET_USER_ID = "10612101"
-local GIFT_AMOUNT = 1
-local CLAIM_INTERVAL = 7
-local MAX_RETRIES = 3
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera
 
-print("🔍 Script started! Looking for the button...")
+local graphicsEnabled = {Bloom = true, ColorCorrection = true, SunRays = true, DepthOfField = true, Atmosphere = true, Vignette = true, ReflectiveRoads = true}
+local currentTheme = "Blue"
+local currentTimeOfDay = "Day"
+local freeCamEnabled = false
+local originalGuiStates = {}
+local rainEnabled = false
+local snowEnabled = false
+local thunderEnabled = false
+local desertEnabled = false
+local activeCategory = "Main"
+local proximityPromptsHidden = false
+local profileHidden = false
 
--- Stats
-local clickCount = 0
-local gemGiftCount = 0
-local failedAttempts = 0
-local lastGemCount = 0
+local lightDetectionEnabled = false
+local selectedLightObject = nil
+local selectedLightHighlight = nil
+local currentLightMode = "None"
+local selectedLightColor = Color3.fromRGB(255, 255, 255)
+local lightEffectConnections = {}
+local detectedLights = {}
+local originalLightProperties = {}
 
--- UI Elements
-local mainUI = nil
+for i, v in pairs(Lighting:GetChildren()) do
+	if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") then
+		v:Destroy()
+	end
+end
+
+local Bloom = Instance.new("BloomEffect", Lighting)
+local Blur = Instance.new("BlurEffect", Lighting)
+local ColorCor = Instance.new("ColorCorrectionEffect", Lighting)
+local SunRays = Instance.new("SunRaysEffect", Lighting)
+local Sky = Instance.new("Sky", Lighting)
+local Atm = Instance.new("Atmosphere", Lighting)
+local DepthOfField = Instance.new("DepthOfFieldEffect", Lighting)
+
+Blur.Size = 0
+
+Sky.SkyboxBk = "http://www.roblox.com/asset/?id=151165214"
+Sky.SkyboxDn = "http://www.roblox.com/asset/?id=151165197"
+Sky.SkyboxFt = "http://www.roblox.com/asset/?id=151165224"
+Sky.SkyboxLf = "http://www.roblox.com/asset/?id=151165191"
+Sky.SkyboxRt = "http://www.roblox.com/asset/?id=151165206"
+Sky.SkyboxUp = "http://www.roblox.com/asset/?id=151165227"
+Sky.SunAngularSize = 15
+Sky.MoonAngularSize = 11
+Sky.StarCount = 3000
+
+Lighting.GlobalShadows = true
+Lighting.ShadowSoftness = 0.2
+Lighting.EnvironmentDiffuseScale = 0.3
+Lighting.EnvironmentSpecularScale = 0.75
+Lighting.GeographicLatitude = 45
+Lighting.ClockTime = CONFIG.StartTime
+
+DepthOfField.FarIntensity = 0.25
+DepthOfField.FocusDistance = 50
+DepthOfField.InFocusRadius = 35
+DepthOfField.NearIntensity = 0.2
+
+local TimePresets = {
+	Dawn = {
+		Time = 6,
+		Bloom = {Intensity = 0.4, Size = 20, Threshold = 0.65},
+		Blur = {Size = 0},
+		ColorCor = {Brightness = 0.02, Contrast = 0.25, Saturation = 0.08, TintColor = Color3.fromRGB(255, 210, 170)},
+		SunRays = {Intensity = 0.12, Spread = 0.75},
+		Lighting = {
+			Ambient = Color3.fromRGB(140, 115, 95),
+			Brightness = 1.8,
+			ColorShift_Bottom = Color3.fromRGB(180, 110, 75),
+			ColorShift_Top = Color3.fromRGB(240, 170, 110),
+			OutdoorAmbient = Color3.fromRGB(165, 130, 95),
+			ExposureCompensation = 0.15
+		},
+		Atmosphere = {Density = 0.38, Offset = 0.5, Color = Color3.fromRGB(255, 210, 165), Decay = Color3.fromRGB(95, 65, 45), Glare = 0.4, Haze = 1.8},
+		Skybox = {
+			Bk = "http://www.roblox.com/asset/?id=151165214",
+			Dn = "http://www.roblox.com/asset/?id=151165197",
+			Ft = "http://www.roblox.com/asset/?id=151165224",
+			Lf = "http://www.roblox.com/asset/?id=151165191",
+			Rt = "http://www.roblox.com/asset/?id=151165206",
+			Up = "http://www.roblox.com/asset/?id=151165227"
+		}
+	},
+
+	Day = {
+		Time = 13,
+		Bloom = {Intensity = 0.25, Size = 14, Threshold = 0.85},
+		Blur = {Size = 0},
+		ColorCor = {Brightness = 0.03, Contrast = 0.35, Saturation = 0.15, TintColor = Color3.fromRGB(255, 255, 255)},
+		SunRays = {Intensity = 0.08, Spread = 0.5},
+		Lighting = {
+			Ambient = Color3.fromRGB(160, 160, 160),
+			Brightness = 2.0,
+			ColorShift_Bottom = Color3.fromRGB(0, 0, 0),
+			ColorShift_Top = Color3.fromRGB(0, 0, 0),
+			OutdoorAmbient = Color3.fromRGB(140, 140, 140),
+			ExposureCompensation = -0.05
+		},
+		Atmosphere = {Density = 0.28, Offset = 0.65, Color = Color3.fromRGB(210, 225, 255), Decay = Color3.fromRGB(105, 125, 155), Glare = 0.15, Haze = 1.3},
+		Skybox = {
+			Bk = "http://www.roblox.com/asset/?id=151165214",
+			Dn = "http://www.roblox.com/asset/?id=151165197",
+			Ft = "http://www.roblox.com/asset/?id=151165224",
+			Lf = "http://www.roblox.com/asset/?id=151165191",
+			Rt = "http://www.roblox.com/asset/?id=151165206",
+			Up = "http://www.roblox.com/asset/?id=151165227"
+		}
+	},
+
+	Dusk = {
+		Time = 18,
+		Bloom = {Intensity = 0.5, Size = 24, Threshold = 0.55},
+		Blur = {Size = 0},
+		ColorCor = {Brightness = 0.01, Contrast = 0.5, Saturation = -0.02, TintColor = Color3.fromRGB(255, 190, 140)},
+		SunRays = {Intensity = 0.16, Spread = 0.8},
+		Lighting = {
+			Ambient = Color3.fromRGB(95, 75, 65),
+			Brightness = 1.9,
+			ColorShift_Bottom = Color3.fromRGB(240, 130, 75),
+			ColorShift_Top = Color3.fromRGB(255, 110, 60),
+			OutdoorAmbient = Color3.fromRGB(110, 75, 55),
+			ExposureCompensation = 0.25
+		},
+		Atmosphere = {Density = 0.42, Offset = 0.42, Color = Color3.fromRGB(255, 160, 110), Decay = Color3.fromRGB(115, 55, 35), Glare = 0.5, Haze = 2.2},
+		Skybox = {
+			Bk = "http://www.roblox.com/asset/?id=151165214",
+			Dn = "http://www.roblox.com/asset/?id=151165197",
+			Ft = "http://www.roblox.com/asset/?id=151165224",
+			Lf = "http://www.roblox.com/asset/?id=151165191",
+			Rt = "http://www.roblox.com/asset/?id=151165206",
+			Up = "http://www.roblox.com/asset/?id=151165227"
+		}
+	},
+
+	Night = {
+		Time = 0,
+		Bloom = {Intensity = 0.5, Size = 24, Threshold = 0.45},
+		Blur = {Size = 0},
+		ColorCor = {Brightness = 0.02, Contrast = 0.4, Saturation = -0.08, TintColor = Color3.fromRGB(205, 215, 255)},
+		SunRays = {Intensity = 0.015, Spread = 0.12},
+		Lighting = {
+			Ambient = Color3.fromRGB(75, 85, 110),
+			Brightness = 1.6,
+			ColorShift_Bottom = Color3.fromRGB(50, 60, 90),
+			ColorShift_Top = Color3.fromRGB(80, 95, 130),
+			OutdoorAmbient = Color3.fromRGB(70, 80, 105),
+			ExposureCompensation = 0.18
+		},
+		Atmosphere = {Density = 0.38, Offset = 0.42, Color = Color3.fromRGB(150, 170, 210), Decay = Color3.fromRGB(60, 70, 100), Glare = 0.12, Haze = 2.3},
+		Skybox = {
+			Bk = "http://www.roblox.com/asset/?id=151165214",
+			Dn = "http://www.roblox.com/asset/?id=151165197",
+			Ft = "http://www.roblox.com/asset/?id=151165224",
+			Lf = "http://www.roblox.com/asset/?id=151165191",
+			Rt = "http://www.roblox.com/asset/?id=151165206",
+			Up = "http://www.roblox.com/asset/?id=151165227"
+		}
+	},
+
+	Pink = {
+		Time = 18,
+		Bloom = {Intensity = 0.6, Size = 26, Threshold = 0.5},
+		Blur = {Size = 0},
+		ColorCor = {Brightness = 0.03, Contrast = 0.45, Saturation = 0.1, TintColor = Color3.fromRGB(255, 180, 200)},
+		SunRays = {Intensity = 0.18, Spread = 0.85},
+		Lighting = {
+			Ambient = Color3.fromRGB(150, 100, 120),
+			Brightness = 2.1,
+			ColorShift_Bottom = Color3.fromRGB(255, 120, 150),
+			ColorShift_Top = Color3.fromRGB(255, 150, 180),
+			OutdoorAmbient = Color3.fromRGB(140, 90, 110),
+			ExposureCompensation = 0.2
+		},
+		Atmosphere = {Density = 0.35, Offset = 0.5, Color = Color3.fromRGB(255, 180, 200), Decay = Color3.fromRGB(180, 80, 120), Glare = 0.35, Haze = 2},
+		Skybox = {
+			Bk = "rbxassetid://570557620",
+			Dn = "rbxassetid://570557514",
+			Ft = "rbxassetid://570557559",
+			Lf = "rbxassetid://570557620",
+			Rt = "rbxassetid://570557559",
+			Up = "rbxassetid://570557812"
+		}
+	}
+}
+
+local function applyPreset(preset, duration)
+	duration = duration or 5
+
+	local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+	TweenService:Create(Bloom, tweenInfo, preset.Bloom):Play()
+	TweenService:Create(Blur, tweenInfo, preset.Blur):Play()
+	TweenService:Create(ColorCor, tweenInfo, preset.ColorCor):Play()
+	TweenService:Create(SunRays, tweenInfo, preset.SunRays):Play()
+	TweenService:Create(Lighting, tweenInfo, preset.Lighting):Play()
+	TweenService:Create(Atm, tweenInfo, preset.Atmosphere):Play()
+	
+	if preset.Skybox then
+		Sky.SkyboxBk = preset.Skybox.Bk
+		Sky.SkyboxDn = preset.Skybox.Dn
+		Sky.SkyboxFt = preset.Skybox.Ft
+		Sky.SkyboxLf = preset.Skybox.Lf
+		Sky.SkyboxRt = preset.Skybox.Rt
+		Sky.SkyboxUp = preset.Skybox.Up
+	end
+end
+
+local function setupReflectiveRoads()
+	local mapFolder = workspace:FindFirstChild("Map")
+	if not mapFolder then return end
+	
+	local highwayFolder = mapFolder:FindFirstChild("Highway")
+	if not highwayFolder then return end
+	
+	for _, model in pairs(highwayFolder:GetChildren()) do
+		if model.Name == "Highwayroad" and model:IsA("Model") then
+			local part = model:FindFirstChild("Part")
+			if part and part:IsA("BasePart") then
+				part.Material = Enum.Material.Glass
+				part.Transparency = 0.35
+				
+				local highlight = part:FindFirstChild("Highlight")
+				if not highlight then
+					highlight = Instance.new("Highlight")
+					highlight.Parent = part
+				end
+				highlight.FillTransparency = 1
+				highlight.OutlineTransparency = 1
+				highlight.Adornee = part
+				highlight.DepthMode = Enum.HighlightDepthMode.Occluded
+			end
+		end
+	end
+end
+
+if graphicsEnabled.ReflectiveRoads then setupReflectiveRoads() end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GraphicsControlUI"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 700, 0, 600)
+mainFrame.Position = UDim2.new(0.5, -350, 0.5, -300)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = Color3.fromRGB(80, 80, 90)
+mainStroke.Thickness = 1.5
+mainStroke.Parent = mainFrame
+
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 50)
+titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 10)
+titleCorner.Parent = titleBar
+
+local titleBarBottom = Instance.new("Frame")
+titleBarBottom.Size = UDim2.new(1, 0, 0, 15)
+titleBarBottom.Position = UDim2.new(0, 0, 1, -15)
+titleBarBottom.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+titleBarBottom.BorderSizePixel = 0
+titleBarBottom.Parent = titleBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -20, 1, 0)
+titleLabel.Position = UDim2.new(0, 15, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "GRAPHICS CONTROL PANEL"
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 20
+titleLabel.TextColor3 = Color3.fromRGB(240, 240, 245)
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = titleBar
+
+local profileFrame = Instance.new("Frame")
+profileFrame.Name = "ProfileFrame"
+profileFrame.Size = UDim2.new(1, -20, 0, 80)
+profileFrame.Position = UDim2.new(0, 10, 1, -90)
+profileFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+profileFrame.BorderSizePixel = 0
+profileFrame.Parent = mainFrame
+
+local profileCorner = Instance.new("UICorner")
+profileCorner.CornerRadius = UDim.new(0, 8)
+profileCorner.Parent = profileFrame
+
+local profileStroke = Instance.new("UIStroke")
+profileStroke.Color = Color3.fromRGB(80, 80, 90)
+profileStroke.Thickness = 1
+profileStroke.Parent = profileFrame
+
+local profileImage = Instance.new("ImageLabel")
+profileImage.Name = "ProfileImage"
+profileImage.Size = UDim2.new(0, 60, 0, 60)
+profileImage.Position = UDim2.new(0, 10, 0.5, -30)
+profileImage.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+profileImage.BorderSizePixel = 0
+profileImage.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size100x100)
+profileImage.Parent = profileFrame
+
+local profileImageCorner = Instance.new("UICorner")
+profileImageCorner.CornerRadius = UDim.new(1, 0)
+profileImageCorner.Parent = profileImage
+
+local profileUsername = Instance.new("TextLabel")
+profileUsername.Name = "ProfileUsername"
+profileUsername.Size = UDim2.new(1, -85, 0, 30)
+profileUsername.Position = UDim2.new(0, 80, 0, 15)
+profileUsername.BackgroundTransparency = 1
+profileUsername.Text = "@" .. player.Name
+profileUsername.Font = Enum.Font.GothamBold
+profileUsername.TextSize = 16
+profileUsername.TextColor3 = Color3.fromRGB(240, 240, 245)
+profileUsername.TextXAlignment = Enum.TextXAlignment.Left
+profileUsername.Parent = profileFrame
+
+local profileDisplayName = Instance.new("TextLabel")
+profileDisplayName.Name = "ProfileDisplayName"
+profileDisplayName.Size = UDim2.new(1, -85, 0, 25)
+profileDisplayName.Position = UDim2.new(0, 80, 0, 40)
+profileDisplayName.BackgroundTransparency = 1
+profileDisplayName.Text = "(" .. player.DisplayName .. ")"
+profileDisplayName.Font = Enum.Font.Gotham
+profileDisplayName.TextSize = 14
+profileDisplayName.TextColor3 = Color3.fromRGB(180, 180, 185)
+profileDisplayName.TextXAlignment = Enum.TextXAlignment.Left
+profileDisplayName.Parent = profileFrame
+
+local tabContainer = Instance.new("Frame")
+tabContainer.Name = "TabContainer"
+tabContainer.Size = UDim2.new(0, 180, 1, -155)
+tabContainer.Position = UDim2.new(0, 10, 0, 60)
+tabContainer.BackgroundTransparency = 1
+tabContainer.Parent = mainFrame
+
+local tabLayout = Instance.new("UIListLayout")
+tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tabLayout.Padding = UDim.new(0, 6)
+tabLayout.Parent = tabContainer
+
+local contentFrame = Instance.new("Frame")
+contentFrame.Name = "ContentFrame"
+contentFrame.Size = UDim2.new(1, -210, 1, -155)
+contentFrame.Position = UDim2.new(0, 200, 0, 60)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+local categories = {
+	{Name = "Main", Icon = ""},
+	{Name = "Time", Icon = ""},
+	{Name = "Graphics", Icon = ""},
+	{Name = "Camera", Icon = ""},
+	{Name = "Effects", Icon = ""},
+	{Name = "Lights", Icon = ""},
+	{Name = "Credits", Icon = ""}
+}
+
+local categoryFrames = {}
+
+local function createTabButton(name, order)
+	local button = Instance.new("TextButton")
+	button.Name = name.."Tab"
+	button.Size = UDim2.new(1, 0, 0, 45)
+	button.BackgroundColor3 = Color3.fromRGB(55, 55, 62)
+	button.BorderSizePixel = 0
+	button.Text = name
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 15
+	button.TextColor3 = Color3.fromRGB(240, 240, 250)
+	button.AutoButtonColor = false
+	button.LayoutOrder = order
+	button.Parent = tabContainer
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = button
+	
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 180))
+	}
+	gradient.Rotation = 90
+	gradient.Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.95),
+		NumberSequenceKeypoint.new(1, 0.98)
+	}
+	gradient.Parent = button
+	
+	button.MouseButton1Click:Connect(function()
+		activeCategory = name
+		for _, tab in pairs(tabContainer:GetChildren()) do
+			if tab:IsA("TextButton") then
+				TweenService:Create(tab, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(55, 55, 62), TextColor3 = Color3.fromRGB(240, 240, 250)}):Play()
+			end
+		end
+		TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 130, 220), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+		
+		for catName, frame in pairs(categoryFrames) do
+			frame.Visible = (catName == name)
+		end
+	end)
+	
+	button.MouseEnter:Connect(function()
+		if activeCategory ~= name then
+			TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(65, 65, 72)}):Play()
+		end
+	end)
+	
+	button.MouseLeave:Connect(function()
+		if activeCategory ~= name then
+			TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(55, 55, 62)}):Play()
+		end
+	end)
+	
+	return button
+end
+
+for i, cat in ipairs(categories) do
+	createTabButton(cat.Name, i)
+	
+	local catFrame = Instance.new("ScrollingFrame")
+	catFrame.Name = cat.Name.."Frame"
+	catFrame.Size = UDim2.new(1, 0, 1, 0)
+	catFrame.BackgroundTransparency = 1
+	catFrame.BorderSizePixel = 0
+	catFrame.ScrollBarThickness = 4
+	catFrame.ScrollBarImageColor3 = Color3.fromRGB(70, 130, 220)
+	catFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+	catFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	catFrame.Visible = (cat.Name == activeCategory)
+	catFrame.Parent = contentFrame
+	
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	listLayout.Padding = UDim.new(0, 8)
+	listLayout.Parent = catFrame
+	
+	categoryFrames[cat.Name] = catFrame
+end
+
+TweenService:Create(tabContainer:FindFirstChild("MainTab"), TweenInfo.new(0), {BackgroundColor3 = Color3.fromRGB(70, 130, 220), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+
+local function create3DButton(name, text, parent, order, callback)
+	local buttonContainer = Instance.new("Frame")
+	buttonContainer.Name = name.."Container"
+	buttonContainer.Size = UDim2.new(1, -10, 0, 45)
+	buttonContainer.BackgroundTransparency = 1
+	buttonContainer.LayoutOrder = order
+	buttonContainer.Parent = parent
+	
+	local button = Instance.new("TextButton")
+	button.Name = name
+	button.Size = UDim2.new(1, 0, 1, 0)
+	button.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	button.BorderSizePixel = 0
+	button.Text = text
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 14
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.AutoButtonColor = false
+	button.Parent = buttonContainer
+	
+	local buttonCorner = Instance.new("UICorner")
+	buttonCorner.CornerRadius = UDim.new(0, 6)
+	buttonCorner.Parent = button
+	
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 180))
+	}
+	gradient.Rotation = 90
+	gradient.Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.85),
+		NumberSequenceKeypoint.new(1, 0.98)
+	}
+	gradient.Parent = button
+	
+	button.MouseButton1Down:Connect(function()
+		TweenService:Create(button, TweenInfo.new(0.06), {Size = UDim2.new(1, 0, 0.9, 0), Position = UDim2.new(0, 0, 0.05, 0)}):Play()
+	end)
+	
+	button.MouseButton1Up:Connect(function()
+		TweenService:Create(button, TweenInfo.new(0.06), {Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0)}):Play()
+	end)
+	
+	button.MouseEnter:Connect(function()
+		TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(70, 130, 220)}):Play()
+	end)
+	
+	button.MouseLeave:Connect(function()
+		TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(60, 60, 68)}):Play()
+	end)
+	
+	button.MouseButton1Click:Connect(callback)
+	
+	return button
+end
+
+local function createToggleButton(name, text, parent, order, initialState, callback)
+	local buttonContainer = Instance.new("Frame")
+	buttonContainer.Name = name.."Container"
+	buttonContainer.Size = UDim2.new(1, -10, 0, 45)
+	buttonContainer.BackgroundTransparency = 1
+	buttonContainer.LayoutOrder = order
+	buttonContainer.Parent = parent
+	
+	local button = Instance.new("TextButton")
+	button.Name = name
+	button.Size = UDim2.new(1, 0, 1, 0)
+	button.BackgroundColor3 = initialState and Color3.fromRGB(70, 130, 220) or Color3.fromRGB(60, 60, 68)
+	button.BorderSizePixel = 0
+	button.Text = text .. (initialState and " [ON]" or " [OFF]")
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 14
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.AutoButtonColor = false
+	button.Parent = buttonContainer
+	
+	local buttonCorner = Instance.new("UICorner")
+	buttonCorner.CornerRadius = UDim.new(0, 6)
+	buttonCorner.Parent = button
+	
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 180))
+	}
+	gradient.Rotation = 90
+	gradient.Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.85),
+		NumberSequenceKeypoint.new(1, 0.98)
+	}
+	gradient.Parent = button
+	
+	local state = initialState
+	
+	button.MouseButton1Down:Connect(function()
+		TweenService:Create(button, TweenInfo.new(0.06), {Size = UDim2.new(1, 0, 0.9, 0), Position = UDim2.new(0, 0, 0.05, 0)}):Play()
+	end)
+	
+	button.MouseButton1Up:Connect(function()
+		TweenService:Create(button, TweenInfo.new(0.06), {Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0)}):Play()
+	end)
+	
+	button.MouseEnter:Connect(function()
+		if not state then
+			TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(70, 70, 78)}):Play()
+		end
+	end)
+	
+	button.MouseLeave:Connect(function()
+		if not state then
+			TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(60, 60, 68)}):Play()
+		end
+	end)
+	
+	button.MouseButton1Click:Connect(function()
+		state = not state
+		button.Text = text .. (state and " [ON]" or " [OFF]")
+		TweenService:Create(button, TweenInfo.new(0.2), {
+			BackgroundColor3 = state and Color3.fromRGB(70, 130, 220) or Color3.fromRGB(60, 60, 68)
+		}):Play()
+		callback(state)
+	end)
+	
+	return button
+end
+
+createToggleButton("HideProfileToggle", "HIDE PROFILE", categoryFrames["Main"], 1, false, function(state)
+	profileHidden = state
+	if state then
+		profileImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+		profileUsername.Text = "@1sulo"
+		profileDisplayName.Text = "(Graphics Designer)"
+	else
+		profileImage.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size100x100)
+		profileUsername.Text = "@" .. player.Name
+		profileDisplayName.Text = "(" .. player.DisplayName .. ")"
+	end
+end)
+
+create3DButton("DayBtn", "DAY MODE", categoryFrames["Time"], 1, function()
+	currentTimeOfDay = "Day"
+	applyPreset(TimePresets.Day, 3)
+end)
+
+create3DButton("NightBtn", "NIGHT MODE", categoryFrames["Time"], 2, function()
+	currentTimeOfDay = "Night"
+	applyPreset(TimePresets.Night, 3)
+end)
+
+create3DButton("PinkBtn", "PINK SUNSET", categoryFrames["Time"], 3, function()
+	currentTheme = "Pink"
+	applyPreset(TimePresets.Pink, 3)
+end)
+
+create3DButton("DuskBtn", "DUSK MODE", categoryFrames["Time"], 4, function()
+	currentTheme = "Dusk"
+	applyPreset(TimePresets.Dusk, 3)
+end)
+
+createToggleButton("BloomToggle", "BLOOM", categoryFrames["Graphics"], 1, graphicsEnabled.Bloom, function(state)
+	graphicsEnabled.Bloom = state
+	Bloom.Enabled = state
+end)
+
+createToggleButton("ColorCorToggle", "COLOR CORRECTION", categoryFrames["Graphics"], 2, graphicsEnabled.ColorCorrection, function(state)
+	graphicsEnabled.ColorCorrection = state
+	ColorCor.Enabled = state
+end)
+
+createToggleButton("SunRaysToggle", "SUN RAYS", categoryFrames["Graphics"], 3, graphicsEnabled.SunRays, function(state)
+	graphicsEnabled.SunRays = state
+	SunRays.Enabled = state
+end)
+
+createToggleButton("DOFToggle", "DEPTH OF FIELD", categoryFrames["Graphics"], 4, graphicsEnabled.DepthOfField, function(state)
+	graphicsEnabled.DepthOfField = state
+	DepthOfField.Enabled = state
+end)
+
+createToggleButton("AtmosphereToggle", "ATMOSPHERE", categoryFrames["Graphics"], 5, graphicsEnabled.Atmosphere, function(state)
+	graphicsEnabled.Atmosphere = state
+	Atm.Enabled = state
+end)
+
+createToggleButton("RoadsToggle", "REFLECTIVE ROADS", categoryFrames["Graphics"], 6, graphicsEnabled.ReflectiveRoads, function(state)
+	graphicsEnabled.ReflectiveRoads = state
+	if state then setupReflectiveRoads() end
+end)
+
+local freeCamMaid = {}
+local stateRot = Vector2.new()
+local DEF_FOV = 70
+
+local function enterFreeCam()
+	freeCamEnabled = true
+	UserInputService.MouseIconEnabled = false
+	camera.CameraType = Enum.CameraType.Scriptable
+	
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	
+	if hrp then hrp.Anchored = true end
+	if hum then hum.WalkSpeed = 0 end
+	
+	local camCFrame = camera.CFrame
+	local lookVector = camCFrame.lookVector.unit
+	stateRot = Vector2.new(math.asin(lookVector.y), math.atan2(-lookVector.z, lookVector.x) - math.pi/2)
+	
+	for _, obj in pairs(playerGui:GetChildren()) do
+		if obj:IsA("ScreenGui") and obj.Enabled and obj ~= screenGui then
+			obj.Enabled = false
+			originalGuiStates[obj] = true
+		end
+	end
+	
+	local conn = RunService.RenderStepped:Connect(function(dt)
+		if not freeCamEnabled then return end
+		
+		local camSpeed = 80
+		local moveVector = Vector3.new(0, 0, 0)
+		
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveVector = moveVector + (camera.CFrame.LookVector * camSpeed * dt) end
+		if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveVector = moveVector - (camera.CFrame.LookVector * camSpeed * dt) end
+		if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveVector = moveVector - (camera.CFrame.RightVector * camSpeed * dt) end
+		if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveVector = moveVector + (camera.CFrame.RightVector * camSpeed * dt) end
+		if UserInputService:IsKeyDown(Enum.KeyCode.E) then moveVector = moveVector + (Vector3.new(0, 1, 0) * camSpeed * dt) end
+		if UserInputService:IsKeyDown(Enum.KeyCode.Q) then moveVector = moveVector - (Vector3.new(0, 1, 0) * camSpeed * dt) end
+		
+		camera.CFrame = camera.CFrame + moveVector
+	end)
+	
+	local conn2 = UserInputService.InputBegan:Connect(function(input)
+		if not freeCamEnabled then return end
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+			local conn3 = UserInputService.InputChanged:Connect(function(input2)
+				if input2.UserInputType == Enum.UserInputType.MouseMovement then
+					local delta = input2.Delta
+					stateRot = stateRot + Vector2.new(-delta.Y * 0.003, -delta.X * 0.003)
+					stateRot = Vector2.new(math.clamp(stateRot.X, -math.pi/2 + 0.1, math.pi/2 - 0.1), stateRot.Y)
+					camera.CFrame = CFrame.new(camera.CFrame.Position) * CFrame.Angles(0, stateRot.Y, 0) * CFrame.Angles(stateRot.X, 0, 0)
+				end
+			end)
+			table.insert(freeCamMaid, conn3)
+		end
+	end)
+	
+	local conn4 = UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		end
+	end)
+	
+	table.insert(freeCamMaid, conn)
+	table.insert(freeCamMaid, conn2)
+	table.insert(freeCamMaid, conn4)
+end
+
+local function exitFreeCam()
+	freeCamEnabled = false
+	UserInputService.MouseIconEnabled = true
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	
+	for _, conn in pairs(freeCamMaid) do
+		if typeof(conn) == "RBXScriptConnection" then
+			conn:Disconnect()
+		end
+	end
+	freeCamMaid = {}
+	
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	
+	if hum then hum.WalkSpeed = 16 end
+	if hrp then hrp.Anchored = false end
+	
+	camera.FieldOfView = DEF_FOV
+	camera.CameraType = Enum.CameraType.Custom
+	camera.CameraSubject = hum
+	
+	for obj in pairs(originalGuiStates) do
+		if obj and obj.Parent then
+			obj.Enabled = true
+		end
+	end
+	originalGuiStates = {}
+end
+
+createToggleButton("FreeCamToggle", "FREE CAMERA (SHIFT+C)", categoryFrames["Camera"], 1, false, function(state)
+	if state then
+		enterFreeCam()
+	else
+		exitFreeCam()
+	end
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if not processed and UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and input.KeyCode == Enum.KeyCode.C then
+		if freeCamEnabled then
+			exitFreeCam()
+		else
+			enterFreeCam()
+		end
+	end
+end)
+
+local uiHidden = false
+
+create3DButton("HideUIBtn", "HIDE UI", categoryFrames["Camera"], 2, function()
+	uiHidden = not uiHidden
+	
+	if uiHidden then
+		for _, gui in pairs(playerGui:GetChildren()) do
+			if gui ~= screenGui and gui:IsA("ScreenGui") and gui.Enabled then
+				gui.Enabled = false
+				originalGuiStates[gui] = true
+			end
+		end
+		
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, false)
+	else
+		for obj in pairs(originalGuiStates) do
+			if obj and obj.Parent then
+				obj.Enabled = true
+			end
+		end
+		originalGuiStates = {}
+		
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, true)
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, true)
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, true)
+	end
+end)
+
+createToggleButton("ProximityToggle", "HIDE PROXIMITY PROMPTS", categoryFrames["Camera"], 3, false, function(state)
+	proximityPromptsHidden = state
+	
+	for _, descendant in pairs(workspace:GetDescendants()) do
+		if descendant:IsA("ProximityPrompt") then
+			descendant.Enabled = not state
+		end
+	end
+	
+	workspace.DescendantAdded:Connect(function(descendant)
+		if descendant:IsA("ProximityPrompt") and proximityPromptsHidden then
+			descendant.Enabled = false
+		end
+	end)
+end)
+
+local rainParts = {}
+
+local function createRealisticRain()
+	if rainEnabled then
+		for _, part in pairs(rainParts) do
+			if part and part.Parent then
+				part:Destroy()
+			end
+		end
+		rainParts = {}
+		rainEnabled = false
+		return
+	end
+	
+	rainEnabled = true
+	
+	local rainEmitter = Instance.new("Part")
+	rainEmitter.Name = "RainEmitter"
+	rainEmitter.Size = Vector3.new(200, 1, 200)
+	rainEmitter.Transparency = 1
+	rainEmitter.CanCollide = false
+	rainEmitter.Anchored = true
+	rainEmitter.Parent = workspace
+	
+	table.insert(rainParts, rainEmitter)
+	
+	spawn(function()
+		while rainEnabled do
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				rainEmitter.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0, 100, 0)
+			end
+			wait(0.5)
+		end
+	end)
+	
+	local particleEmitter = Instance.new("ParticleEmitter")
+	particleEmitter.Name = "RainParticles"
+	particleEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	particleEmitter.Rate = 300
+	particleEmitter.Lifetime = NumberRange.new(3, 4)
+	particleEmitter.Speed = NumberRange.new(80, 100)
+	particleEmitter.SpreadAngle = Vector2.new(5, 5)
+	particleEmitter.VelocityInheritance = 0
+	particleEmitter.Acceleration = Vector3.new(0, -100, 0)
+	particleEmitter.Size = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.15),
+		NumberSequenceKeypoint.new(1, 0.15)
+	}
+	particleEmitter.Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.3),
+		NumberSequenceKeypoint.new(0.8, 0.3),
+		NumberSequenceKeypoint.new(1, 1)
+	}
+	particleEmitter.Color = ColorSequence.new(Color3.fromRGB(200, 220, 255))
+	particleEmitter.LightEmission = 0.1
+	particleEmitter.ZOffset = -1
+	particleEmitter.Parent = rainEmitter
+	
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = rainEmitter
+	particleEmitter.Parent = attachment
+	
+	for i = 1, 25 do
+		local rainStreak = Instance.new("Part")
+		rainStreak.Name = "RainStreak"
+		rainStreak.Size = Vector3.new(0.05, 2, 0.05)
+		rainStreak.Material = Enum.Material.Neon
+		rainStreak.Color = Color3.fromRGB(200, 220, 255)
+		rainStreak.Transparency = 0.4
+		rainStreak.CanCollide = false
+		rainStreak.Anchored = true
+		rainStreak.Parent = workspace
+		
+		table.insert(rainParts, rainStreak)
+		
+		spawn(function()
+			while rainEnabled do
+				if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+					local basePos = player.Character.HumanoidRootPart.Position
+					local randomOffset = Vector3.new(
+						math.random(-100, 100),
+						math.random(50, 100),
+						math.random(-100, 100)
+					)
+					rainStreak.Position = basePos + randomOffset
+					rainStreak.Orientation = Vector3.new(0, 0, 0)
+					
+					local fallDistance = randomOffset.Y + 150
+					local fallTime = fallDistance / 90
+					
+					TweenService:Create(rainStreak, TweenInfo.new(fallTime, Enum.EasingStyle.Linear), {
+						Position = rainStreak.Position - Vector3.new(0, fallDistance, 0)
+					}):Play()
+					
+					wait(fallTime + math.random(0, 20) / 100)
+				else
+					wait(0.5)
+				end
+			end
+			rainStreak:Destroy()
+		end)
+	end
+	
+	local rainSound = Instance.new("Sound")
+	rainSound.Name = "RainSound"
+	rainSound.SoundId = "rbxassetid://3051653867"
+	rainSound.Volume = 0.3
+	rainSound.Looped = true
+	rainSound.Parent = rainEmitter
+	rainSound:Play()
+	
+	table.insert(rainParts, rainSound)
+end
+
+local snowParts = {}
+
+local function createSnowEffect()
+	if snowEnabled then
+		for _, part in pairs(snowParts) do
+			if part and part.Parent then
+				part:Destroy()
+			end
+		end
+		snowParts = {}
+		snowEnabled = false
+		return
+	end
+	
+	snowEnabled = true
+	
+	local snowEmitter = Instance.new("Part")
+	snowEmitter.Name = "SnowEmitter"
+	snowEmitter.Size = Vector3.new(250, 1, 250)
+	snowEmitter.Transparency = 1
+	snowEmitter.CanCollide = false
+	snowEmitter.Anchored = true
+	snowEmitter.Parent = workspace
+	
+	table.insert(snowParts, snowEmitter)
+	
+	spawn(function()
+		while snowEnabled do
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				snowEmitter.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0, 100, 0)
+			end
+			wait(0.5)
+		end
+	end)
+	
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = snowEmitter
+	
+	local particleEmitter = Instance.new("ParticleEmitter")
+	particleEmitter.Name = "SnowParticles"
+	particleEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	particleEmitter.Rate = 150
+	particleEmitter.Lifetime = NumberRange.new(8, 10)
+	particleEmitter.Speed = NumberRange.new(5, 15)
+	particleEmitter.SpreadAngle = Vector2.new(15, 15)
+	particleEmitter.VelocityInheritance = 0
+	particleEmitter.Acceleration = Vector3.new(0, -5, 0)
+	particleEmitter.RotSpeed = NumberRange.new(-50, 50)
+	particleEmitter.Rotation = NumberRange.new(0, 360)
+	particleEmitter.Size = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.3),
+		NumberSequenceKeypoint.new(1, 0.3)
+	}
+	particleEmitter.Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(0.7, 0.2),
+		NumberSequenceKeypoint.new(1, 1)
+	}
+	particleEmitter.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+	particleEmitter.LightEmission = 0.8
+	particleEmitter.ZOffset = -1
+	particleEmitter.Parent = attachment
+end
+
+local thunderParts = {}
+local thunderShakeConnection = nil
+
+local function createThunderStorm()
+	if thunderEnabled then
+		for _, part in pairs(thunderParts) do
+			if part and part.Parent then
+				part:Destroy()
+			end
+		end
+		thunderParts = {}
+		thunderEnabled = false
+		if thunderShakeConnection then
+			thunderShakeConnection:Disconnect()
+			thunderShakeConnection = nil
+		end
+		return
+	end
+	
+	thunderEnabled = true
+	
+	local rainEmitter = Instance.new("Part")
+	rainEmitter.Name = "ThunderRainEmitter"
+	rainEmitter.Size = Vector3.new(200, 1, 200)
+	rainEmitter.Transparency = 1
+	rainEmitter.CanCollide = false
+	rainEmitter.Anchored = true
+	rainEmitter.Parent = workspace
+	
+	table.insert(thunderParts, rainEmitter)
+	
+	spawn(function()
+		while thunderEnabled do
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				rainEmitter.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0, 100, 0)
+			end
+			wait(0.5)
+		end
+	end)
+	
+	local particleEmitter = Instance.new("ParticleEmitter")
+	particleEmitter.Name = "HeavyRainParticles"
+	particleEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	particleEmitter.Rate = 400
+	particleEmitter.Lifetime = NumberRange.new(2.5, 3.5)
+	particleEmitter.Speed = NumberRange.new(100, 120)
+	particleEmitter.SpreadAngle = Vector2.new(8, 8)
+	particleEmitter.VelocityInheritance = 0
+	particleEmitter.Acceleration = Vector3.new(0, -120, 0)
+	particleEmitter.Size = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(1, 0.2)
+	}
+	particleEmitter.Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(0.8, 0.2),
+		NumberSequenceKeypoint.new(1, 1)
+	}
+	particleEmitter.Color = ColorSequence.new(Color3.fromRGB(150, 170, 200))
+	particleEmitter.LightEmission = 0.1
+	particleEmitter.ZOffset = -1
+	particleEmitter.Parent = rainEmitter
+	
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = rainEmitter
+	particleEmitter.Parent = attachment
+	
+	local stormSound = Instance.new("Sound")
+	stormSound.Name = "StormSound"
+	stormSound.SoundId = "rbxassetid://3051653867"
+	stormSound.Volume = 0.5
+	stormSound.Looped = true
+	stormSound.Parent = rainEmitter
+	stormSound:Play()
+	
+	table.insert(thunderParts, stormSound)
+	
+	spawn(function()
+		while thunderEnabled do
+			wait(math.random(5, 15))
+			if not thunderEnabled then break end
+			
+			ColorCor.TintColor = Color3.fromRGB(255, 255, 255)
+			ColorCor.Brightness = 0.5
+			
+			local thunderSound = Instance.new("Sound")
+			thunderSound.SoundId = "rbxassetid://2800815529"
+			thunderSound.Volume = 0.7
+			thunderSound.Parent = workspace
+			thunderSound:Play()
+			
+			local originalCFrame = camera.CFrame
+			local shakeIntensity = 0.3
+			local shakeDuration = 0.5
+			local shakeStart = tick()
+			
+			thunderShakeConnection = RunService.RenderStepped:Connect(function()
+				if tick() - shakeStart < shakeDuration then
+					local shakeOffset = Vector3.new(
+						math.random(-100, 100) / 100 * shakeIntensity,
+						math.random(-100, 100) / 100 * shakeIntensity,
+						math.random(-100, 100) / 100 * shakeIntensity
+					)
+					camera.CFrame = camera.CFrame * CFrame.new(shakeOffset)
+				else
+					if thunderShakeConnection then
+						thunderShakeConnection:Disconnect()
+						thunderShakeConnection = nil
+					end
+				end
+			end)
+			
+			wait(0.1)
+			TweenService:Create(ColorCor, TweenInfo.new(0.8), {
+				TintColor = Color3.fromRGB(205, 215, 255),
+				Brightness = 0.02
+			}):Play()
+			
+			wait(1)
+			thunderSound:Destroy()
+		end
+	end)
+end
+
+local desertParts = {}
+
+local function createDesertMode()
+	if desertEnabled then
+		for _, part in pairs(desertParts) do
+			if part and part.Parent then
+				part:Destroy()
+			end
+		end
+		desertParts = {}
+		desertEnabled = false
+		Atm.Density = 0.28
+		Atm.Color = Color3.fromRGB(210, 225, 255)
+		Atm.Haze = 1.3
+		ColorCor.TintColor = Color3.fromRGB(255, 255, 255)
+		return
+	end
+	
+	desertEnabled = true
+	
+	Atm.Density = 0.55
+	Atm.Color = Color3.fromRGB(255, 230, 180)
+	Atm.Haze = 3.5
+	ColorCor.TintColor = Color3.fromRGB(255, 240, 200)
+	
+	local sandEmitter = Instance.new("Part")
+	sandEmitter.Name = "SandEmitter"
+	sandEmitter.Size = Vector3.new(200, 1, 200)
+	sandEmitter.Transparency = 1
+	sandEmitter.CanCollide = false
+	sandEmitter.Anchored = true
+	sandEmitter.Parent = workspace
+	
+	table.insert(desertParts, sandEmitter)
+	
+	spawn(function()
+		while desertEnabled do
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				sandEmitter.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0, 50, 0)
+			end
+			wait(0.5)
+		end
+	end)
+	
+	local particleEmitter = Instance.new("ParticleEmitter")
+	particleEmitter.Name = "SandParticles"
+	particleEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	particleEmitter.Rate = 80
+	particleEmitter.Lifetime = NumberRange.new(6, 8)
+	particleEmitter.Speed = NumberRange.new(10, 20)
+	particleEmitter.SpreadAngle = Vector2.new(30, 10)
+	particleEmitter.VelocityInheritance = 0
+	particleEmitter.Acceleration = Vector3.new(5, 0, 0)
+	particleEmitter.Rotation = NumberRange.new(0, 360)
+	particleEmitter.RotSpeed = NumberRange.new(-30, 30)
+	particleEmitter.Size = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 1.5),
+		NumberSequenceKeypoint.new(1, 2)
+	}
+	particleEmitter.Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.6),
+		NumberSequenceKeypoint.new(0.5, 0.7),
+		NumberSequenceKeypoint.new(1, 1)
+	}
+	particleEmitter.Color = ColorSequence.new(Color3.fromRGB(255, 220, 160))
+	particleEmitter.LightEmission = 0.3
+	particleEmitter.ZOffset = -1
+	particleEmitter.Parent = sandEmitter
+	
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = sandEmitter
+	particleEmitter.Parent = attachment
+	
+	local windSound = Instance.new("Sound")
+	windSound.Name = "WindSound"
+	windSound.SoundId = "rbxassetid://1837829565"
+	windSound.Volume = 0.4
+	windSound.Looped = true
+	windSound.Parent = sandEmitter
+	windSound:Play()
+	
+	table.insert(desertParts, windSound)
+end
+
+createToggleButton("RainToggle", "REALISTIC RAIN", categoryFrames["Effects"], 1, false, function(state)
+	createRealisticRain()
+end)
+
+createToggleButton("SnowToggle", "SNOW EFFECT", categoryFrames["Effects"], 2, false, function(state)
+	createSnowEffect()
+end)
+
+createToggleButton("ThunderToggle", "THUNDER STORM", categoryFrames["Effects"], 3, false, function(state)
+	createThunderStorm()
+end)
+
+createToggleButton("DesertToggle", "DESERT MODE", categoryFrames["Effects"], 4, false, function(state)
+	createDesertMode()
+end)
+
+local function findAllLights(object)
+	local lights = {}
+	if not object then return lights end
+	
+	local function scanObject(obj)
+		for _, descendant in pairs(obj:GetDescendants()) do
+			if descendant:IsA("PointLight") or descendant:IsA("SpotLight") or descendant:IsA("SurfaceLight") then
+				table.insert(lights, descendant)
+			end
+		end
+	end
+	
+	local success = pcall(function()
+		scanObject(object)
+	end)
+	
+	return lights
+end
+
+local function stopAllLightEffects()
+	for i = #lightEffectConnections, 1, -1 do
+		local conn = lightEffectConnections[i]
+		if conn then
+			pcall(function()
+				if typeof(conn) == "RBXScriptConnection" then
+					conn:Disconnect()
+				end
+			end)
+			lightEffectConnections[i] = nil
+		end
+	end
+	lightEffectConnections = {}
+end
+
+local function restoreOriginalLightProperties()
+	for light, props in pairs(originalLightProperties) do
+		if light and light.Parent then
+			pcall(function()
+				light.Brightness = props.Brightness
+				light.Color = props.Color
+			end)
+		end
+	end
+end
+
+local function saveOriginalLightProperties(lights)
+	originalLightProperties = {}
+	for _, light in pairs(lights) do
+		if light and light.Parent then
+			originalLightProperties[light] = {
+				Brightness = light.Brightness,
+				Color = light.Color,
+				Range = light.Range
+			}
+		end
+	end
+end
+
+local function applyRGBEffect(lights)
+	stopAllLightEffects()
+	saveOriginalLightProperties(lights)
+	
+	local validLights = {}
+	for _, light in pairs(lights) do
+		if light and light.Parent then
+			table.insert(validLights, light)
+		end
+	end
+	
+	if #validLights == 0 then return end
+	
+	local hue = 0
+	local connection = RunService.Heartbeat:Connect(function(deltaTime)
+		if currentLightMode ~= "RGB" then
+			connection:Disconnect()
+			return
+		end
+		
+		hue = (hue + deltaTime * 0.3) % 1
+		local color = Color3.fromHSV(hue, 1, 1)
+		
+		for _, light in pairs(validLights) do
+			if light and light.Parent then
+				pcall(function()
+					light.Color = color
+				end)
+			end
+		end
+	end)
+	
+	local propertyConnection = RunService.Heartbeat:Connect(function()
+		if currentLightMode ~= "RGB" then
+			propertyConnection:Disconnect()
+			return
+		end
+		
+		for _, light in pairs(validLights) do
+			if light and light.Parent then
+				local currentColor = light.Color
+				local expectedHue = hue
+				local actualHue, actualSat, actualVal = currentColor:ToHSV()
+				
+				if math.abs(actualHue - expectedHue) > 0.05 then
+					pcall(function()
+						light.Color = Color3.fromHSV(hue, 1, 1)
+					end)
+				end
+			end
+		end
+	end)
+	
+	table.insert(lightEffectConnections, connection)
+	table.insert(lightEffectConnections, propertyConnection)
+end
+
+local function applyFlickerEffect(lights)
+	stopAllLightEffects()
+	saveOriginalLightProperties(lights)
+	
+	local validLights = {}
+	for _, light in pairs(lights) do
+		if light and light.Parent then
+			table.insert(validLights, {light = light, originalBrightness = light.Brightness, targetBrightness = light.Brightness})
+		end
+	end
+	
+	if #validLights == 0 then return end
+	
+	local connection = RunService.Heartbeat:Connect(function()
+		if currentLightMode ~= "Flicker" then
+			connection:Disconnect()
+			return
+		end
+		
+		for _, lightData in pairs(validLights) do
+			if lightData.light and lightData.light.Parent then
+				local randomFactor = 0.6 + (math.random() * 0.8)
+				lightData.targetBrightness = lightData.originalBrightness * randomFactor
+				
+				pcall(function()
+					lightData.light.Brightness = lightData.targetBrightness
+				end)
+			end
+		end
+	end)
+	
+	local propertyConnection = RunService.Heartbeat:Connect(function()
+		if currentLightMode ~= "Flicker" then
+			propertyConnection:Disconnect()
+			return
+		end
+		
+		for _, lightData in pairs(validLights) do
+			if lightData.light and lightData.light.Parent then
+				if math.abs(lightData.light.Brightness - lightData.targetBrightness) > 0.1 then
+					pcall(function()
+						lightData.light.Brightness = lightData.targetBrightness
+					end)
+				end
+			end
+		end
+	end)
+	
+	table.insert(lightEffectConnections, connection)
+	table.insert(lightEffectConnections, propertyConnection)
+end
+
+local function applySlowmoEffect(lights)
+	stopAllLightEffects()
+	saveOriginalLightProperties(lights)
+	
+	local validLights = {}
+	for _, light in pairs(lights) do
+		if light and light.Parent then
+			table.insert(validLights, {light = light, originalBrightness = light.Brightness, targetBrightness = light.Brightness})
+		end
+	end
+	
+	if #validLights == 0 then return end
+	
+	local time = 0
+	local connection = RunService.Heartbeat:Connect(function(deltaTime)
+		if currentLightMode ~= "Slowmo" then
+			connection:Disconnect()
+			return
+		end
+		
+		time = time + deltaTime
+		local brightness = 0.5 + (math.sin(time * 1.5) * 0.5)
+		
+		for _, lightData in pairs(validLights) do
+			if lightData.light and lightData.light.Parent then
+				lightData.targetBrightness = lightData.originalBrightness * brightness
+				
+				pcall(function()
+					lightData.light.Brightness = lightData.targetBrightness
+				end)
+			end
+		end
+	end)
+	
+	local propertyConnection = RunService.Heartbeat:Connect(function()
+		if currentLightMode ~= "Slowmo" then
+			propertyConnection:Disconnect()
+			return
+		end
+		
+		for _, lightData in pairs(validLights) do
+			if lightData.light and lightData.light.Parent then
+				if math.abs(lightData.light.Brightness - lightData.targetBrightness) > 0.1 then
+					pcall(function()
+						lightData.light.Brightness = lightData.targetBrightness
+					end)
+				end
+			end
+		end
+	end)
+	
+	table.insert(lightEffectConnections, connection)
+	table.insert(lightEffectConnections, propertyConnection)
+end
+
 local statusLabel = nil
-local gemsDisplay = nil
-local timerDisplay = nil
-local claimValueDisplay = nil
-local claimsLabel = nil
-local giftsLabel = nil
 
--- Helper function to check if user is whitelisted
-local function isWhitelisted()
-    for _, username in ipairs(WHITELISTED_USERS) do
-        if player.Name == username then
-            return true
-        end
-    end
-    return false
+local function createStatusLabel()
+	if not statusLabel then
+		statusLabel = Instance.new("TextLabel")
+		statusLabel.Name = "LightStatus"
+		statusLabel.Size = UDim2.new(1, -10, 0, 35)
+		statusLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+		statusLabel.BorderSizePixel = 0
+		statusLabel.Text = "No object selected"
+		statusLabel.Font = Enum.Font.GothamBold
+		statusLabel.TextSize = 13
+		statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		statusLabel.LayoutOrder = 0
+		statusLabel.Parent = categoryFrames["Lights"]
+		
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 6)
+		corner.Parent = statusLabel
+	end
 end
 
--- Wait for game UI first
-local screenGui = playerGui:WaitForChild("ScreenGui", 10)
-if not screenGui then
-    warn("❌ ScreenGui not found! Check the name.")
-    return
-end
-print("✅ Found ScreenGui")
+createStatusLabel()
 
-local framesContainer = screenGui:WaitForChild("Frames", 10)
-if not framesContainer then
-    warn("❌ Frames not found!")
-    return
-end
-print("✅ Found Frames")
+local lightColorFrame = nil
+local colorWheelImage = nil
+local colorPreview = nil
 
-local timeFrame = framesContainer:WaitForChild("Time", 10)
-if not timeFrame then
-    warn("❌ Time frame not found!")
-    return
-end
-print("✅ Found Time frame")
-
-local claimButton = timeFrame:WaitForChild("Claim", 10)
-if not claimButton then
-    warn("❌ Claim button not found!")
-    return
-end
-print("✅ Found Claim button!")
-
--- Create modern UI
-local function createModernUI()
-    -- Main ScreenGui
-    local ui = Instance.new("ScreenGui")
-    ui.Name = "ModernAutoClaimUI"
-    ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ui.ResetOnSpawn = false
-    ui.Parent = playerGui
-    
-    -- Main Container (Top Right)
-    local mainContainer = Instance.new("Frame")
-    mainContainer.Name = "MainContainer"
-    mainContainer.Size = UDim2.new(0, 320, 0, 180)
-    mainContainer.Position = UDim2.new(1, -340, 0, 20)
-    mainContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    mainContainer.BorderSizePixel = 0
-    mainContainer.ClipsDescendants = true
-    mainContainer.Parent = ui
-    
-    -- Gradient Background
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
-    }
-    gradient.Rotation = 45
-    gradient.Parent = mainContainer
-    
-    -- Corner
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 16)
-    corner.Parent = mainContainer
-    
-    -- Stroke
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(100, 100, 255)
-    stroke.Thickness = 2
-    stroke.Transparency = 0.5
-    stroke.Parent = mainContainer
-    
-    -- Animated glow effect
-    task.spawn(function()
-        local glowTween = TweenService:Create(stroke, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-            Transparency = 0.2
-        })
-        glowTween:Play()
-    end)
-    
-    -- Title Bar
-    local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 40)
-    titleBar.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
-    titleBar.BorderSizePixel = 0
-    titleBar.Parent = mainContainer
-    
-    local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 16)
-    titleCorner.Parent = titleBar
-    
-    local titleCover = Instance.new("Frame")
-    titleCover.Size = UDim2.new(1, 0, 0, 20)
-    titleCover.Position = UDim2.new(0, 0, 1, -20)
-    titleCover.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
-    titleCover.BorderSizePixel = 0
-    titleCover.Parent = titleBar
-    
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -20, 1, 0)
-    titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "💎 Improved Auto-Claim System"
-    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLabel.TextSize = 18
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = titleBar
-    
-    -- Status Section
-    local statusFrame = Instance.new("Frame")
-    statusFrame.Size = UDim2.new(1, -20, 0, 30)
-    statusFrame.Position = UDim2.new(0, 10, 0, 50)
-    statusFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    statusFrame.BorderSizePixel = 0
-    statusFrame.Parent = mainContainer
-    
-    local statusCorner = Instance.new("UICorner")
-    statusCorner.CornerRadius = UDim.new(0, 8)
-    statusCorner.Parent = statusFrame
-    
-    statusLabel = Instance.new("TextLabel")
-    statusLabel.Size = UDim2.new(1, -16, 1, 0)
-    statusLabel.Position = UDim2.new(0, 8, 0, 0)
-    statusLabel.BackgroundTransparency = 1
-    statusLabel.Text = "🔄 Initializing..."
-    statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-    statusLabel.TextSize = 14
-    statusLabel.Font = Enum.Font.Gotham
-    statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-    statusLabel.Parent = statusFrame
-    
-    -- Claim Value Display
-    local claimValueFrame = Instance.new("Frame")
-    claimValueFrame.Size = UDim2.new(1, -20, 0, 35)
-    claimValueFrame.Position = UDim2.new(0, 10, 0, 90)
-    claimValueFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    claimValueFrame.BorderSizePixel = 0
-    claimValueFrame.Parent = mainContainer
-    
-    local claimCorner = Instance.new("UICorner")
-    claimCorner.CornerRadius = UDim.new(0, 8)
-    claimCorner.Parent = claimValueFrame
-    
-    claimValueDisplay = Instance.new("TextLabel")
-    claimValueDisplay.Size = UDim2.new(1, -16, 1, 0)
-    claimValueDisplay.Position = UDim2.new(0, 8, 0, 0)
-    claimValueDisplay.BackgroundTransparency = 1
-    claimValueDisplay.Text = "💰 Claim Value: Loading..."
-    claimValueDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
-    claimValueDisplay.TextSize = 16
-    claimValueDisplay.Font = Enum.Font.GothamBold
-    claimValueDisplay.TextXAlignment = Enum.TextXAlignment.Left
-    claimValueDisplay.Parent = claimValueFrame
-    
-    -- Timer Display
-    local timerFrame = Instance.new("Frame")
-    timerFrame.Size = UDim2.new(1, -20, 0, 30)
-    timerFrame.Position = UDim2.new(0, 10, 0, 135)
-    timerFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    timerFrame.BorderSizePixel = 0
-    timerFrame.Parent = mainContainer
-    
-    local timerCorner = Instance.new("UICorner")
-    timerCorner.CornerRadius = UDim.new(0, 8)
-    timerCorner.Parent = timerFrame
-    
-    timerDisplay = Instance.new("TextLabel")
-    timerDisplay.Size = UDim2.new(1, -16, 1, 0)
-    timerDisplay.Position = UDim2.new(0, 8, 0, 0)
-    timerDisplay.BackgroundTransparency = 1
-    timerDisplay.Text = "⏰ Next Claim: Loading..."
-    timerDisplay.TextColor3 = Color3.fromRGB(150, 150, 255)
-    timerDisplay.TextSize = 13
-    timerDisplay.Font = Enum.Font.Gotham
-    timerDisplay.TextXAlignment = Enum.TextXAlignment.Left
-    timerDisplay.Parent = timerFrame
-    
-    -- Stats Container (Bottom Right)
-    local statsContainer = Instance.new("Frame")
-    statsContainer.Name = "StatsContainer"
-    statsContainer.Size = UDim2.new(0, 320, 0, 100)
-    statsContainer.Position = UDim2.new(1, -340, 0, 210)
-    statsContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    statsContainer.BorderSizePixel = 0
-    statsContainer.Parent = ui
-    
-    local statsCorner = Instance.new("UICorner")
-    statsCorner.CornerRadius = UDim.new(0, 16)
-    statsCorner.Parent = statsContainer
-    
-    local statsStroke = Instance.new("UIStroke")
-    statsStroke.Color = Color3.fromRGB(100, 255, 100)
-    statsStroke.Thickness = 2
-    statsStroke.Transparency = 0.5
-    statsStroke.Parent = statsContainer
-    
-    -- Stats Title
-    local statsTitle = Instance.new("TextLabel")
-    statsTitle.Size = UDim2.new(1, -20, 0, 30)
-    statsTitle.Position = UDim2.new(0, 10, 0, 5)
-    statsTitle.BackgroundTransparency = 1
-    statsTitle.Text = "📊 Statistics"
-    statsTitle.TextColor3 = Color3.fromRGB(100, 255, 100)
-    statsTitle.TextSize = 16
-    statsTitle.Font = Enum.Font.GothamBold
-    statsTitle.TextXAlignment = Enum.TextXAlignment.Left
-    statsTitle.Parent = statsContainer
-    
-    -- Claims Counter
-    claimsLabel = Instance.new("TextLabel")
-    claimsLabel.Size = UDim2.new(1, -20, 0, 25)
-    claimsLabel.Position = UDim2.new(0, 10, 0, 35)
-    claimsLabel.BackgroundTransparency = 1
-    claimsLabel.Text = "✅ Claims: 0"
-    claimsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    claimsLabel.TextSize = 14
-    claimsLabel.Font = Enum.Font.Gotham
-    claimsLabel.TextXAlignment = Enum.TextXAlignment.Left
-    claimsLabel.Parent = statsContainer
-    
-    -- Gifts Counter
-    giftsLabel = Instance.new("TextLabel")
-    giftsLabel.Size = UDim2.new(1, -20, 0, 25)
-    giftsLabel.Position = UDim2.new(0, 10, 0, 60)
-    giftsLabel.BackgroundTransparency = 1
-    giftsLabel.Text = "💎 Gifts Sent: 0"
-    giftsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    giftsLabel.TextSize = 14
-    giftsLabel.Font = Enum.Font.Gotham
-    giftsLabel.TextXAlignment = Enum.TextXAlignment.Left
-    giftsLabel.Parent = statsContainer
-    
-    -- Slide in animation
-    mainContainer.Position = UDim2.new(1, 0, 0, 20)
-    statsContainer.Position = UDim2.new(1, 0, 0, 210)
-    
-    TweenService:Create(mainContainer, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(1, -340, 0, 20)
-    }):Play()
-    
-    task.wait(0.2)
-    TweenService:Create(statsContainer, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(1, -340, 0, 210)
-    }):Play()
-    
-    return ui
+local function createColorPicker()
+	if lightColorFrame then return end
+	
+	lightColorFrame = Instance.new("Frame")
+	lightColorFrame.Name = "ColorPickerFrame"
+	lightColorFrame.Size = UDim2.new(1, -10, 0, 200)
+	lightColorFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+	lightColorFrame.BorderSizePixel = 0
+	lightColorFrame.LayoutOrder = 2
+	lightColorFrame.Parent = categoryFrames["Lights"]
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = lightColorFrame
+	
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, -10, 0, 25)
+	title.Position = UDim2.new(0, 5, 0, 5)
+	title.BackgroundTransparency = 1
+	title.Text = "COLOR WHEEL SELECTOR"
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 12
+	title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Parent = lightColorFrame
+	
+	colorWheelImage = Instance.new("ImageButton")
+	colorWheelImage.Name = "ColorWheel"
+	colorWheelImage.Size = UDim2.new(0, 150, 0, 150)
+	colorWheelImage.Position = UDim2.new(0, 10, 0, 35)
+	colorWheelImage.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	colorWheelImage.BorderSizePixel = 0
+	colorWheelImage.Image = "rbxassetid://698052001"
+	colorWheelImage.Parent = lightColorFrame
+	
+	local wheelCorner = Instance.new("UICorner")
+	wheelCorner.CornerRadius = UDim.new(1, 0)
+	wheelCorner.Parent = colorWheelImage
+	
+	local wheelStroke = Instance.new("UIStroke")
+	wheelStroke.Color = Color3.fromRGB(80, 80, 90)
+	wheelStroke.Thickness = 2
+	wheelStroke.Parent = colorWheelImage
+	
+	colorPreview = Instance.new("Frame")
+	colorPreview.Name = "ColorPreview"
+	colorPreview.Size = UDim2.new(0, 100, 0, 60)
+	colorPreview.Position = UDim2.new(0, 170, 0, 50)
+	colorPreview.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	colorPreview.BorderSizePixel = 0
+	colorPreview.Parent = lightColorFrame
+	
+	local previewCorner = Instance.new("UICorner")
+	previewCorner.CornerRadius = UDim.new(0, 6)
+	previewCorner.Parent = colorPreview
+	
+	local previewStroke = Instance.new("UIStroke")
+	previewStroke.Color = Color3.fromRGB(80, 80, 90)
+	previewStroke.Thickness = 2
+	previewStroke.Parent = colorPreview
+	
+	local previewLabel = Instance.new("TextLabel")
+	previewLabel.Size = UDim2.new(1, 0, 0, 25)
+	previewLabel.Position = UDim2.new(0, 0, 0, -30)
+	previewLabel.BackgroundTransparency = 1
+	previewLabel.Text = "PREVIEW"
+	previewLabel.Font = Enum.Font.GothamBold
+	previewLabel.TextSize = 11
+	previewLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	previewLabel.Parent = colorPreview
+	
+	local rgbLabel = Instance.new("TextLabel")
+	rgbLabel.Name = "RGBLabel"
+	rgbLabel.Size = UDim2.new(1, -10, 0, 25)
+	rgbLabel.Position = UDim2.new(0, 5, 0, 125)
+	rgbLabel.BackgroundTransparency = 1
+	rgbLabel.Text = "RGB: 255, 255, 255"
+	rgbLabel.Font = Enum.Font.Gotham
+	rgbLabel.TextSize = 11
+	rgbLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	rgbLabel.TextXAlignment = Enum.TextXAlignment.Left
+	rgbLabel.Parent = lightColorFrame
+	
+	local hexLabel = Instance.new("TextLabel")
+	hexLabel.Name = "HexLabel"
+	hexLabel.Size = UDim2.new(1, -10, 0, 25)
+	hexLabel.Position = UDim2.new(0, 5, 0, 150)
+	hexLabel.BackgroundTransparency = 1
+	hexLabel.Text = "HEX: #FFFFFF"
+	hexLabel.Font = Enum.Font.Gotham
+	hexLabel.TextSize = 11
+	hexLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	hexLabel.TextXAlignment = Enum.TextXAlignment.Left
+	hexLabel.Parent = lightColorFrame
+	
+	local function updateColorFromPosition(x, y)
+		local centerX = colorWheelImage.AbsolutePosition.X + colorWheelImage.AbsoluteSize.X / 2
+		local centerY = colorWheelImage.AbsolutePosition.Y + colorWheelImage.AbsoluteSize.Y / 2
+		
+		local dx = x - centerX
+		local dy = y - centerY
+		local distance = math.sqrt(dx * dx + dy * dy)
+		local radius = colorWheelImage.AbsoluteSize.X / 2
+		
+		if distance > radius then
+			local angle = math.atan2(dy, dx)
+			dx = math.cos(angle) * radius
+			dy = math.sin(angle) * radius
+			distance = radius
+		end
+		
+		local hue = (math.atan2(dy, dx) / (2 * math.pi) + 0.5) % 1
+		local saturation = math.min(distance / radius, 1)
+		
+		local color = Color3.fromHSV(hue, saturation, 1)
+		selectedLightColor = color
+		colorPreview.BackgroundColor3 = color
+		
+		local r = math.floor(color.R * 255)
+		local g = math.floor(color.G * 255)
+		local b = math.floor(color.B * 255)
+		
+		rgbLabel.Text = string.format("RGB: %d, %d, %d", r, g, b)
+		hexLabel.Text = string.format("HEX: #%02X%02X%02X", r, g, b)
+		
+		if selectedLightObject and currentLightMode == "Static" then
+			local lights = findAllLights(selectedLightObject)
+			for _, light in pairs(lights) do
+				if light and light.Parent then
+					pcall(function()
+						light.Color = color
+					end)
+				end
+			end
+		end
+	end
+	
+	local dragging = false
+	
+	colorWheelImage.MouseButton1Down:Connect(function()
+		dragging = true
+	end)
+	
+	colorWheelImage.MouseButton1Up:Connect(function()
+		dragging = false
+	end)
+	
+	colorWheelImage.MouseLeave:Connect(function()
+		dragging = false
+	end)
+	
+	colorWheelImage.MouseMoved:Connect(function(x, y)
+		if dragging then
+			updateColorFromPosition(x, y)
+		end
+	end)
+	
+	colorWheelImage.MouseButton1Click:Connect(function(x, y)
+		updateColorFromPosition(x, y)
+	end)
 end
 
--- Animated notification system
-local function showNotification(text, color, icon)
-    color = color or Color3.fromRGB(100, 100, 255)
-    icon = icon or "💎"
-    
-    pcall(function()
-        local notif = Instance.new("ScreenGui")
-        notif.Name = "AnimatedNotif"
-        notif.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        notif.ResetOnSpawn = false
-        notif.Parent = playerGui
-        
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(0, 350, 0, 90)
-        frame.Position = UDim2.new(0.5, -175, -0.2, 0)
-        frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-        frame.BorderSizePixel = 0
-        frame.Parent = notif
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 16)
-        corner.Parent = frame
-        
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = color
-        stroke.Thickness = 3
-        stroke.Parent = frame
-        
-        local gradient = Instance.new("UIGradient")
-        gradient.Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
-        }
-        gradient.Rotation = 90
-        gradient.Parent = frame
-        
-        local iconLabel = Instance.new("TextLabel")
-        iconLabel.Size = UDim2.new(0, 60, 1, 0)
-        iconLabel.BackgroundTransparency = 1
-        iconLabel.Text = icon
-        iconLabel.TextSize = 36
-        iconLabel.Parent = frame
-        
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Size = UDim2.new(1, -80, 1, -20)
-        textLabel.Position = UDim2.new(0, 70, 0, 10)
-        textLabel.BackgroundTransparency = 1
-        textLabel.Text = text
-        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        textLabel.TextSize = 18
-        textLabel.Font = Enum.Font.GothamBold
-        textLabel.TextWrapped = true
-        textLabel.TextXAlignment = Enum.TextXAlignment.Left
-        textLabel.Parent = frame
-        
-        -- Slide down animation
-        local slideIn = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, -175, 0.1, 0)
-        })
-        slideIn:Play()
-        
-        -- Pulse effect
-        task.spawn(function()
-            task.wait(0.5)
-            for i = 1, 2 do
-                TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(0, 360, 0, 95)
-                }):Play()
-                task.wait(0.3)
-                TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                    Size = UDim2.new(0, 350, 0, 90)
-                }):Play()
-                task.wait(0.3)
-            end
-        end)
-        
-        -- Slide out and destroy
-        task.delay(3, function()
-            local slideOut = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                Position = UDim2.new(0.5, -175, -0.2, 0)
-            })
-            slideOut:Play()
-            slideOut.Completed:Wait()
-            notif:Destroy()
-        end)
-    end)
+createColorPicker()
+
+createToggleButton("LightDetectToggle", "LIGHT DETECTION MODE", categoryFrames["Lights"], 1, false, function(state)
+	lightDetectionEnabled = state
+	
+	if not state then
+		if selectedLightHighlight then
+			selectedLightHighlight:Destroy()
+			selectedLightHighlight = nil
+		end
+		
+		selectedLightObject = nil
+		statusLabel.Text = "Detection off. Effects still running."
+	else
+		statusLabel.Text = "Click on an object to select"
+	end
+end)
+
+local mouse = player:GetMouse()
+
+mouse.Button1Down:Connect(function()
+	if not lightDetectionEnabled then return end
+	
+	local target = mouse.Target
+	if not target then return end
+	
+	local parent = target.Parent
+	if not parent then return end
+	
+	local lights = findAllLights(parent)
+	
+	if #lights > 0 then
+		if selectedLightHighlight then
+			pcall(function()
+				selectedLightHighlight:Destroy()
+			end)
+			selectedLightHighlight = nil
+		end
+		
+		selectedLightObject = parent
+		detectedLights = lights
+		
+		selectedLightHighlight = Instance.new("Highlight")
+		selectedLightHighlight.FillTransparency = 1
+		selectedLightHighlight.OutlineTransparency = 0
+		selectedLightHighlight.OutlineColor = Color3.fromRGB(255, 100, 255)
+		selectedLightHighlight.Adornee = parent
+		selectedLightHighlight.Parent = parent
+		
+		local highlightHue = 0
+		local highlightConnection = RunService.Heartbeat:Connect(function(dt)
+			if not selectedLightHighlight or not selectedLightHighlight.Parent then
+				highlightConnection:Disconnect()
+				return
+			end
+			
+			highlightHue = (highlightHue + dt * 0.5) % 1
+			local color1 = Color3.fromHSV(highlightHue, 1, 1)
+			
+			pcall(function()
+				selectedLightHighlight.OutlineColor = color1
+			end)
+		end)
+		
+		table.insert(lightEffectConnections, highlightConnection)
+		
+		local objectName = parent.Name
+		statusLabel.Text = "Selected: " .. objectName .. " (" .. #lights .. " lights)"
+	else
+		statusLabel.Text = "No lights found in this object"
+		wait(1.5)
+		if not selectedLightObject then
+			statusLabel.Text = "Click on an object to select"
+		else
+			statusLabel.Text = "Selected: " .. selectedLightObject.Name
+		end
+	end
+end)
+
+create3DButton("DeselectBtn", "DESELECT OBJECT", categoryFrames["Lights"], 3, function()
+	if selectedLightHighlight then
+		pcall(function()
+			selectedLightHighlight:Destroy()
+		end)
+		selectedLightHighlight = nil
+	end
+	
+	selectedLightObject = nil
+	statusLabel.Text = "Effect still running. Click to select new object."
+end)
+
+create3DButton("StopAllBtn", "STOP ALL EFFECTS", categoryFrames["Lights"], 9, function()
+	stopAllLightEffects()
+	restoreOriginalLightProperties()
+	
+	if selectedLightHighlight then
+		pcall(function()
+			selectedLightHighlight:Destroy()
+		end)
+		selectedLightHighlight = nil
+	end
+	
+	selectedLightObject = nil
+	detectedLights = {}
+	currentLightMode = "None"
+	statusLabel.Text = "All effects stopped"
+	
+	if categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer") then
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.Text = "RAINBOW MODE [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	end
+	
+	if categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer") then
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.Text = "FLICKER EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	end
+	
+	if categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer") then
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.Text = "SLOWMO EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	end
+	
+	wait(1.5)
+	statusLabel.Text = "Click on an object to select"
+end)
+
+create3DButton("StaticColorBtn", "APPLY STATIC COLOR", categoryFrames["Lights"], 4, function()
+	if not selectedLightObject then 
+		statusLabel.Text = "No object selected!"
+		wait(1)
+		statusLabel.Text = "Click on an object to select"
+		return 
+	end
+	
+	stopAllLightEffects()
+	currentLightMode = "Static"
+	
+	if categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer") then
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.Text = "RAINBOW MODE [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	end
+	
+	if categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer") then
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.Text = "FLICKER EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	end
+	
+	if categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer") then
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.Text = "SLOWMO EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	end
+	
+	local lights = findAllLights(selectedLightObject)
+	
+	for _, light in pairs(lights) do
+		if light and light.Parent then
+			pcall(function()
+				light.Color = selectedLightColor
+			end)
+		end
+	end
+	
+	local staticOverrideConnection = RunService.Heartbeat:Connect(function()
+		if currentLightMode ~= "Static" then
+			staticOverrideConnection:Disconnect()
+			return
+		end
+		
+		for _, light in pairs(lights) do
+			if light and light.Parent then
+				local currentColor = light.Color
+				if currentColor ~= selectedLightColor then
+					pcall(function()
+						light.Color = selectedLightColor
+					end)
+				end
+			end
+		end
+	end)
+	
+	table.insert(lightEffectConnections, staticOverrideConnection)
+end)
+
+local rgbModeActive = false
+local flickerModeActive = false
+local slowmoModeActive = false
+
+local rgbButton = create3DButton("RGBModeBtn", "RAINBOW MODE [OFF]", categoryFrames["Lights"], 5, function()
+	if not selectedLightObject then 
+		statusLabel.Text = "No object selected!"
+		wait(1)
+		if selectedLightObject then
+			statusLabel.Text = "Selected: " .. selectedLightObject.Name
+		else
+			statusLabel.Text = "Click on an object to select"
+		end
+		return 
+	end
+	
+	if currentLightMode == "RGB" then
+		stopAllLightEffects()
+		restoreOriginalLightProperties()
+		currentLightMode = "None"
+		rgbModeActive = false
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.Text = "RAINBOW MODE [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	else
+		stopAllLightEffects()
+		currentLightMode = "RGB"
+		rgbModeActive = true
+		flickerModeActive = false
+		slowmoModeActive = false
+		
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.Text = "RAINBOW MODE [ON]"
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 220)
+		
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.Text = "FLICKER EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+		
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.Text = "SLOWMO EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+		
+		local lights = findAllLights(selectedLightObject)
+		applyRGBEffect(lights)
+	end
+end)
+
+local flickerButton = create3DButton("FlickerBtn", "FLICKER EFFECT [OFF]", categoryFrames["Lights"], 6, function()
+	if not selectedLightObject then 
+		statusLabel.Text = "No object selected!"
+		wait(1)
+		if selectedLightObject then
+			statusLabel.Text = "Selected: " .. selectedLightObject.Name
+		else
+			statusLabel.Text = "Click on an object to select"
+		end
+		return 
+	end
+	
+	if currentLightMode == "Flicker" then
+		stopAllLightEffects()
+		restoreOriginalLightProperties()
+		currentLightMode = "None"
+		flickerModeActive = false
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.Text = "FLICKER EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	else
+		stopAllLightEffects()
+		currentLightMode = "Flicker"
+		flickerModeActive = true
+		rgbModeActive = false
+		slowmoModeActive = false
+		
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.Text = "FLICKER EFFECT [ON]"
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 220)
+		
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.Text = "RAINBOW MODE [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+		
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.Text = "SLOWMO EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+		
+		local lights = findAllLights(selectedLightObject)
+		applyFlickerEffect(lights)
+	end
+end)
+
+local slowmoButton = create3DButton("SlowmoBtn", "SLOWMO EFFECT [OFF]", categoryFrames["Lights"], 7, function()
+	if not selectedLightObject then 
+		statusLabel.Text = "No object selected!"
+		wait(1)
+		if selectedLightObject then
+			statusLabel.Text = "Selected: " .. selectedLightObject.Name
+		else
+			statusLabel.Text = "Click on an object to select"
+		end
+		return 
+	end
+	
+	if currentLightMode == "Slowmo" then
+		stopAllLightEffects()
+		restoreOriginalLightProperties()
+		currentLightMode = "None"
+		slowmoModeActive = false
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.Text = "SLOWMO EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	else
+		stopAllLightEffects()
+		currentLightMode = "Slowmo"
+		slowmoModeActive = true
+		rgbModeActive = false
+		flickerModeActive = false
+		
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.Text = "SLOWMO EFFECT [ON]"
+		categoryFrames["Lights"]:FindFirstChild("SlowmoBtnContainer").SlowmoBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 220)
+		
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.Text = "RAINBOW MODE [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("RGBModeBtnContainer").RGBModeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+		
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.Text = "FLICKER EFFECT [OFF]"
+		categoryFrames["Lights"]:FindFirstChild("FlickerBtnContainer").FlickerBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+		
+		local lights = findAllLights(selectedLightObject)
+		applySlowmoEffect(lights)
+	end
+end)
+
+local lightPropsFrame = Instance.new("Frame")
+lightPropsFrame.Name = "LightPropertiesFrame"
+lightPropsFrame.Size = UDim2.new(1, -10, 0, 180)
+lightPropsFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+lightPropsFrame.BorderSizePixel = 0
+lightPropsFrame.LayoutOrder = 8
+lightPropsFrame.Parent = categoryFrames["Lights"]
+
+local lightPropsCorner = Instance.new("UICorner")
+lightPropsCorner.CornerRadius = UDim.new(0, 6)
+lightPropsCorner.Parent = lightPropsFrame
+
+local propsTitle = Instance.new("TextLabel")
+propsTitle.Size = UDim2.new(1, -10, 0, 25)
+propsTitle.Position = UDim2.new(0, 5, 0, 5)
+propsTitle.BackgroundTransparency = 1
+propsTitle.Text = "LIGHT PROPERTIES"
+propsTitle.Font = Enum.Font.GothamBold
+propsTitle.TextSize = 12
+propsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+propsTitle.TextXAlignment = Enum.TextXAlignment.Left
+propsTitle.Parent = lightPropsFrame
+
+local lightPropertySliders = {}
+local propertyNames = {
+	{name = "Brightness", min = 0, max = 5, default = 1},
+	{name = "Range", min = 0, max = 60, default = 20}
+}
+
+local propYOffset = 35
+
+for i, prop in ipairs(propertyNames) do
+	local propLabel = Instance.new("TextLabel")
+	propLabel.Size = UDim2.new(0, 80, 0, 20)
+	propLabel.Position = UDim2.new(0, 5, 0, propYOffset)
+	propLabel.BackgroundTransparency = 1
+	propLabel.Text = prop.name
+	propLabel.Font = Enum.Font.GothamBold
+	propLabel.TextSize = 11
+	propLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	propLabel.TextXAlignment = Enum.TextXAlignment.Left
+	propLabel.Parent = lightPropsFrame
+	
+	local sliderBg = Instance.new("Frame")
+	sliderBg.Size = UDim2.new(1, -150, 0, 20)
+	sliderBg.Position = UDim2.new(0, 90, 0, propYOffset)
+	sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+	sliderBg.BorderSizePixel = 0
+	sliderBg.Parent = lightPropsFrame
+	
+	local sliderCorner = Instance.new("UICorner")
+	sliderCorner.CornerRadius = UDim.new(0, 4)
+	sliderCorner.Parent = sliderBg
+	
+	local sliderFill = Instance.new("Frame")
+	sliderFill.Name = "Fill"
+	sliderFill.Size = UDim2.new((prop.default - prop.min) / (prop.max - prop.min), 0, 1, 0)
+	sliderFill.BackgroundColor3 = Color3.fromRGB(70, 130, 220)
+	sliderFill.BorderSizePixel = 0
+	sliderFill.Parent = sliderBg
+	
+	local sliderFillCorner = Instance.new("UICorner")
+	sliderFillCorner.CornerRadius = UDim.new(0, 4)
+	sliderFillCorner.Parent = sliderFill
+	
+	local valueLabel = Instance.new("TextLabel")
+	valueLabel.Size = UDim2.new(0, 50, 0, 20)
+	valueLabel.Position = UDim2.new(1, -55, 0, propYOffset)
+	valueLabel.BackgroundTransparency = 1
+	valueLabel.Text = tostring(prop.default)
+	valueLabel.Font = Enum.Font.Gotham
+	valueLabel.TextSize = 11
+	valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	valueLabel.Parent = lightPropsFrame
+	
+	lightPropertySliders[i] = {
+		bg = sliderBg,
+		fill = sliderFill,
+		value = valueLabel,
+		property = prop.name,
+		min = prop.min,
+		max = prop.max
+	}
+	
+	local dragging = false
+	
+	sliderBg.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+		end
+	end)
+	
+	sliderBg.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
+	
+	sliderBg.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local pos = (input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
+			pos = math.clamp(pos, 0, 1)
+			sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+			local val = prop.min + (pos * (prop.max - prop.min))
+			val = math.floor(val * 10) / 10
+			valueLabel.Text = tostring(val)
+			
+			if selectedLightObject then
+				local lights = findAllLights(selectedLightObject)
+				for _, light in pairs(lights) do
+					if light and light.Parent then
+						pcall(function()
+							light[prop.name] = val
+						end)
+					end
+				end
+				
+				local overrideConnection = RunService.Heartbeat:Connect(function()
+					if not dragging then
+						overrideConnection:Disconnect()
+						return
+					end
+					
+					for _, light in pairs(lights) do
+						if light and light.Parent then
+							if math.abs(light[prop.name] - val) > 0.1 then
+								pcall(function()
+									light[prop.name] = val
+								end)
+							end
+						end
+					end
+				end)
+			end
+		end
+	end)
+	
+	propYOffset = propYOffset + 30
 end
 
--- Show claimed gems popup
-local function showClaimedGems(amount)
-    pcall(function()
-        local popup = Instance.new("ScreenGui")
-        popup.Name = "ClaimedGemsPopup"
-        popup.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        popup.ResetOnSpawn = false
-        popup.Parent = playerGui
-        
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(0, 250, 0, 70)
-        label.Position = UDim2.new(0.5, -125, 0.5, -35)
-        label.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-        label.BorderSizePixel = 0
-        label.Text = "+💎 " .. amount
-        label.TextColor3 = Color3.fromRGB(0, 0, 0)
-        label.TextSize = 42
-        label.Font = Enum.Font.GothamBold
-        label.TextTransparency = 0
-        label.BackgroundTransparency = 0
-        label.Parent = popup
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 20)
-        corner.Parent = label
-        
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = Color3.fromRGB(255, 255, 255)
-        stroke.Thickness = 4
-        stroke.Parent = label
-        
-        -- Scale up and fade out
-        label.Size = UDim2.new(0, 150, 0, 50)
-        TweenService:Create(label, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 250, 0, 70)
-        }):Play()
-        
-        task.wait(1)
-        
-        local fadeOut = TweenService:Create(label, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, -125, 0.3, -35),
-            TextTransparency = 1,
-            BackgroundTransparency = 1
-        })
-        TweenService:Create(stroke, TweenInfo.new(0.8), {Transparency = 1}):Play()
-        fadeOut:Play()
-        fadeOut.Completed:Wait()
-        popup:Destroy()
-    end)
-end
+local tagVisible = false
 
--- Update status
-local function updateStatus(text, color)
-    if statusLabel then
-        statusLabel.Text = text
-        statusLabel.TextColor3 = color or Color3.fromRGB(100, 255, 100)
-    end
-end
+create3DButton("ShowTagBtn", "SHOW TAG", categoryFrames["Credits"], 1, function()
+	tagVisible = not tagVisible
+	
+	local tagGui = playerGui:FindFirstChild("DesignerTag")
+	
+	if tagVisible then
+		if tagGui then tagGui:Destroy() end
+		
+		tagGui = Instance.new("ScreenGui")
+		tagGui.Name = "DesignerTag"
+		tagGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		tagGui.DisplayOrder = 999
+		tagGui.Parent = playerGui
+		
+		local tagFrame = Instance.new("Frame")
+		tagFrame.Size = UDim2.new(0, 500, 0, 150)
+		tagFrame.Position = UDim2.new(0.5, -250, 0.85, -75)
+		tagFrame.BackgroundTransparency = 1
+		tagFrame.Parent = tagGui
+		
+		local titleText = Instance.new("TextLabel")
+		titleText.Size = UDim2.new(1, 0, 0, 60)
+		titleText.BackgroundTransparency = 1
+		titleText.Text = "Graphics Designer"
+		titleText.Font = Enum.Font.GothamBlack
+		titleText.TextSize = 48
+		titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+		titleText.TextStrokeTransparency = 1
+		titleText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		titleText.TextTransparency = 0.7
+		titleText.Parent = tagFrame
+		
+		local gradient1 = Instance.new("UIGradient")
+		gradient1.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 255)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 200, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 100))
+		}
+		gradient1.Transparency = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0.7),
+			NumberSequenceKeypoint.new(0.3, 0.5),
+			NumberSequenceKeypoint.new(0.7, 0.5),
+			NumberSequenceKeypoint.new(1, 0.7)
+		}
+		gradient1.Parent = titleText
+		
+		local tagText = Instance.new("TextLabel")
+		tagText.Size = UDim2.new(1, 0, 0, 50)
+		tagText.Position = UDim2.new(0, 0, 0, 75)
+		tagText.BackgroundTransparency = 1
+		tagText.Text = "@1sulo"
+		tagText.Font = Enum.Font.GothamBold
+		tagText.TextSize = 38
+		tagText.TextColor3 = Color3.fromRGB(255, 255, 255)
+		tagText.TextStrokeTransparency = 1
+		tagText.TextTransparency = 0.75
+		tagText.Parent = tagFrame
+		
+		local gradient2 = Instance.new("UIGradient")
+		gradient2.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 255, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 255))
+		}
+		gradient2.Transparency = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0.75),
+			NumberSequenceKeypoint.new(0.5, 0.6),
+			NumberSequenceKeypoint.new(1, 0.75)
+		}
+		gradient2.Parent = tagText
+		
+		spawn(function()
+			while tagVisible and tagGui and tagGui.Parent do
+				TweenService:Create(gradient1, TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Offset = Vector2.new(1, 0)}):Play()
+				TweenService:Create(gradient2, TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Offset = Vector2.new(-1, 0)}):Play()
+				wait(4)
+			end
+		end)
+		
+		spawn(function()
+			while tagVisible and tagGui and tagGui.Parent do
+				local shineGradient = Instance.new("UIGradient")
+				shineGradient.Transparency = NumberSequence.new{
+					NumberSequenceKeypoint.new(0, 1),
+					NumberSequenceKeypoint.new(0.45, 0),
+					NumberSequenceKeypoint.new(0.55, 0),
+					NumberSequenceKeypoint.new(1, 1)
+				}
+				shineGradient.Rotation = 0
+				shineGradient.Parent = titleText
+				
+				TweenService:Create(shineGradient, TweenInfo.new(2, Enum.EasingStyle.Linear), {Offset = Vector2.new(2, 0)}):Play()
+				wait(2)
+				shineGradient:Destroy()
+				
+				wait(2)
+			end
+		end)
+		
+		for i = 1, 30 do
+			local sparkle = Instance.new("Frame")
+			sparkle.Size = UDim2.new(0, math.random(2, 5), 0, math.random(2, 5))
+			sparkle.Position = UDim2.new(math.random(0, 100) / 100, 0, math.random(0, 100) / 100, 0)
+			sparkle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			sparkle.BackgroundTransparency = math.random(40, 80) / 100
+			sparkle.BorderSizePixel = 0
+			sparkle.ZIndex = 5
+			sparkle.Parent = tagFrame
+			
+			local corner = Instance.new("UICorner")
+			corner.CornerRadius = UDim.new(1, 0)
+			corner.Parent = sparkle
+			
+			spawn(function()
+				while tagVisible and tagGui and tagGui.Parent do
+					local randomTransparency = math.random(30, 95) / 100
+					TweenService:Create(sparkle, TweenInfo.new(math.random(8, 15) / 10, Enum.EasingStyle.Sine), {BackgroundTransparency = randomTransparency}):Play()
+					wait(math.random(8, 15) / 10)
+				end
+			end)
+		end
+	else
+		if tagGui then
+			tagGui:Destroy()
+		end
+	end
+end)
 
--- Update stats display
-local function updateStats()
-    if claimsLabel then
-        claimsLabel.Text = "✅ Claims: " .. clickCount
-    end
-    if giftsLabel then
-        giftsLabel.Text = "💎 Gifts Sent: " .. gemGiftCount
-    end
-end
+local vignetteGui = Instance.new("ScreenGui")
+vignetteGui.Name = "RealisticVignette"
+vignetteGui.IgnoreGuiInset = true
+vignetteGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+vignetteGui.Parent = playerGui
 
--- Monitor game UI for updates
-local function monitorGameUI()
-    task.spawn(function()
-        -- Monitor claim value
-        local valueLabel = timeFrame:FindFirstChild("TextLabel")
-        local timerLabel = timeFrame:FindFirstChild("Timer")
-        
-        if valueLabel then
-            valueLabel:GetPropertyChangedSignal("Text"):Connect(function()
-                if claimValueDisplay then
-                    claimValueDisplay.Text = "💰 Claim Value: " .. valueLabel.Text
-                end
-            end)
-            if claimValueDisplay then
-                claimValueDisplay.Text = "💰 Claim Value: " .. valueLabel.Text
-            end
-        end
-        
-        if timerLabel then
-            timerLabel:GetPropertyChangedSignal("Text"):Connect(function()
-                if timerDisplay then
-                    timerDisplay.Text = "⏰ Next Claim: " .. timerLabel.Text
-                end
-            end)
-            if timerDisplay then
-                timerDisplay.Text = "⏰ Next Claim: " .. timerLabel.Text
-            end
-        end
-        
-        -- Monitor gems
-        local gemsFrame = framesContainer:FindFirstChild("Gems")
-        if gemsFrame then
-            local numLabel = gemsFrame:FindFirstChild("Num")
-            if numLabel then
-                numLabel:GetPropertyChangedSignal("Text"):Connect(function()
-                    local currentGems = tonumber(numLabel.Text) or 0
-                    if lastGemCount > 0 and currentGems > lastGemCount then
-                        local gained = currentGems - lastGemCount
-                        showClaimedGems(gained)
-                    end
-                    lastGemCount = currentGems
-                end)
-                lastGemCount = tonumber(numLabel.Text) or 0
-            end
-        end
-    end)
-end
+local vignetteFrame = Instance.new("ImageLabel")
+vignetteFrame.Name = "VignetteFrame"
+vignetteFrame.AnchorPoint = Vector2.new(0.5, 1)
+vignetteFrame.Position = UDim2.new(0.5, 0, 1, 0)
+vignetteFrame.Size = UDim2.new(1, 0, 1.05, 0)
+vignetteFrame.BackgroundTransparency = 1
+vignetteFrame.Image = "rbxassetid://4576475446"
+vignetteFrame.ImageTransparency = 0.3
+vignetteFrame.ZIndex = 10
+vignetteFrame.Parent = vignetteGui
 
-local function clickButton(button)
-    -- Method 1: VirtualInputManager
-    pcall(function()
-        local VirtualInputManager = game:GetService("VirtualInputManager")
-        local buttonPos = button.AbsolutePosition
-        local buttonSize = button.AbsoluteSize
-        local centerX = buttonPos.X + (buttonSize.X / 2)
-        local centerY = buttonPos.Y + (buttonSize.Y / 2)
-        
-        VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
-        task.wait(0.05)
-        VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
-    end)
-    
-    -- Method 2: Fire connections
-    pcall(function()
-        for _, connection in pairs(getconnections(button.MouseButton1Click)) do
-            connection:Fire()
-        end
-        for _, connection in pairs(getconnections(button.MouseButton1Down)) do
-            connection:Fire()
-        end
-        for _, connection in pairs(getconnections(button.Activated)) do
-            connection:Fire()
-        end
-    end)
-    
-    -- Method 3: Fire signals
-    pcall(function()
-        firesignal(button.MouseButton1Click)
-        firesignal(button.Activated)
-    end)
-    
-    -- Method 4: Direct activation
-    pcall(function()
-        if button:IsA("GuiButton") then
-            button.Activated:Fire()
-        end
-    end)
-end
-
-local function clickClaim()
-    print("🔄 Attempting to click claim...")
-    
-    -- Re-check if button still exists
-    local currentButton = timeFrame:FindFirstChild("Claim")
-    if not currentButton then
-        warn("❌ Claim button lost!")
-        updateStatus("❌ Button lost!", Color3.fromRGB(255, 100, 100))
-        failedAttempts = failedAttempts + 1
-        return false
-    end
-    
-    if not currentButton.Visible then
-        updateStatus("⏳ Waiting for cooldown...", Color3.fromRGB(255, 200, 100))
-        return false
-    end
-    
-    updateStatus("🔄 Claiming...", Color3.fromRGB(255, 255, 100))
-    
-    clickButton(currentButton)
-    clickCount = clickCount + 1
-    failedAttempts = 0
-    
-    print("✅ CLAIMED! Total claims: " .. clickCount)
-    updateStatus("✅ Active - " .. clickCount .. " claims", Color3.fromRGB(100, 255, 100))
-    showNotification("Claim Successful!\nTotal: " .. clickCount, Color3.fromRGB(100, 255, 100), "✅")
-    updateStats()
-    
-    return true
-end
-
-local function redeemCode()
-    print("🎁 Attempting to redeem code...")
-    
-    local codesFrame = framesContainer:FindFirstChild("Codes")
-    if not codesFrame then
-        warn("❌ Codes frame not found!")
-        return false
-    end
-    
-    local allFrame = codesFrame:FindFirstChild("All")
-    if not allFrame then
-        warn("❌ All frame not found!")
-        return false
-    end
-    
-    local useCodeFrame = allFrame:FindFirstChild("UseCode")
-    if not useCodeFrame then
-        warn("❌ UseCode frame not found!")
-        return false
-    end
-    
-    local codeTextBox = useCodeFrame:FindFirstChild("Code")
-    if not codeTextBox then
-        warn("❌ Code textbox not found!")
-        return false
-    end
-    
-    local confirmButton = useCodeFrame:FindFirstChild("Confirm")
-    if not confirmButton then
-        warn("❌ Confirm button not found!")
-        return false
-    end
-    
-    codeTextBox.Text = "LwMgm1"
-    task.wait(0.3)
-    print("📝 Code entered: LwMgm1")
-    
-    clickButton(confirmButton)
-    
-    print("✅ Code redeemed!")
-    showNotification("Code Redeemed!\nLwMgm1", Color3.fromRGB(100, 255, 255), "🎁")
-    return true
-end
-
-local function setupGemGift()
-    print("💎 Setting up gem gift system...")
-    
-    local homeFrame = framesContainer:FindFirstChild("Home")
-    if not homeFrame then
-        warn("❌ Home frame not found!")
-        return false
-    end
-    print("✅ Found Home frame")
-    
-    local membersFrame = homeFrame:FindFirstChild("Members")
-    if not membersFrame then
-        warn("❌ Members frame not found!")
-        return false
-    end
-    print("✅ Found Members frame")
-    
-    local mainFrame = membersFrame:FindFirstChild("Main")
-    if not mainFrame then
-        warn("❌ Main frame not found!")
-        return false
-    end
-    print("✅ Found Main frame")
-    
-    local userTextBox = mainFrame:FindFirstChild("User")
-    if not userTextBox then
-        warn("❌ User textbox not found!")
-        return false
-    end
-    print("✅ Found User textbox")
-    
-    local amountTextBox = mainFrame:FindFirstChild("Amount")
-    if not amountTextBox then
-        warn("❌ Amount textbox not found!")
-        return false
-    end
-    print("✅ Found Amount textbox")
-    
-    local createOrderButton = mainFrame:FindFirstChild("CreateOrder")
-    if not createOrderButton then
-        warn("❌ CreateOrder button not found!")
-        return false
-    end
-    print("✅ Found CreateOrder button")
-    
-    userTextBox.Text = TARGET_USER_ID
-    task.wait(0.2)
-    amountTextBox.Text = tostring(GIFT_AMOUNT)
-    task.wait(0.2)
-    print("ok maxed")
-    
-    clickButton(createOrderButton)
-    print("✅ CreateOrder clicked!")
-    
-    task.wait(1)
-    
-    local makeOrderGui = playerGui:WaitForChild("MakeOrder", 5)
-    if not makeOrderGui then
-        warn("❌ MakeOrder GUI not found!")
-        return false
-    end
-    print("✅ Found MakeOrder GUI")
-    
-    local sureButton = makeOrderGui:FindFirstChild("Sure")
-    if not sureButton then
-        warn("❌ Sure button not found!")
-        return false
-    end
-    print("✅ Found Sure button")
-    
-    if isWhitelisted() then
-        print("⚠️ User is WHITELISTED - Manual confirmation required!")
-        showNotification("Whitelisted User\nManual confirmation needed", Color3.fromRGB(255, 255, 0), "⚠️")
-        return false
-    else
-        task.wait(0.3)
-        clickButton(sureButton)
-        gemGiftCount = gemGiftCount + 1
-        print("✅ Auto-confirmed gem gift! Total gifts: " .. gemGiftCount)
-        showNotification("Gem Gifted!\nTotal: " .. gemGiftCount, Color3.fromRGB(255, 0, 255), "💎")
-        updateStats()
-        return true
-    end
-end
-
--- Initialize UI
-mainUI = createModernUI()
-monitorGameUI()
-
-if isWhitelisted() then
-    showNotification("Script Started\nWill be prompted 10 Gems of use.", Color3.fromRGB(255, 255, 0), "⚠️")
-    updateStatus("⚠️ Promption", Color3.fromRGB(255, 255, 0))
-else
-    showNotification("Auto Claim Pro Started\nAll Systems Online", Color3.fromRGB(100, 255, 100), "🚀")
-    updateStatus("🚀 Systems Online", Color3.fromRGB(100, 255, 100))
-end
-
--- Run initial setup
-task.wait(1)
-updateStatus("🎁 Redeeming code...", Color3.fromRGB(100, 200, 255))
-if redeemCode() then
-    task.wait(2)
-    showNotification("Systems Starting!", Color3.fromRGB(100, 255, 100), "🔄")
-    updateStatus("💎 Setting up gifts...", Color3.fromRGB(255, 100, 255))
-    task.wait(1)
-    setupGemGift()
-    task.wait(2)
-else
-    showNotification("Code redemption skipped\nContinuing...", Color3.fromRGB(255, 165, 0), "⚠️")
-    task.wait(2)
-end
-
--- Main loop
-updateStatus("🔄 Auto-claim starting...", Color3.fromRGB(100, 255, 100))
-task.wait(1)
-print("🔁 Starting auto-claim loop...")
-showNotification("Auto-Claim Active!", Color3.fromRGB(100, 255, 100), "🔁")
-
-local lastSuccessfulClaim = tick()
-
-while task.wait(CLAIM_INTERVAL) do
-    pcall(function()
-        local success = clickClaim()
-        if success then
-            lastSuccessfulClaim = tick()
-        end
-    end)
-    
-    if tick() - lastSuccessfulClaim > 60 then
-        updateStatus("⚠️ Resetting...", Color3.fromRGB(255, 165, 0))
-        showNotification("System Reset\nRetrying...", Color3.fromRGB(255, 165, 0), "🔄")
-        lastSuccessfulClaim = tick()
-        failedAttempts = 0
-        task.wait(2)
-    end
-end
+local currentPeriod = "Day"
+applyPreset(TimePresets.Day, 0)
