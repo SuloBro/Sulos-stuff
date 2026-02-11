@@ -17,10 +17,13 @@ local hasGamepass = false
 
 local WAYPOINTS = {
 	Vector3.new(-5900, -15, -4785),
-	Vector3.new(-2900, -17, -5213),
+	Vector3.new(-2962, -17, -5481),
 	Vector3.new(-3016, -17, -6549),
 	Vector3.new(-2906, -17, -5012),
-	Vector3.new(-5962, -17, -4379)
+    Vector3.new(-5180, -17, -3967),
+	Vector3.new(-5962, -17, -4379),
+    Vector3.new(-3887, -17, -5264),
+    Vector3.new(-5870, -17, -4741)
 }
 
 local function checkShirtOwnership()
