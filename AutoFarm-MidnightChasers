@@ -17,8 +17,10 @@ local hasGamepass = false
 
 local WAYPOINTS = {
 	Vector3.new(-5900, -15, -4785),
-	Vector3.new(-2962, -17, -5481),
+	Vector3.new(-3166, -17, -5388),
 	Vector3.new(-3016, -17, -6549),
+    Vector3.new(-4832, -17, -4637),
+    Vector3.new(-5051, -17, -5411),
 	Vector3.new(-2906, -17, -5012),
     Vector3.new(-5180, -17, -3967),
 	Vector3.new(-5962, -17, -4379),
