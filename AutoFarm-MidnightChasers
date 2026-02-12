@@ -275,7 +275,7 @@ local playerIcon = Instance.new("ImageLabel")
 playerIcon.Size = UDim2.new(0, 30, 0, 30)
 playerIcon.Position = UDim2.new(1, -40, 1, -40)
 playerIcon.BackgroundTransparency = 1
-playerIcon.Image = "" .. player.UserId .. "&width=150&height=150&format=png"
+playerIcon.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. player.UserId .. "&width=150&height=150&format=png"
 playerIcon.Parent = guiFrame
 
 local iconCorner = Instance.new("UICorner")
@@ -291,7 +291,7 @@ local usernameText = Instance.new("TextLabel")
 usernameText.Size = UDim2.new(1, -80, 0, 20)
 usernameText.Position = UDim2.new(0, 10, 1, -30)
 usernameText.BackgroundTransparency = 1
-usernameText.Text = "Script test"
+usernameText.Text = "@" .. player.Name
 usernameText.TextColor3 = Color3.fromRGB(120, 120, 120)
 usernameText.TextSize = 12
 usernameText.Font = Enum.Font.Gotham
