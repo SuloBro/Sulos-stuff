@@ -712,7 +712,7 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 				
 				wait(0.3)
 				
-				local carSpeed = hasGamepass and 450 or 380
+				local carSpeed = hasGamepass and 540 or 460
 				
 				for waypointIndex = 2, #WAYPOINTS do
 					if not autoFarmActive or not isPlayerSeated() then
