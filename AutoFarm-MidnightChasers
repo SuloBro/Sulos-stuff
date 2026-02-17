@@ -13,7 +13,14 @@ local GROUP_ID = 10612101
 local REQUIRED_RANK = 6
 local SHIRT_ID = 132268448125497
 local SHIRT_LINK = "https://www.roblox.com/catalog/132268448125497/PREMIUM-Support"
+local DISCORD_LINK = "https://discord.gg/pKQVm2P6B7"
 local hasGamepass = false
+
+local farmStartCash = 0
+local farmStartTime = 0
+local totalCashEarned = 0
+local lastCashAmount = 0
+local cashPerSecond = 0
 
 local WAYPOINTS = {
 	Vector3.new(-5900, -15, -4785),
@@ -26,6 +33,145 @@ local WAYPOINTS = {
     Vector3.new(-3887, -17, -5264),
     Vector3.new(-5870, -17, -4741)
 }
+
+local function createRoadSection(position, rotation)
+	local roadModel = Instance.new("Model")
+	roadModel.Name = "Road"
+	
+	local mainRoad = Instance.new("Part")
+	mainRoad.Name = "Road"
+	mainRoad.Size = Vector3.new(512, 1, 512)
+	mainRoad.CFrame = CFrame.new(position) * CFrame.Angles(0, math.rad(rotation), 0)
+	mainRoad.Anchored = true
+	mainRoad.CanCollide = true
+	mainRoad.Material = Enum.Material.Asphalt
+	mainRoad.Color = Color3.fromRGB(60, 60, 60)
+	mainRoad.Parent = roadModel
+	
+	for i = 1, 8 do
+		local stripe = Instance.new("Part")
+		stripe.Name = "Road_Mark"
+		stripe.Size = Vector3.new(8, 0.1, 60)
+		stripe.CFrame = mainRoad.CFrame * CFrame.new(-200 + (i * 50), 0.6, 0)
+		stripe.Anchored = true
+		stripe.CanCollide = false
+		stripe.Material = Enum.Material.SmoothPlastic
+		stripe.Color = Color3.fromRGB(255, 255, 255)
+		stripe.Parent = roadModel
+	end
+	
+	roadModel.Parent = workspace
+	return roadModel
+end
+
+local function createFarmRoad()
+	local minX, maxX = math.huge, -math.huge
+	local minZ, maxZ = math.huge, -math.huge
+	
+	for _, waypoint in ipairs(WAYPOINTS) do
+		minX = math.min(minX, waypoint.X)
+		maxX = math.max(maxX, waypoint.X)
+		minZ = math.min(minZ, waypoint.Z)
+		maxZ = math.max(maxZ, waypoint.Z)
+	end
+	
+	local centerX = (minX + maxX) / 2
+	local centerZ = (minZ + maxZ) / 2
+	local roadY = -17.5
+	
+	local sections = {
+		{x = centerX, z = centerZ, rot = 0},
+		{x = centerX - 512, z = centerZ, rot = 0},
+		{x = centerX + 512, z = centerZ, rot = 0},
+		{x = centerX, z = centerZ - 512, rot = 0},
+		{x = centerX, z = centerZ + 512, rot = 0},
+		{x = centerX - 512, z = centerZ - 512, rot = 0},
+		{x = centerX + 512, z = centerZ - 512, rot = 0},
+		{x = centerX - 512, z = centerZ + 512, rot = 0},
+		{x = centerX + 512, z = centerZ + 512, rot = 0},
+		{x = centerX - 1024, z = centerZ, rot = 0},
+		{x = centerX + 1024, z = centerZ, rot = 0},
+		{x = centerX, z = centerZ - 1024, rot = 0},
+		{x = centerX, z = centerZ + 1024, rot = 0},
+		{x = centerX - 1024, z = centerZ - 512, rot = 0},
+		{x = centerX + 1024, z = centerZ - 512, rot = 0},
+		{x = centerX - 1024, z = centerZ + 512, rot = 0},
+		{x = centerX + 1024, z = centerZ + 512, rot = 0},
+		{x = centerX - 512, z = centerZ - 1024, rot = 0},
+		{x = centerX + 512, z = centerZ - 1024, rot = 0},
+		{x = centerX - 512, z = centerZ + 1024, rot = 0},
+		{x = centerX + 512, z = centerZ + 1024, rot = 0},
+		{x = centerX - 1024, z = centerZ - 1024, rot = 0},
+		{x = centerX + 1024, z = centerZ - 1024, rot = 0},
+		{x = centerX - 1024, z = centerZ + 1024, rot = 0},
+		{x = centerX + 1024, z = centerZ + 1024, rot = 0},
+		{x = centerX - 1536, z = centerZ, rot = 0},
+		{x = centerX + 1536, z = centerZ, rot = 0},
+		{x = centerX, z = centerZ - 1536, rot = 0},
+		{x = centerX, z = centerZ + 1536, rot = 0},
+		{x = centerX - 1536, z = centerZ - 512, rot = 0},
+		{x = centerX + 1536, z = centerZ - 512, rot = 0},
+		{x = centerX - 1536, z = centerZ + 512, rot = 0},
+		{x = centerX + 1536, z = centerZ + 512, rot = 0},
+		{x = centerX - 512, z = centerZ - 1536, rot = 0},
+		{x = centerX + 512, z = centerZ - 1536, rot = 0},
+		{x = centerX - 512, z = centerZ + 1536, rot = 0},
+		{x = centerX + 512, z = centerZ + 1536, rot = 0},
+		{x = centerX - 1536, z = centerZ - 1024, rot = 0},
+		{x = centerX + 1536, z = centerZ - 1024, rot = 0},
+		{x = centerX - 1536, z = centerZ + 1024, rot = 0},
+		{x = centerX + 1536, z = centerZ + 1024, rot = 0},
+		{x = centerX - 1024, z = centerZ - 1536, rot = 0},
+		{x = centerX + 1024, z = centerZ - 1536, rot = 0},
+		{x = centerX - 1024, z = centerZ + 1536, rot = 0},
+		{x = centerX + 1024, z = centerZ + 1536, rot = 0},
+		{x = centerX - 1536, z = centerZ - 1536, rot = 0},
+		{x = centerX + 1536, z = centerZ - 1536, rot = 0},
+		{x = centerX - 1536, z = centerZ + 1536, rot = 0},
+		{x = centerX + 1536, z = centerZ + 1536, rot = 0},
+		{x = centerX - 2048, z = centerZ, rot = 0},
+		{x = centerX + 2048, z = centerZ, rot = 0},
+		{x = centerX, z = centerZ - 2048, rot = 0},
+		{x = centerX, z = centerZ + 2048, rot = 0},
+		{x = centerX - 2048, z = centerZ - 512, rot = 0},
+		{x = centerX + 2048, z = centerZ - 512, rot = 0},
+		{x = centerX - 2048, z = centerZ + 512, rot = 0},
+		{x = centerX + 2048, z = centerZ + 512, rot = 0},
+		{x = centerX - 512, z = centerZ - 2048, rot = 0},
+		{x = centerX + 512, z = centerZ - 2048, rot = 0},
+		{x = centerX - 512, z = centerZ + 2048, rot = 0},
+		{x = centerX + 512, z = centerZ + 2048, rot = 0},
+		{x = centerX - 2048, z = centerZ - 1024, rot = 0},
+		{x = centerX + 2048, z = centerZ - 1024, rot = 0},
+		{x = centerX - 2048, z = centerZ + 1024, rot = 0},
+		{x = centerX + 2048, z = centerZ + 1024, rot = 0},
+		{x = centerX - 1024, z = centerZ - 2048, rot = 0},
+		{x = centerX + 1024, z = centerZ - 2048, rot = 0},
+		{x = centerX - 1024, z = centerZ + 2048, rot = 0},
+		{x = centerX + 1024, z = centerZ + 2048, rot = 0},
+		{x = centerX - 2048, z = centerZ - 1536, rot = 0},
+		{x = centerX + 2048, z = centerZ - 1536, rot = 0},
+		{x = centerX - 2048, z = centerZ + 1536, rot = 0},
+		{x = centerX + 2048, z = centerZ + 1536, rot = 0},
+		{x = centerX - 1536, z = centerZ - 2048, rot = 0},
+		{x = centerX + 1536, z = centerZ - 2048, rot = 0},
+		{x = centerX - 1536, z = centerZ + 2048, rot = 0},
+		{x = centerX + 1536, z = centerZ + 2048, rot = 0},
+		{x = centerX - 2048, z = centerZ - 2048, rot = 0},
+		{x = centerX + 2048, z = centerZ - 2048, rot = 0},
+		{x = centerX - 2048, z = centerZ + 2048, rot = 0},
+		{x = centerX + 2048, z = centerZ + 2048, rot = 0},
+	}
+	
+	for _, section in ipairs(sections) do
+		createRoadSection(Vector3.new(section.x, roadY, section.z), section.rot)
+	end
+end
+
+spawn(function()
+	wait(0.5)
+	createFarmRoad()
+end)
 
 local function checkShirtOwnership()
 	local success, ownsShirt = pcall(function()
@@ -46,6 +192,262 @@ local function checkPremiumStatus()
 	local hasShirt = checkShirtOwnership()
 	hasGamepass = hasRank or hasShirt
 	return hasGamepass
+end
+
+local function setupUITracking()
+	local mainUI = player.PlayerGui:WaitForChild("Main_User_Interface")
+	local afkRewards = mainUI:WaitForChild("AFKRewards")
+	local cashEarnedImage = afkRewards:WaitForChild("CashEarned")
+	local cashEarnedLabel = cashEarnedImage:WaitForChild("Label")
+	local timeImage = afkRewards:WaitForChild("Time")
+	local timeLabel = timeImage:WaitForChild("Label")
+	
+	local uiFrame = mainUI:WaitForChild("UI_Frame")
+	local bottom = uiFrame:WaitForChild("Bottom")
+	local moneyButton = bottom:WaitForChild("Money")
+	local moneyLabel = moneyButton:WaitForChild("Money")
+	local teleportButton = bottom:WaitForChild("Teleport")
+	local rewardsButton = bottom:WaitForChild("Rewards")
+	local vipTrialButton = bottom:WaitForChild("VIPTrial")
+	local vipIcon = vipTrialButton:WaitForChild("Icon")
+	local vipLabel = vipTrialButton:WaitForChild("Label")
+	
+	afkRewards.Visible = false
+	
+	vipIcon.Image = "rbxassetid://7948857489"
+	vipLabel.Text = "Click to copy"
+	vipLabel.Visible = false
+	
+	vipTrialButton.MouseEnter:Connect(function()
+		vipLabel.Visible = true
+	end)
+	
+	vipTrialButton.MouseLeave:Connect(function()
+		vipLabel.Visible = false
+	end)
+	
+	vipTrialButton.MouseButton1Click:Connect(function()
+		if setclipboard then
+			setclipboard(DISCORD_LINK)
+		end
+		
+		local originalColor = vipIcon.ImageColor3
+		TweenService:Create(vipIcon, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(100, 255, 150)}):Play()
+		wait(0.5)
+		TweenService:Create(vipIcon, TweenInfo.new(0.3), {ImageColor3 = originalColor}):Play()
+	end)
+	
+	local perSecondLabel = Instance.new("TextLabel")
+	perSecondLabel.Name = "PerSecondEarnings"
+	perSecondLabel.Size = UDim2.new(0, 180, 0, 40)
+	perSecondLabel.Position = UDim2.new(0.5, -90, 0, -45)
+	perSecondLabel.BackgroundTransparency = 1
+	perSecondLabel.Text = "+$0/s"
+	perSecondLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
+	perSecondLabel.TextSize = 22
+	perSecondLabel.Font = Enum.Font.GothamBold
+	perSecondLabel.TextStrokeTransparency = 0.5
+	perSecondLabel.Visible = false
+	perSecondLabel.Parent = moneyButton
+	
+	return {
+		cashEarnedLabel = cashEarnedLabel,
+		timeLabel = timeLabel,
+		afkRewards = afkRewards,
+		perSecondLabel = perSecondLabel,
+		teleportButton = teleportButton,
+		rewardsButton = rewardsButton,
+		vipTrialButton = vipTrialButton
+	}
+end
+
+local function formatNumber(num)
+	local formatted = tostring(math.floor(num))
+	local k
+	while true do
+		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+		if k == 0 then
+			break
+		end
+	end
+	return formatted
+end
+
+local function getMilestoneGradient(amount)
+	if amount >= 15000000 then
+		return {
+			Color3.fromRGB(138, 43, 226),
+			Color3.fromRGB(75, 0, 130),
+			Color3.fromRGB(138, 43, 226)
+		}
+	elseif amount >= 10000000 then
+		return {
+			Color3.fromRGB(70, 130, 255),
+			Color3.fromRGB(30, 80, 200),
+			Color3.fromRGB(70, 130, 255)
+		}
+	elseif amount >= 5000000 then
+		return {
+			Color3.fromRGB(0, 191, 255),
+			Color3.fromRGB(0, 100, 200),
+			Color3.fromRGB(0, 191, 255)
+		}
+	elseif amount >= 2500000 then
+		return {
+			Color3.fromRGB(65, 105, 225),
+			Color3.fromRGB(25, 50, 150),
+			Color3.fromRGB(65, 105, 225)
+		}
+	elseif amount >= 1000000 then
+		return {
+			Color3.fromRGB(30, 144, 255),
+			Color3.fromRGB(0, 90, 180),
+			Color3.fromRGB(30, 144, 255)
+		}
+	elseif amount >= 750000 then
+		return {
+			Color3.fromRGB(70, 130, 220),
+			Color3.fromRGB(30, 80, 150),
+			Color3.fromRGB(70, 130, 220)
+		}
+	elseif amount >= 500000 then
+		return {
+			Color3.fromRGB(100, 149, 237),
+			Color3.fromRGB(50, 100, 180),
+			Color3.fromRGB(100, 149, 237)
+		}
+	elseif amount >= 250000 then
+		return {
+			Color3.fromRGB(135, 206, 250),
+			Color3.fromRGB(70, 130, 200),
+			Color3.fromRGB(135, 206, 250)
+		}
+	elseif amount >= 100000 then
+		return {
+			Color3.fromRGB(0, 150, 255),
+			Color3.fromRGB(0, 100, 200),
+			Color3.fromRGB(0, 150, 255)
+		}
+	elseif amount >= 50000 then
+		return {
+			Color3.fromRGB(100, 180, 255),
+			Color3.fromRGB(50, 120, 200),
+			Color3.fromRGB(100, 180, 255)
+		}
+	else
+		return nil
+	end
+end
+
+local currentMilestone = 0
+
+local function updateCashGradient(amount)
+	if not uiElements or not uiElements.cashEarnedLabel then return end
+	
+	local newMilestone = 0
+	if amount >= 15000000 then newMilestone = 15000000
+	elseif amount >= 10000000 then newMilestone = 10000000
+	elseif amount >= 5000000 then newMilestone = 5000000
+	elseif amount >= 2500000 then newMilestone = 2500000
+	elseif amount >= 1000000 then newMilestone = 1000000
+	elseif amount >= 750000 then newMilestone = 750000
+	elseif amount >= 500000 then newMilestone = 500000
+	elseif amount >= 250000 then newMilestone = 250000
+	elseif amount >= 100000 then newMilestone = 100000
+	elseif amount >= 50000 then newMilestone = 50000
+	end
+	
+	if newMilestone ~= currentMilestone then
+		currentMilestone = newMilestone
+		
+		local gradient = getMilestoneGradient(amount)
+		if gradient then
+			local existingGradient = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
+			if existingGradient then
+				existingGradient:Destroy()
+			end
+			
+			local newGradient = Instance.new("UIGradient")
+			newGradient.Name = "MilestoneGradient"
+			newGradient.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, gradient[1]),
+				ColorSequenceKeypoint.new(0.5, gradient[2]),
+				ColorSequenceKeypoint.new(1, gradient[3])
+			}
+			newGradient.Rotation = 0
+			newGradient.Parent = uiElements.cashEarnedLabel
+			
+			spawn(function()
+				while newGradient.Parent and autoFarmActive do
+					for rot = 0, 360, 2 do
+						if not newGradient.Parent or not autoFarmActive then break end
+						newGradient.Rotation = rot
+						wait(0.03)
+					end
+				end
+			end)
+		end
+	end
+end
+
+local uiElements = nil
+
+spawn(function()
+	wait(1)
+	uiElements = setupUITracking()
+end)
+
+local function formatTime(seconds)
+	local hours = math.floor(seconds / 3600)
+	local minutes = math.floor((seconds % 3600) / 60)
+	local secs = math.floor(seconds % 60)
+	return string.format("%02d:%02d:%02d", hours, minutes, secs)
+end
+
+local function updateCashEarned()
+	if not uiElements then return end
+	
+	local currentCash = player.leaderstats.Cash.Value
+	local earned = currentCash - farmStartCash
+	totalCashEarned = earned
+	
+	uiElements.cashEarnedLabel.Text = "$" .. formatNumber(earned)
+	updateCashGradient(earned)
+	
+	local popTween = TweenService:Create(uiElements.cashEarnedLabel, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+		TextSize = 22
+	})
+	popTween:Play()
+	wait(0.2)
+	TweenService:Create(uiElements.cashEarnedLabel, TweenInfo.new(0.2), {TextSize = 18}):Play()
+end
+
+local function updatePerSecondEarnings()
+	if not uiElements then return end
+	
+	local currentCash = player.leaderstats.Cash.Value
+	local cashDiff = currentCash - lastCashAmount
+	lastCashAmount = currentCash
+	
+	if cashDiff > 0 then
+		cashPerSecond = cashDiff
+		
+		local floatingLabel = uiElements.perSecondLabel:Clone()
+		floatingLabel.Text = "+$" .. formatNumber(cashDiff) .. "/s"
+		floatingLabel.Position = UDim2.new(0.5, -90, 0, -10)
+		floatingLabel.Visible = true
+		floatingLabel.Parent = uiElements.perSecondLabel.Parent
+		
+		local moveTween = TweenService:Create(floatingLabel, TweenInfo.new(1.5), {
+			Position = UDim2.new(0.5, -90, 0, -60),
+			TextTransparency = 1
+		})
+		moveTween:Play()
+		
+		moveTween.Completed:Connect(function()
+			floatingLabel:Destroy()
+		end)
+	end
 end
 
 local guiScreen = Instance.new("ScreenGui")
@@ -557,8 +959,10 @@ local function stabilizeCar(car)
 	end)
 end
 
-local function smoothNavigateToCar(car, targetPos, speed)
+local function smoothNavigateToCar(car, targetPos, maxSpeed)
 	local reachedTarget = false
+	local currentSpeed = maxSpeed * 0.4
+	local accelerationTime = 0
 	
 	while not reachedTarget and autoFarmActive and isPlayerSeated() do
 		if not car.Parent or not car.PrimaryPart then break end
@@ -571,9 +975,12 @@ local function smoothNavigateToCar(car, targetPos, speed)
 			break
 		end
 		
+		accelerationTime = accelerationTime + 0.05
+		currentSpeed = math.min(currentSpeed + (maxSpeed * 0.02), maxSpeed)
+		
 		local direction = (targetPos - currentPos).Unit
 		local currentVelocity = car.PrimaryPart.AssemblyLinearVelocity
-		local targetVelocity = direction * speed
+		local targetVelocity = direction * currentSpeed
 		
 		local smoothedVelocity = currentVelocity:Lerp(targetVelocity, 0.1)
 		car.PrimaryPart.AssemblyLinearVelocity = smoothedVelocity
@@ -602,6 +1009,20 @@ spawn(function()
 			autoFarmToggle.Text = "Start AutoFarm"
 			toggleStroke.Color = Color3.fromRGB(70, 140, 220)
 			statusText.Text = "Status: Stopped - Player left seat"
+			
+			if uiElements then
+				uiElements.afkRewards.Visible = false
+				uiElements.teleportButton.Visible = true
+				uiElements.rewardsButton.Visible = true
+				uiElements.vipTrialButton.Visible = false
+				
+				local existingGradient = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
+				if existingGradient then
+					existingGradient:Destroy()
+				end
+				currentMilestone = 0
+			end
+			
 			if carStabilizationConnection then
 				carStabilizationConnection:Disconnect()
 				carStabilizationConnection = nil
@@ -616,6 +1037,18 @@ spawn(function()
 		checkPremiumStatus()
 		if previousStatus ~= hasGamepass then
 			updatePremiumUI()
+		end
+	end
+end)
+
+spawn(function()
+	while wait(1) do
+		if autoFarmActive and uiElements then
+			local elapsedTime = tick() - farmStartTime
+			uiElements.timeLabel.Text = formatTime(elapsedTime)
+			
+			updateCashEarned()
+			updatePerSecondEarnings()
 		end
 	end
 end)
@@ -663,6 +1096,20 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 		toggleStroke.Color = Color3.fromRGB(100, 255, 150)
 		toggleGlow.ImageColor3 = Color3.fromRGB(100, 255, 150)
 		statusText.Text = "Status: Running"
+		
+		farmStartCash = player.leaderstats.Cash.Value
+		farmStartTime = tick()
+		lastCashAmount = farmStartCash
+		totalCashEarned = 0
+		
+		if uiElements then
+			uiElements.afkRewards.Visible = true
+			uiElements.cashEarnedLabel.Text = "$0"
+			uiElements.timeLabel.Text = "00:00:00"
+			uiElements.teleportButton.Visible = false
+			uiElements.rewardsButton.Visible = false
+			uiElements.vipTrialButton.Visible = true
+		end
 		
 		toggleGradient.Color = ColorSequence.new{
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 80, 40)),
@@ -743,6 +1190,19 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 		toggleStroke.Color = Color3.fromRGB(70, 140, 220)
 		toggleGlow.ImageColor3 = Color3.fromRGB(70, 140, 220)
 		statusText.Text = "Status: Stopped"
+		
+		if uiElements then
+			uiElements.afkRewards.Visible = false
+			uiElements.teleportButton.Visible = true
+			uiElements.rewardsButton.Visible = true
+			uiElements.vipTrialButton.Visible = false
+			
+			local existingGradient = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
+			if existingGradient then
+				existingGradient:Destroy()
+			end
+			currentMilestone = 0
+		end
 		
 		toggleGradient.Color = ColorSequence.new{
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 50)),
