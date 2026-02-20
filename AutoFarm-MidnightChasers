@@ -7,236 +7,269 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
+local IS_SALTFLATS = (game.PlaceId == 139048751758942)
 local GROUP_ID = 10612101
 local REQUIRED_RANK = 6
 local SHIRT_ID = 132268448125497
 local SHIRT_LINK = "https://www.roblox.com/catalog/132268448125497/PREMIUM-Support"
 local DISCORD_LINK = "https://discord.gg/pKQVm2P6B7"
+local SAVE_FILE = "SuloAutoFarm_Data.json"
 local hasGamepass = false
-
+local autoFarmActive = false
+local carStabilizationConnection = nil
+local uiElements = nil
+local currentMilestone = 0
 local farmStartCash = 0
 local farmStartTime = 0
 local totalCashEarned = 0
 local lastCashAmount = 0
 local cashPerSecond = 0
+local allTimeMoney = 0
+local longestAFKSeconds = 0
+local sessionStartAllTime = 0
 
-local WAYPOINTS = {
+local WAYPOINTS = IS_SALTFLATS and {
+	Vector3.new(3338, -9, 6035),
+	Vector3.new(3397, -6, 6105),
+	Vector3.new(2781, -6, 5214),
+	Vector3.new(599, 5, 1451),
+	Vector3.new(-1313, 5, -1092),
+	Vector3.new(-1893, 5, -1692),
+	Vector3.new(-15069, 5, -14868),
+	Vector3.new(-38681, 5, -38500),
+} or {
 	Vector3.new(-5900, -15, -4785),
 	Vector3.new(-3166, -17, -5388),
-    Vector3.new(-4832, -17, -4637),
-    Vector3.new(-5051, -17, -5411),
+	Vector3.new(-4832, -17, -4637),
+	Vector3.new(-5051, -17, -5411),
 	Vector3.new(-2906, -17, -5012),
-    Vector3.new(-5180, -17, -3967),
+	Vector3.new(-5180, -17, -3967),
 	Vector3.new(-5962, -17, -4379),
-    Vector3.new(-3887, -17, -5264),
-    Vector3.new(-5870, -17, -4741)
+	Vector3.new(-3887, -17, -5264),
+	Vector3.new(-5870, -17, -4741),
 }
 
-local function createRoadSection(position, rotation)
-	local roadModel = Instance.new("Model")
-	roadModel.Name = "Road"
-	
-	local mainRoad = Instance.new("Part")
-	mainRoad.Name = "Road"
-	mainRoad.Size = Vector3.new(512, 1, 512)
-	mainRoad.CFrame = CFrame.new(position) * CFrame.Angles(0, math.rad(rotation), 0)
-	mainRoad.Anchored = true
-	mainRoad.CanCollide = true
-	mainRoad.Material = Enum.Material.Asphalt
-	mainRoad.Color = Color3.fromRGB(60, 60, 60)
-	mainRoad.Parent = roadModel
-	
-	for i = 1, 8 do
-		local stripe = Instance.new("Part")
-		stripe.Name = "Road_Mark"
-		stripe.Size = Vector3.new(8, 0.1, 60)
-		stripe.CFrame = mainRoad.CFrame * CFrame.new(-200 + (i * 50), 0.6, 0)
-		stripe.Anchored = true
-		stripe.CanCollide = false
-		stripe.Material = Enum.Material.SmoothPlastic
-		stripe.Color = Color3.fromRGB(255, 255, 255)
-		stripe.Parent = roadModel
+local function loadData()
+	local success, result = pcall(readfile, SAVE_FILE)
+	if not success or not result then return end
+	local ok, data = pcall(HttpService.JSONDecode, HttpService, result)
+	if ok and data then
+		if data.allTime then allTimeMoney = data.allTime end
+		if data.longestAFK then longestAFKSeconds = data.longestAFK end
 	end
-	
-	roadModel.Parent = workspace
-	return roadModel
 end
 
-local function createFarmRoad()
-	local minX, maxX = math.huge, -math.huge
-	local minZ, maxZ = math.huge, -math.huge
-	
-	for _, waypoint in ipairs(WAYPOINTS) do
-		minX = math.min(minX, waypoint.X)
-		maxX = math.max(maxX, waypoint.X)
-		minZ = math.min(minZ, waypoint.Z)
-		maxZ = math.max(maxZ, waypoint.Z)
-	end
-	
-	local centerX = (minX + maxX) / 2
-	local centerZ = (minZ + maxZ) / 2
-	local roadY = -17.5
-	
-	local sections = {
-		{x = centerX, z = centerZ, rot = 0},
-		{x = centerX - 512, z = centerZ, rot = 0},
-		{x = centerX + 512, z = centerZ, rot = 0},
-		{x = centerX, z = centerZ - 512, rot = 0},
-		{x = centerX, z = centerZ + 512, rot = 0},
-		{x = centerX - 512, z = centerZ - 512, rot = 0},
-		{x = centerX + 512, z = centerZ - 512, rot = 0},
-		{x = centerX - 512, z = centerZ + 512, rot = 0},
-		{x = centerX + 512, z = centerZ + 512, rot = 0},
-		{x = centerX - 1024, z = centerZ, rot = 0},
-		{x = centerX + 1024, z = centerZ, rot = 0},
-		{x = centerX, z = centerZ - 1024, rot = 0},
-		{x = centerX, z = centerZ + 1024, rot = 0},
-		{x = centerX - 1024, z = centerZ - 512, rot = 0},
-		{x = centerX + 1024, z = centerZ - 512, rot = 0},
-		{x = centerX - 1024, z = centerZ + 512, rot = 0},
-		{x = centerX + 1024, z = centerZ + 512, rot = 0},
-		{x = centerX - 512, z = centerZ - 1024, rot = 0},
-		{x = centerX + 512, z = centerZ - 1024, rot = 0},
-		{x = centerX - 512, z = centerZ + 1024, rot = 0},
-		{x = centerX + 512, z = centerZ + 1024, rot = 0},
-		{x = centerX - 1024, z = centerZ - 1024, rot = 0},
-		{x = centerX + 1024, z = centerZ - 1024, rot = 0},
-		{x = centerX - 1024, z = centerZ + 1024, rot = 0},
-		{x = centerX + 1024, z = centerZ + 1024, rot = 0},
-		{x = centerX - 1536, z = centerZ, rot = 0},
-		{x = centerX + 1536, z = centerZ, rot = 0},
-		{x = centerX, z = centerZ - 1536, rot = 0},
-		{x = centerX, z = centerZ + 1536, rot = 0},
-		{x = centerX - 1536, z = centerZ - 512, rot = 0},
-		{x = centerX + 1536, z = centerZ - 512, rot = 0},
-		{x = centerX - 1536, z = centerZ + 512, rot = 0},
-		{x = centerX + 1536, z = centerZ + 512, rot = 0},
-		{x = centerX - 512, z = centerZ - 1536, rot = 0},
-		{x = centerX + 512, z = centerZ - 1536, rot = 0},
-		{x = centerX - 512, z = centerZ + 1536, rot = 0},
-		{x = centerX + 512, z = centerZ + 1536, rot = 0},
-		{x = centerX - 1536, z = centerZ - 1024, rot = 0},
-		{x = centerX + 1536, z = centerZ - 1024, rot = 0},
-		{x = centerX - 1536, z = centerZ + 1024, rot = 0},
-		{x = centerX + 1536, z = centerZ + 1024, rot = 0},
-		{x = centerX - 1024, z = centerZ - 1536, rot = 0},
-		{x = centerX + 1024, z = centerZ - 1536, rot = 0},
-		{x = centerX - 1024, z = centerZ + 1536, rot = 0},
-		{x = centerX + 1024, z = centerZ + 1536, rot = 0},
-		{x = centerX - 1536, z = centerZ - 1536, rot = 0},
-		{x = centerX + 1536, z = centerZ - 1536, rot = 0},
-		{x = centerX - 1536, z = centerZ + 1536, rot = 0},
-		{x = centerX + 1536, z = centerZ + 1536, rot = 0},
-		{x = centerX - 2048, z = centerZ, rot = 0},
-		{x = centerX + 2048, z = centerZ, rot = 0},
-		{x = centerX, z = centerZ - 2048, rot = 0},
-		{x = centerX, z = centerZ + 2048, rot = 0},
-		{x = centerX - 2048, z = centerZ - 512, rot = 0},
-		{x = centerX + 2048, z = centerZ - 512, rot = 0},
-		{x = centerX - 2048, z = centerZ + 512, rot = 0},
-		{x = centerX + 2048, z = centerZ + 512, rot = 0},
-		{x = centerX - 512, z = centerZ - 2048, rot = 0},
-		{x = centerX + 512, z = centerZ - 2048, rot = 0},
-		{x = centerX - 512, z = centerZ + 2048, rot = 0},
-		{x = centerX + 512, z = centerZ + 2048, rot = 0},
-		{x = centerX - 2048, z = centerZ - 1024, rot = 0},
-		{x = centerX + 2048, z = centerZ - 1024, rot = 0},
-		{x = centerX - 2048, z = centerZ + 1024, rot = 0},
-		{x = centerX + 2048, z = centerZ + 1024, rot = 0},
-		{x = centerX - 1024, z = centerZ - 2048, rot = 0},
-		{x = centerX + 1024, z = centerZ - 2048, rot = 0},
-		{x = centerX - 1024, z = centerZ + 2048, rot = 0},
-		{x = centerX + 1024, z = centerZ + 2048, rot = 0},
-		{x = centerX - 2048, z = centerZ - 1536, rot = 0},
-		{x = centerX + 2048, z = centerZ - 1536, rot = 0},
-		{x = centerX - 2048, z = centerZ + 1536, rot = 0},
-		{x = centerX + 2048, z = centerZ + 1536, rot = 0},
-		{x = centerX - 1536, z = centerZ - 2048, rot = 0},
-		{x = centerX + 1536, z = centerZ - 2048, rot = 0},
-		{x = centerX - 1536, z = centerZ + 2048, rot = 0},
-		{x = centerX + 1536, z = centerZ + 2048, rot = 0},
-		{x = centerX - 2048, z = centerZ - 2048, rot = 0},
-		{x = centerX + 2048, z = centerZ - 2048, rot = 0},
-		{x = centerX - 2048, z = centerZ + 2048, rot = 0},
-		{x = centerX + 2048, z = centerZ + 2048, rot = 0},
-	}
-	
-	for _, section in ipairs(sections) do
-		createRoadSection(Vector3.new(section.x, roadY, section.z), section.rot)
+local function saveData()
+	pcall(writefile, SAVE_FILE, HttpService:JSONEncode({
+		allTime = allTimeMoney,
+		longestAFK = longestAFKSeconds,
+	}))
+end
+
+loadData()
+
+local function disableCollision(model)
+	for _, desc in pairs(model:GetDescendants()) do
+		if desc:IsA("BasePart") then
+			desc.CanCollide = false
+		end
 	end
 end
+
+local function setupExistingVehicles()
+	local npc = workspace:FindFirstChild("NPCVehicles")
+	if not npc then return end
+	local vehicles = npc:FindFirstChild("Vehicles")
+	if not vehicles then return end
+	for _, v in pairs(vehicles:GetChildren()) do
+		if v:IsA("Model") or v:IsA("Folder") then
+			disableCollision(v)
+		end
+	end
+end
+
+local function monitorNewVehicles()
+	local npc = workspace:FindFirstChild("NPCVehicles")
+	if not npc then return end
+	local vehicles = npc:FindFirstChild("Vehicles")
+	if not vehicles then return end
+	vehicles.ChildAdded:Connect(function(child)
+		wait(0.1)
+		disableCollision(child)
+	end)
+end
+
+setupExistingVehicles()
+monitorNewVehicles()
 
 spawn(function()
-	wait(0.5)
-	createFarmRoad()
+	while wait(1) do
+		setupExistingVehicles()
+	end
 end)
 
-local function checkShirtOwnership()
-	local success, ownsShirt = pcall(function()
-		return MarketplaceService:PlayerOwnsAsset(player, SHIRT_ID)
+if not IS_SALTFLATS then
+	local function createRoadSection(position, rotation)
+		local roadModel = Instance.new("Model")
+		roadModel.Name = "Road"
+		local mainRoad = Instance.new("Part")
+		mainRoad.Name = "Road"
+		mainRoad.Size = Vector3.new(512, 1, 512)
+		mainRoad.CFrame = CFrame.new(position) * CFrame.Angles(0, math.rad(rotation), 0)
+		mainRoad.Anchored = true
+		mainRoad.CanCollide = true
+		mainRoad.Material = Enum.Material.Asphalt
+		mainRoad.Color = Color3.fromRGB(60, 60, 60)
+		mainRoad.Parent = roadModel
+		for i = 1, 8 do
+			local stripe = Instance.new("Part")
+			stripe.Size = Vector3.new(8, 0.1, 60)
+			stripe.CFrame = mainRoad.CFrame * CFrame.new(-200 + (i * 50), 0.6, 0)
+			stripe.Anchored = true
+			stripe.CanCollide = false
+			stripe.Material = Enum.Material.SmoothPlastic
+			stripe.Color = Color3.fromRGB(255, 255, 255)
+			stripe.Parent = roadModel
+		end
+		roadModel.Parent = workspace
+	end
+
+	spawn(function()
+		wait(0.5)
+		local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+		for _, wp in ipairs(WAYPOINTS) do
+			minX = math.min(minX, wp.X); maxX = math.max(maxX, wp.X)
+			minZ = math.min(minZ, wp.Z); maxZ = math.max(maxZ, wp.Z)
+		end
+		local cx, cz = (minX + maxX) / 2, (minZ + maxZ) / 2
+		for xo = -2, 2 do
+			for zo = -2, 2 do
+				createRoadSection(Vector3.new(cx + xo * 512, -17.5, cz + zo * 512), 0)
+			end
+		end
 	end)
-	return success and ownsShirt or false
+end
+
+local function checkShirtOwnership()
+	local ok, result = pcall(function() return MarketplaceService:PlayerOwnsAsset(player, SHIRT_ID) end)
+	return ok and result or false
 end
 
 local function checkGroupRank()
-	local success, rank = pcall(function()
-		return player:GetRankInGroup(GROUP_ID)
-	end)
-	return success and rank >= REQUIRED_RANK
+	local ok, rank = pcall(function() return player:GetRankInGroup(GROUP_ID) end)
+	return ok and rank >= REQUIRED_RANK
 end
 
 local function checkPremiumStatus()
-	local hasRank = checkGroupRank()
-	local hasShirt = checkShirtOwnership()
-	hasGamepass = hasRank or hasShirt
+	hasGamepass = checkGroupRank() or checkShirtOwnership()
 	return hasGamepass
+end
+
+local function formatNumber(num)
+	local f = tostring(math.floor(num))
+	local k
+	while true do
+		f, k = string.gsub(f, "^(-?%d+)(%d%d%d)", "%1,%2")
+		if k == 0 then break end
+	end
+	return f
+end
+
+local function formatAbbreviated(num)
+	if num >= 1000000000 then return string.format("%.1fB", num / 1000000000)
+	elseif num >= 1000000 then return string.format("%.1fM", num / 1000000)
+	elseif num >= 1000 then return string.format("%.1fK", num / 1000)
+	end
+	return tostring(math.floor(num))
+end
+
+local function formatTime(seconds)
+	local h = math.floor(seconds / 3600)
+	local m = math.floor((seconds % 3600) / 60)
+	local s = math.floor(seconds % 60)
+	return string.format("%02d:%02d:%02d", h, m, s)
+end
+
+local function getMilestoneGradient(amount)
+	if amount >= 15000000 then return { Color3.fromRGB(138, 43, 226), Color3.fromRGB(75, 0, 130), Color3.fromRGB(138, 43, 226) }
+	elseif amount >= 10000000 then return { Color3.fromRGB(70, 130, 255), Color3.fromRGB(30, 80, 200), Color3.fromRGB(70, 130, 255) }
+	elseif amount >= 5000000 then return { Color3.fromRGB(0, 191, 255), Color3.fromRGB(0, 100, 200), Color3.fromRGB(0, 191, 255) }
+	elseif amount >= 2500000 then return { Color3.fromRGB(65, 105, 225), Color3.fromRGB(25, 50, 150), Color3.fromRGB(65, 105, 225) }
+	elseif amount >= 1000000 then return { Color3.fromRGB(30, 144, 255), Color3.fromRGB(0, 90, 180), Color3.fromRGB(30, 144, 255) }
+	elseif amount >= 500000 then return { Color3.fromRGB(100, 149, 237), Color3.fromRGB(50, 100, 180), Color3.fromRGB(100, 149, 237) }
+	elseif amount >= 100000 then return { Color3.fromRGB(0, 150, 255), Color3.fromRGB(0, 100, 200), Color3.fromRGB(0, 150, 255) }
+	elseif amount >= 50000 then return { Color3.fromRGB(100, 180, 255), Color3.fromRGB(50, 120, 200), Color3.fromRGB(100, 180, 255) }
+	end
+	return nil
+end
+
+local function updateCashGradient(amount)
+	if not uiElements or not uiElements.cashEarnedLabel then return end
+	local newMilestone = 0
+	if amount >= 15000000 then newMilestone = 15000000
+	elseif amount >= 10000000 then newMilestone = 10000000
+	elseif amount >= 5000000 then newMilestone = 5000000
+	elseif amount >= 2500000 then newMilestone = 2500000
+	elseif amount >= 1000000 then newMilestone = 1000000
+	elseif amount >= 500000 then newMilestone = 500000
+	elseif amount >= 100000 then newMilestone = 100000
+	elseif amount >= 50000 then newMilestone = 50000
+	end
+	if newMilestone ~= currentMilestone then
+		currentMilestone = newMilestone
+		local gradient = getMilestoneGradient(amount)
+		if gradient then
+			local eg = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
+			if eg then eg:Destroy() end
+			local g = Instance.new("UIGradient")
+			g.Name = "MilestoneGradient"
+			g.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, gradient[1]),
+				ColorSequenceKeypoint.new(0.5, gradient[2]),
+				ColorSequenceKeypoint.new(1, gradient[3])
+			}
+			g.Rotation = 0
+			g.Parent = uiElements.cashEarnedLabel
+			spawn(function()
+				while g.Parent and autoFarmActive do
+					for rot = 0, 360, 2 do
+						if not g.Parent or not autoFarmActive then break end
+						g.Rotation = rot; wait(0.03)
+					end
+				end
+			end)
+		end
+	end
 end
 
 local function setupUITracking()
 	local mainUI = player.PlayerGui:WaitForChild("Main_User_Interface")
 	local afkRewards = mainUI:WaitForChild("AFKRewards")
-	local cashEarnedImage = afkRewards:WaitForChild("CashEarned")
-	local cashEarnedLabel = cashEarnedImage:WaitForChild("Label")
-	local timeImage = afkRewards:WaitForChild("Time")
-	local timeLabel = timeImage:WaitForChild("Label")
-	
-	local uiFrame = mainUI:WaitForChild("UI_Frame")
-	local bottom = uiFrame:WaitForChild("Bottom")
+	local cashEarnedLabel = afkRewards:WaitForChild("CashEarned"):WaitForChild("Label")
+	local timeLabel = afkRewards:WaitForChild("Time"):WaitForChild("Label")
+	local bottom = mainUI:WaitForChild("UI_Frame"):WaitForChild("Bottom")
 	local moneyButton = bottom:WaitForChild("Money")
-	local moneyLabel = moneyButton:WaitForChild("Money")
 	local teleportButton = bottom:WaitForChild("Teleport")
 	local rewardsButton = bottom:WaitForChild("Rewards")
 	local vipTrialButton = bottom:WaitForChild("VIPTrial")
 	local vipIcon = vipTrialButton:WaitForChild("Icon")
 	local vipLabel = vipTrialButton:WaitForChild("Label")
-	
 	afkRewards.Visible = false
-	
 	vipIcon.Image = "rbxassetid://7948857489"
 	vipLabel.Text = "Click to copy"
 	vipLabel.Visible = false
-	
-	vipTrialButton.MouseEnter:Connect(function()
-		vipLabel.Visible = true
-	end)
-	
-	vipTrialButton.MouseLeave:Connect(function()
-		vipLabel.Visible = false
-	end)
-	
+	vipTrialButton.MouseEnter:Connect(function() vipLabel.Visible = true end)
+	vipTrialButton.MouseLeave:Connect(function() vipLabel.Visible = false end)
 	vipTrialButton.MouseButton1Click:Connect(function()
-		if setclipboard then
-			setclipboard(DISCORD_LINK)
-		end
-		
-		local originalColor = vipIcon.ImageColor3
+		if setclipboard then setclipboard(DISCORD_LINK) end
+		local orig = vipIcon.ImageColor3
 		TweenService:Create(vipIcon, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(100, 255, 150)}):Play()
 		wait(0.5)
-		TweenService:Create(vipIcon, TweenInfo.new(0.3), {ImageColor3 = originalColor}):Play()
+		TweenService:Create(vipIcon, TweenInfo.new(0.3), {ImageColor3 = orig}):Play()
 	end)
-	
 	local perSecondLabel = Instance.new("TextLabel")
 	perSecondLabel.Name = "PerSecondEarnings"
 	perSecondLabel.Size = UDim2.new(0, 180, 0, 40)
@@ -249,7 +282,6 @@ local function setupUITracking()
 	perSecondLabel.TextStrokeTransparency = 0.5
 	perSecondLabel.Visible = false
 	perSecondLabel.Parent = moneyButton
-	
 	return {
 		cashEarnedLabel = cashEarnedLabel,
 		timeLabel = timeLabel,
@@ -257,196 +289,63 @@ local function setupUITracking()
 		perSecondLabel = perSecondLabel,
 		teleportButton = teleportButton,
 		rewardsButton = rewardsButton,
-		vipTrialButton = vipTrialButton
+		vipTrialButton = vipTrialButton,
 	}
 end
-
-local function formatNumber(num)
-	local formatted = tostring(math.floor(num))
-	local k
-	while true do
-		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
-		if k == 0 then
-			break
-		end
-	end
-	return formatted
-end
-
-local function getMilestoneGradient(amount)
-	if amount >= 15000000 then
-		return {
-			Color3.fromRGB(138, 43, 226),
-			Color3.fromRGB(75, 0, 130),
-			Color3.fromRGB(138, 43, 226)
-		}
-	elseif amount >= 10000000 then
-		return {
-			Color3.fromRGB(70, 130, 255),
-			Color3.fromRGB(30, 80, 200),
-			Color3.fromRGB(70, 130, 255)
-		}
-	elseif amount >= 5000000 then
-		return {
-			Color3.fromRGB(0, 191, 255),
-			Color3.fromRGB(0, 100, 200),
-			Color3.fromRGB(0, 191, 255)
-		}
-	elseif amount >= 2500000 then
-		return {
-			Color3.fromRGB(65, 105, 225),
-			Color3.fromRGB(25, 50, 150),
-			Color3.fromRGB(65, 105, 225)
-		}
-	elseif amount >= 1000000 then
-		return {
-			Color3.fromRGB(30, 144, 255),
-			Color3.fromRGB(0, 90, 180),
-			Color3.fromRGB(30, 144, 255)
-		}
-	elseif amount >= 750000 then
-		return {
-			Color3.fromRGB(70, 130, 220),
-			Color3.fromRGB(30, 80, 150),
-			Color3.fromRGB(70, 130, 220)
-		}
-	elseif amount >= 500000 then
-		return {
-			Color3.fromRGB(100, 149, 237),
-			Color3.fromRGB(50, 100, 180),
-			Color3.fromRGB(100, 149, 237)
-		}
-	elseif amount >= 250000 then
-		return {
-			Color3.fromRGB(135, 206, 250),
-			Color3.fromRGB(70, 130, 200),
-			Color3.fromRGB(135, 206, 250)
-		}
-	elseif amount >= 100000 then
-		return {
-			Color3.fromRGB(0, 150, 255),
-			Color3.fromRGB(0, 100, 200),
-			Color3.fromRGB(0, 150, 255)
-		}
-	elseif amount >= 50000 then
-		return {
-			Color3.fromRGB(100, 180, 255),
-			Color3.fromRGB(50, 120, 200),
-			Color3.fromRGB(100, 180, 255)
-		}
-	else
-		return nil
-	end
-end
-
-local currentMilestone = 0
-
-local function updateCashGradient(amount)
-	if not uiElements or not uiElements.cashEarnedLabel then return end
-	
-	local newMilestone = 0
-	if amount >= 15000000 then newMilestone = 15000000
-	elseif amount >= 10000000 then newMilestone = 10000000
-	elseif amount >= 5000000 then newMilestone = 5000000
-	elseif amount >= 2500000 then newMilestone = 2500000
-	elseif amount >= 1000000 then newMilestone = 1000000
-	elseif amount >= 750000 then newMilestone = 750000
-	elseif amount >= 500000 then newMilestone = 500000
-	elseif amount >= 250000 then newMilestone = 250000
-	elseif amount >= 100000 then newMilestone = 100000
-	elseif amount >= 50000 then newMilestone = 50000
-	end
-	
-	if newMilestone ~= currentMilestone then
-		currentMilestone = newMilestone
-		
-		local gradient = getMilestoneGradient(amount)
-		if gradient then
-			local existingGradient = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
-			if existingGradient then
-				existingGradient:Destroy()
-			end
-			
-			local newGradient = Instance.new("UIGradient")
-			newGradient.Name = "MilestoneGradient"
-			newGradient.Color = ColorSequence.new{
-				ColorSequenceKeypoint.new(0, gradient[1]),
-				ColorSequenceKeypoint.new(0.5, gradient[2]),
-				ColorSequenceKeypoint.new(1, gradient[3])
-			}
-			newGradient.Rotation = 0
-			newGradient.Parent = uiElements.cashEarnedLabel
-			
-			spawn(function()
-				while newGradient.Parent and autoFarmActive do
-					for rot = 0, 360, 2 do
-						if not newGradient.Parent or not autoFarmActive then break end
-						newGradient.Rotation = rot
-						wait(0.03)
-					end
-				end
-			end)
-		end
-	end
-end
-
-local uiElements = nil
 
 spawn(function()
 	wait(1)
 	uiElements = setupUITracking()
 end)
 
-local function formatTime(seconds)
-	local hours = math.floor(seconds / 3600)
-	local minutes = math.floor((seconds % 3600) / 60)
-	local secs = math.floor(seconds % 60)
-	return string.format("%02d:%02d:%02d", hours, minutes, secs)
+local allTimeLabel = nil
+local allTimeDetailLabel = nil
+local longestAFKLabel = nil
+
+local function updateAllTimeUI()
+	if allTimeLabel then
+		allTimeLabel.Text = "All-Time Money:  $" .. formatAbbreviated(allTimeMoney)
+	end
+	if allTimeDetailLabel then
+		allTimeDetailLabel.Text = "Exact: $" .. formatNumber(allTimeMoney)
+	end
+end
+
+local function updateLongestAFKUI()
+	if longestAFKLabel then
+		longestAFKLabel.Text = "Longest AFK:  " .. formatTime(longestAFKSeconds)
+	end
 end
 
 local function updateCashEarned()
 	if not uiElements then return end
-	
 	local currentCash = player.leaderstats.Cash.Value
-	local earned = currentCash - farmStartCash
+	local earned = math.max(0, currentCash - farmStartCash)
 	totalCashEarned = earned
-	
 	uiElements.cashEarnedLabel.Text = "$" .. formatNumber(earned)
 	updateCashGradient(earned)
-	
-	local popTween = TweenService:Create(uiElements.cashEarnedLabel, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-		TextSize = 22
-	})
-	popTween:Play()
+	TweenService:Create(uiElements.cashEarnedLabel, TweenInfo.new(0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {TextSize = 22}):Play()
 	wait(0.2)
 	TweenService:Create(uiElements.cashEarnedLabel, TweenInfo.new(0.2), {TextSize = 18}):Play()
 end
 
 local function updatePerSecondEarnings()
 	if not uiElements then return end
-	
 	local currentCash = player.leaderstats.Cash.Value
-	local cashDiff = currentCash - lastCashAmount
+	local diff = currentCash - lastCashAmount
 	lastCashAmount = currentCash
-	
-	if cashDiff > 0 then
-		cashPerSecond = cashDiff
-		
-		local floatingLabel = uiElements.perSecondLabel:Clone()
-		floatingLabel.Text = "+$" .. formatNumber(cashDiff) .. "/s"
-		floatingLabel.Position = UDim2.new(0.5, -90, 0, -10)
-		floatingLabel.Visible = true
-		floatingLabel.Parent = uiElements.perSecondLabel.Parent
-		
-		local moveTween = TweenService:Create(floatingLabel, TweenInfo.new(1.5), {
-			Position = UDim2.new(0.5, -90, 0, -60),
-			TextTransparency = 1
+	if diff > 0 then
+		cashPerSecond = diff
+		local fl = uiElements.perSecondLabel:Clone()
+		fl.Text = "+$" .. formatNumber(diff) .. "/s"
+		fl.Position = UDim2.new(0.5, -90, 0, -10)
+		fl.Visible = true
+		fl.Parent = uiElements.perSecondLabel.Parent
+		local mt = TweenService:Create(fl, TweenInfo.new(1.5), {
+			Position = UDim2.new(0.5, -90, 0, -60), TextTransparency = 1,
 		})
-		moveTween:Play()
-		
-		moveTween.Completed:Connect(function()
-			floatingLabel:Destroy()
-		end)
+		mt:Play()
+		mt.Completed:Connect(function() fl:Destroy() end)
 	end
 end
 
@@ -458,35 +357,82 @@ guiScreen.IgnoreGuiInset = true
 guiScreen.Parent = player.PlayerGui
 
 local guiFrame = Instance.new("Frame")
-guiFrame.Size = UDim2.new(0, 300, 0, 200)
-guiFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
-guiFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+guiFrame.Size = UDim2.new(0, 312, 0, 300)
+guiFrame.Position = UDim2.new(0.5, -156, 0.5, -150)
+guiFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
 guiFrame.BorderSizePixel = 0
 guiFrame.Parent = guiScreen
 
 local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 10)
+frameCorner.CornerRadius = UDim.new(0, 14)
 frameCorner.Parent = guiFrame
 
 local frameStroke = Instance.new("UIStroke")
-frameStroke.Color = Color3.fromRGB(60, 60, 60)
-frameStroke.Thickness = 2
+frameStroke.Color = Color3.fromRGB(44, 44, 50)
+frameStroke.Thickness = 1.5
 frameStroke.Parent = guiFrame
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -90, 0, 40)
-title.Position = UDim2.new(0, 10, 0, 10)
-title.BackgroundTransparency = 1
-title.Text = "Sulo's Auto Mechanics"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 20
-title.Font = Enum.Font.GothamBold
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = guiFrame
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -90, 0, 30)
+titleLabel.Position = UDim2.new(0, 12, 0, 10)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Sulo's Auto Mechanics"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 20
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = guiFrame
+
+local mapSubtitle = Instance.new("TextLabel")
+mapSubtitle.Size = UDim2.new(1, -20, 0, 22)
+mapSubtitle.Position = UDim2.new(0, 12, 0, 40)
+mapSubtitle.BackgroundTransparency = 1
+mapSubtitle.TextSize = 14
+mapSubtitle.Font = Enum.Font.GothamBold
+mapSubtitle.TextXAlignment = Enum.TextXAlignment.Left
+mapSubtitle.Parent = guiFrame
+
+if IS_SALTFLATS then
+	mapSubtitle.Text = "Current Map:  Boneville Salt Flats"
+	mapSubtitle.TextColor3 = Color3.fromRGB(215, 170, 80)
+	local dg = Instance.new("UIGradient")
+	dg.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(190, 135, 45)),
+		ColorSequenceKeypoint.new(0.35, Color3.fromRGB(255, 215, 100)),
+		ColorSequenceKeypoint.new(0.65, Color3.fromRGB(240, 185, 75)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(190, 135, 45))
+	}
+	dg.Offset = Vector2.new(-1, 0)
+	dg.Parent = mapSubtitle
+	spawn(function()
+		while mapSubtitle.Parent do
+			local t = TweenService:Create(dg, TweenInfo.new(2.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Offset = Vector2.new(1, 0)})
+			t:Play(); t.Completed:Wait(); dg.Offset = Vector2.new(-1, 0); wait(0.4)
+		end
+	end)
+else
+	mapSubtitle.Text = "Current Map:  Midnight Chasers Highway"
+	mapSubtitle.TextColor3 = Color3.fromRGB(100, 160, 255)
+	local cg = Instance.new("UIGradient")
+	cg.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 105, 215)),
+		ColorSequenceKeypoint.new(0.35, Color3.fromRGB(140, 195, 255)),
+		ColorSequenceKeypoint.new(0.65, Color3.fromRGB(95, 155, 250)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(55, 105, 215))
+	}
+	cg.Offset = Vector2.new(-1, 0)
+	cg.Parent = mapSubtitle
+	spawn(function()
+		while mapSubtitle.Parent do
+			local t = TweenService:Create(cg, TweenInfo.new(2.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Offset = Vector2.new(1, 0)})
+			t:Play(); t.Completed:Wait(); cg.Offset = Vector2.new(-1, 0); wait(0.4)
+		end
+	end)
+end
 
 local premiumButton = Instance.new("TextButton")
-premiumButton.Size = UDim2.new(0, 70, 0, 30)
-premiumButton.Position = UDim2.new(1, -80, 0, 15)
+premiumButton.Size = UDim2.new(0, 72, 0, 30)
+premiumButton.Position = UDim2.new(1, -82, 0, 12)
 premiumButton.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
 premiumButton.BorderSizePixel = 0
 premiumButton.Text = "2x Cash"
@@ -525,329 +471,173 @@ hoverTooltip.TextTransparency = 1
 hoverTooltip.Visible = false
 hoverTooltip.Parent = premiumButton
 
-spawn(function()
-	wait(1)
-	if hasGamepass then
-		premiumButton.Text = "Owned"
-		premiumButton.BackgroundColor3 = Color3.fromRGB(100, 255, 150)
-		premiumButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-		premiumStroke.Color = Color3.fromRGB(50, 200, 100)
-		premiumGradient.Color = ColorSequence.new{
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 255, 170)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 220, 130))
-		}
-	end
-end)
-
 premiumButton.MouseEnter:Connect(function()
 	if not hasGamepass then
 		hoverTooltip.Visible = true
-		local fadeInTween = TweenService:Create(hoverTooltip, TweenInfo.new(0.2), {TextTransparency = 0})
-		fadeInTween:Play()
+		TweenService:Create(hoverTooltip, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
 	end
-	
-	local hoverTween = TweenService:Create(premiumButton, TweenInfo.new(0.2), {
-		Size = UDim2.new(0, 75, 0, 33)
-	})
-	hoverTween:Play()
+	TweenService:Create(premiumButton, TweenInfo.new(0.2), {Size = UDim2.new(0, 77, 0, 33)}):Play()
 end)
 
 premiumButton.MouseLeave:Connect(function()
 	if not hasGamepass then
-		local fadeOutTween = TweenService:Create(hoverTooltip, TweenInfo.new(0.2), {TextTransparency = 1})
-		fadeOutTween:Play()
-		fadeOutTween.Completed:Connect(function()
-			hoverTooltip.Visible = false
-		end)
+		local fo = TweenService:Create(hoverTooltip, TweenInfo.new(0.2), {TextTransparency = 1})
+		fo:Play()
+		fo.Completed:Connect(function() hoverTooltip.Visible = false end)
 	end
-	
-	local unhoverTween = TweenService:Create(premiumButton, TweenInfo.new(0.2), {
-		Size = UDim2.new(0, 70, 0, 30)
-	})
-	unhoverTween:Play()
+	TweenService:Create(premiumButton, TweenInfo.new(0.2), {Size = UDim2.new(0, 72, 0, 30)}):Play()
 end)
 
 premiumButton.MouseButton1Click:Connect(function()
-	if hasGamepass then
-		return
-	end
-	
+	if hasGamepass then return end
 	local ripple = Instance.new("Frame")
-	ripple.Size = UDim2.new(0, 0, 0, 0)
-	ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
-	ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-	ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	ripple.BackgroundTransparency = 0.3
-	ripple.BorderSizePixel = 0
-	ripple.ZIndex = 10
-	ripple.Parent = premiumButton
-	
-	local rippleCorner = Instance.new("UICorner")
-	rippleCorner.CornerRadius = UDim.new(1, 0)
-	rippleCorner.Parent = ripple
-	
-	local rippleTween = TweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Size = UDim2.new(3, 0, 3, 0),
-		BackgroundTransparency = 1
+	ripple.Size = UDim2.new(0, 0, 0, 0); ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
+	ripple.AnchorPoint = Vector2.new(0.5, 0.5); ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	ripple.BackgroundTransparency = 0.3; ripple.BorderSizePixel = 0; ripple.ZIndex = 10; ripple.Parent = premiumButton
+	local rc = Instance.new("UICorner"); rc.CornerRadius = UDim.new(1, 0); rc.Parent = ripple
+	local rt = TweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = UDim2.new(3, 0, 3, 0), BackgroundTransparency = 1,
 	})
-	rippleTween:Play()
-	
-	rippleTween.Completed:Connect(function()
-		ripple:Destroy()
-	end)
-	
-	if setclipboard then
-		setclipboard(SHIRT_LINK)
-	end
-	
-	local copyNotification = Instance.new("ScreenGui")
-	copyNotification.Name = "CopyNotification"
-	copyNotification.DisplayOrder = 100000
-	copyNotification.IgnoreGuiInset = true
-	copyNotification.Parent = player.PlayerGui
-	
-	local copyFrame = Instance.new("Frame")
-	copyFrame.Size = UDim2.new(0, 0, 0, 0)
-	copyFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-	copyFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-	copyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	copyFrame.BorderSizePixel = 0
-	copyFrame.Parent = copyNotification
-	
-	local copyCorner = Instance.new("UICorner")
-	copyCorner.CornerRadius = UDim.new(0, 12)
-	copyCorner.Parent = copyFrame
-	
-	local copyStroke = Instance.new("UIStroke")
-	copyStroke.Color = Color3.fromRGB(255, 215, 0)
-	copyStroke.Thickness = 2.5
-	copyStroke.Transparency = 0.3
-	copyStroke.Parent = copyFrame
-	
-	local copyGlow = Instance.new("ImageLabel")
-	copyGlow.Size = UDim2.new(1, 50, 1, 50)
-	copyGlow.Position = UDim2.new(0, -25, 0, -25)
-	copyGlow.BackgroundTransparency = 1
-	copyGlow.Image = "rbxassetid://5028857084"
-	copyGlow.ImageColor3 = Color3.fromRGB(255, 215, 0)
-	copyGlow.ImageTransparency = 0.8
-	copyGlow.ScaleType = Enum.ScaleType.Slice
-	copyGlow.SliceCenter = Rect.new(24, 24, 276, 276)
-	copyGlow.ZIndex = 0
-	copyGlow.Parent = copyFrame
-	
-	local copyText = Instance.new("TextLabel")
-	copyText.Size = UDim2.new(1, -30, 1, -30)
-	copyText.Position = UDim2.new(0, 15, 0, 15)
-	copyText.BackgroundTransparency = 1
-	copyText.Text = "Link copied to clipboard!\nPaste in browser"
-	copyText.TextColor3 = Color3.fromRGB(255, 255, 255)
-	copyText.TextSize = 20
-	copyText.Font = Enum.Font.GothamBold
-	copyText.TextWrapped = true
-	copyText.Parent = copyFrame
-	
-	local expandTween = TweenService:Create(copyFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 380, 0, 90)
-	})
-	expandTween:Play()
-	
+	rt:Play(); rt.Completed:Connect(function() ripple:Destroy() end)
+	if setclipboard then setclipboard(SHIRT_LINK) end
+	local cn = Instance.new("ScreenGui")
+	cn.Name = "CopyNotification"; cn.DisplayOrder = 100000; cn.IgnoreGuiInset = true; cn.Parent = player.PlayerGui
+	local cf = Instance.new("Frame")
+	cf.Size = UDim2.new(0, 0, 0, 0); cf.Position = UDim2.new(0.5, 0, 0.5, 0)
+	cf.AnchorPoint = Vector2.new(0.5, 0.5); cf.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+	cf.BorderSizePixel = 0; cf.Parent = cn
+	local cc = Instance.new("UICorner"); cc.CornerRadius = UDim.new(0, 12); cc.Parent = cf
+	local cs = Instance.new("UIStroke"); cs.Color = Color3.fromRGB(255, 215, 0); cs.Thickness = 2; cs.Parent = cf
+	local ct = Instance.new("TextLabel")
+	ct.Size = UDim2.new(1, -30, 1, -30); ct.Position = UDim2.new(0, 15, 0, 15)
+	ct.BackgroundTransparency = 1; ct.Text = "Link copied!\nPaste in browser"
+	ct.TextColor3 = Color3.fromRGB(255, 255, 255); ct.TextSize = 20
+	ct.Font = Enum.Font.GothamBold; ct.TextWrapped = true; ct.Parent = cf
+	TweenService:Create(cf, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 320, 0, 85)}):Play()
 	wait(3)
-	
-	local shrinkTween = TweenService:Create(copyFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-		Size = UDim2.new(0, 0, 0, 0)
-	})
-	shrinkTween:Play()
-	
-	wait(0.3)
-	copyNotification:Destroy()
+	local sh = TweenService:Create(cf, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)})
+	sh:Play(); wait(0.3); cn:Destroy()
 end)
 
+local div1 = Instance.new("Frame")
+div1.Size = UDim2.new(1, -24, 0, 1); div1.Position = UDim2.new(0, 12, 0, 68)
+div1.BackgroundColor3 = Color3.fromRGB(36, 36, 42); div1.BorderSizePixel = 0; div1.Parent = guiFrame
+
 local statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(1, -20, 0, 30)
-statusText.Position = UDim2.new(0, 10, 0, 55)
+statusText.Size = UDim2.new(1, -20, 0, 20)
+statusText.Position = UDim2.new(0, 12, 0, 76)
 statusText.BackgroundTransparency = 1
-statusText.Text = "Status: Ready"
-statusText.TextColor3 = Color3.fromRGB(200, 200, 200)
+statusText.Text = "Status:  Ready"
+statusText.TextColor3 = Color3.fromRGB(175, 175, 175)
 statusText.TextSize = 14
-statusText.Font = Enum.Font.Gotham
+statusText.Font = Enum.Font.GothamMedium
 statusText.TextXAlignment = Enum.TextXAlignment.Left
 statusText.Parent = guiFrame
 
-local playerIcon = Instance.new("ImageLabel")
-playerIcon.Size = UDim2.new(0, 30, 0, 30)
-playerIcon.Position = UDim2.new(1, -40, 1, -40)
-playerIcon.BackgroundTransparency = 1
-playerIcon.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. player.UserId .. "&width=150&height=150&format=png"
-playerIcon.Parent = guiFrame
+local accentA = IS_SALTFLATS and Color3.fromRGB(195, 145, 48) or Color3.fromRGB(80, 140, 230)
+local accentB = IS_SALTFLATS and Color3.fromRGB(255, 215, 100) or Color3.fromRGB(150, 210, 255)
 
-local iconCorner = Instance.new("UICorner")
-iconCorner.CornerRadius = UDim.new(1, 0)
-iconCorner.Parent = playerIcon
+local allTimeFrame = Instance.new("Frame")
+allTimeFrame.Size = UDim2.new(1, -20, 0, 22)
+allTimeFrame.Position = UDim2.new(0, 12, 0, 100)
+allTimeFrame.BackgroundTransparency = 1
+allTimeFrame.Parent = guiFrame
 
-local iconStroke = Instance.new("UIStroke")
-iconStroke.Color = Color3.fromRGB(60, 60, 60)
-iconStroke.Thickness = 2
-iconStroke.Parent = playerIcon
+allTimeLabel = Instance.new("TextLabel")
+allTimeLabel.Size = UDim2.new(1, 0, 1, 0)
+allTimeLabel.BackgroundTransparency = 1
+allTimeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+allTimeLabel.TextSize = 14
+allTimeLabel.Font = Enum.Font.GothamBold
+allTimeLabel.TextXAlignment = Enum.TextXAlignment.Left
+allTimeLabel.Parent = allTimeFrame
 
-local usernameText = Instance.new("TextLabel")
-usernameText.Size = UDim2.new(1, -80, 0, 20)
-usernameText.Position = UDim2.new(0, 10, 1, -30)
-usernameText.BackgroundTransparency = 1
-usernameText.Text = "@" .. player.Name
-usernameText.TextColor3 = Color3.fromRGB(120, 120, 120)
-usernameText.TextSize = 12
-usernameText.Font = Enum.Font.Gotham
-usernameText.TextXAlignment = Enum.TextXAlignment.Left
-usernameText.Parent = guiFrame
-
-local premiumDiamond = Instance.new("ImageLabel")
-premiumDiamond.Size = UDim2.new(0, 16, 0, 16)
-premiumDiamond.Position = UDim2.new(0, -20, 0.5, -8)
-premiumDiamond.BackgroundTransparency = 1
-premiumDiamond.Image = "rbxassetid://14915516955"
-premiumDiamond.ImageColor3 = Color3.fromRGB(100, 200, 255)
-premiumDiamond.Visible = false
-premiumDiamond.Parent = usernameText
-
-local function updatePremiumUI()
-	if hasGamepass then
-		statusText.Text = "Status: Premium Active"
-		statusText.TextColor3 = Color3.fromRGB(100, 255, 150)
-		
-		usernameText.TextColor3 = Color3.fromRGB(255, 255, 255)
-		premiumDiamond.Visible = true
-		
-		iconStroke.Color = Color3.fromRGB(100, 200, 255)
-		
-		premiumButton.Text = "Owned"
-		premiumButton.BackgroundColor3 = Color3.fromRGB(100, 255, 150)
-		premiumButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-		premiumStroke.Color = Color3.fromRGB(50, 200, 100)
-		premiumGradient.Color = ColorSequence.new{
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 255, 170)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 220, 130))
-		}
-		
-		if not usernameText:FindFirstChild("UIGradient") then
-			local usernameGradient = Instance.new("UIGradient")
-			usernameGradient.Color = ColorSequence.new{
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 150, 255)),
-				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 200, 255)),
-				ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 150, 255))
-			}
-			usernameGradient.Offset = Vector2.new(-1, 0)
-			usernameGradient.Parent = usernameText
-			
-			spawn(function()
-				while usernameText.Parent and hasGamepass do
-					local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Circular, Enum.EasingDirection.Out)
-					local tween = TweenService:Create(usernameGradient, tweenInfo, {Offset = Vector2.new(1, 0)})
-					
-					tween:Play()
-					tween.Completed:Wait()
-					usernameGradient.Offset = Vector2.new(-1, 0)
-					tween:Play()
-					tween.Completed:Wait()
-					usernameGradient.Offset = Vector2.new(-1, 0)
-					wait(2.5)
-				end
-			end)
-		end
-		
-		spawn(function()
-			while premiumDiamond.Visible and premiumDiamond.Parent do
-				for i = 0, 360, 3 do
-					if not premiumDiamond.Visible or not premiumDiamond.Parent then break end
-					premiumDiamond.Rotation = i
-					wait(0.02)
-				end
-			end
-		end)
-	else
-		statusText.Text = "Status: Standard Mode"
-		statusText.TextColor3 = Color3.fromRGB(200, 200, 200)
-		premiumDiamond.Visible = false
-		iconStroke.Color = Color3.fromRGB(60, 60, 60)
-	end
-end
+local ag = Instance.new("UIGradient")
+ag.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, accentA),
+	ColorSequenceKeypoint.new(0.5, accentB),
+	ColorSequenceKeypoint.new(1, accentA)
+}
+ag.Offset = Vector2.new(-1, 0)
+ag.Parent = allTimeLabel
 
 spawn(function()
-	wait(1)
-	checkPremiumStatus()
-	updatePremiumUI()
-	
-	local tipNotification = Instance.new("ScreenGui")
-	tipNotification.Name = "TipNotification"
-	tipNotification.DisplayOrder = 100000
-	tipNotification.IgnoreGuiInset = true
-	tipNotification.Parent = player.PlayerGui
-	
-	local tipFrame = Instance.new("Frame")
-	tipFrame.Size = UDim2.new(0, 0, 0, 0)
-	tipFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-	tipFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-	tipFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	tipFrame.BorderSizePixel = 0
-	tipFrame.Parent = tipNotification
-	
-	local tipCorner = Instance.new("UICorner")
-	tipCorner.CornerRadius = UDim.new(0, 15)
-	tipCorner.Parent = tipFrame
-	
-	local tipStroke = Instance.new("UIStroke")
-	tipStroke.Color = Color3.fromRGB(100, 200, 255)
-	tipStroke.Thickness = 3
-	tipStroke.Transparency = 0.3
-	tipStroke.Parent = tipFrame
-	
-	local tipGlow = Instance.new("ImageLabel")
-	tipGlow.Size = UDim2.new(1, 60, 1, 60)
-	tipGlow.Position = UDim2.new(0, -30, 0, -30)
-	tipGlow.BackgroundTransparency = 1
-	tipGlow.Image = "rbxassetid://5028857084"
-	tipGlow.ImageColor3 = Color3.fromRGB(100, 200, 255)
-	tipGlow.ImageTransparency = 0.8
-	tipGlow.ScaleType = Enum.ScaleType.Slice
-	tipGlow.SliceCenter = Rect.new(24, 24, 276, 276)
-	tipGlow.ZIndex = 0
-	tipGlow.Parent = tipFrame
-	
-	local tipText = Instance.new("TextLabel")
-	tipText.Size = UDim2.new(1, -40, 1, -40)
-	tipText.Position = UDim2.new(0, 20, 0, 20)
-	tipText.BackgroundTransparency = 1
-	tipText.Text = "Enable Traffic for more CASH!\n(Settings)"
-	tipText.TextColor3 = Color3.fromRGB(255, 255, 255)
-	tipText.TextSize = 28
-	tipText.Font = Enum.Font.FredokaOne
-	tipText.TextWrapped = true
-	tipText.Parent = tipFrame
-	
-	local expandTween = TweenService:Create(tipFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 500, 0, 120)
-	})
-	expandTween:Play()
-	
-	wait(4)
-	
-	local shrinkTween = TweenService:Create(tipFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-		Size = UDim2.new(0, 0, 0, 0)
-	})
-	shrinkTween:Play()
-	
-	wait(0.4)
-	tipNotification:Destroy()
+	while allTimeLabel.Parent do
+		local t = TweenService:Create(ag, TweenInfo.new(2.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Offset = Vector2.new(1, 0)})
+		t:Play(); t.Completed:Wait(); ag.Offset = Vector2.new(-1, 0); wait(0.5)
+	end
 end)
 
+allTimeDetailLabel = Instance.new("TextLabel")
+allTimeDetailLabel.Size = UDim2.new(1, 0, 1, 0)
+allTimeDetailLabel.BackgroundTransparency = 1
+allTimeDetailLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
+allTimeDetailLabel.TextSize = 13
+allTimeDetailLabel.Font = Enum.Font.Gotham
+allTimeDetailLabel.TextXAlignment = Enum.TextXAlignment.Left
+allTimeDetailLabel.TextTransparency = 1
+allTimeDetailLabel.Parent = allTimeFrame
+
+allTimeFrame.MouseEnter:Connect(function()
+	TweenService:Create(allTimeLabel, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+	TweenService:Create(allTimeDetailLabel, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+end)
+
+allTimeFrame.MouseLeave:Connect(function()
+	TweenService:Create(allTimeLabel, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+	TweenService:Create(allTimeDetailLabel, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+end)
+
+local longestFrame = Instance.new("Frame")
+longestFrame.Size = UDim2.new(1, -20, 0, 22)
+longestFrame.Position = UDim2.new(0, 12, 0, 124)
+longestFrame.BackgroundTransparency = 1
+longestFrame.Parent = guiFrame
+
+longestAFKLabel = Instance.new("TextLabel")
+longestAFKLabel.Size = UDim2.new(1, 0, 1, 0)
+longestAFKLabel.BackgroundTransparency = 1
+longestAFKLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+longestAFKLabel.TextSize = 14
+longestAFKLabel.Font = Enum.Font.GothamMedium
+longestAFKLabel.TextXAlignment = Enum.TextXAlignment.Left
+longestAFKLabel.Parent = longestFrame
+
+local lg = Instance.new("UIGradient")
+lg.Color = IS_SALTFLATS and ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(155, 125, 65)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 165, 90)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(155, 125, 65))
+} or ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(65, 115, 185)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(105, 160, 230)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(65, 115, 185))
+}
+lg.Offset = Vector2.new(-1, 0)
+lg.Parent = longestAFKLabel
+
+spawn(function()
+	while longestAFKLabel.Parent do
+		local t = TweenService:Create(lg, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Offset = Vector2.new(1, 0)})
+		t:Play(); t.Completed:Wait(); lg.Offset = Vector2.new(-1, 0); wait(0.5)
+	end
+end)
+
+updateAllTimeUI()
+updateLongestAFKUI()
+
+local div2 = Instance.new("Frame")
+div2.Size = UDim2.new(1, -24, 0, 1); div2.Position = UDim2.new(0, 12, 0, 152)
+div2.BackgroundColor3 = Color3.fromRGB(36, 36, 42); div2.BorderSizePixel = 0; div2.Parent = guiFrame
+
 local autoFarmToggle = Instance.new("TextButton")
-autoFarmToggle.Size = UDim2.new(1, -20, 0, 55)
-autoFarmToggle.Position = UDim2.new(0, 10, 0, 95)
+autoFarmToggle.Size = UDim2.new(1, -20, 0, 58)
+autoFarmToggle.Position = UDim2.new(0, 10, 0, 160)
 autoFarmToggle.Text = "Start AutoFarm"
 autoFarmToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoFarmToggle.TextSize = 18
+autoFarmToggle.TextSize = 19
 autoFarmToggle.Font = Enum.Font.GothamBold
-autoFarmToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+autoFarmToggle.BackgroundColor3 = Color3.fromRGB(42, 42, 46)
 autoFarmToggle.BorderSizePixel = 0
 autoFarmToggle.ClipsDescendants = true
 autoFarmToggle.Parent = guiFrame
@@ -858,8 +648,8 @@ toggleCorner.Parent = autoFarmToggle
 
 local toggleGradient = Instance.new("UIGradient")
 toggleGradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 50)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 35))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(52, 52, 57)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(32, 32, 36))
 }
 toggleGradient.Rotation = 90
 toggleGradient.Parent = autoFarmToggle
@@ -885,76 +675,209 @@ toggleGlow.Parent = autoFarmToggle
 
 spawn(function()
 	while autoFarmToggle.Parent do
-		local pulseTween = TweenService:Create(toggleGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.7})
-		pulseTween:Play()
+		TweenService:Create(toggleGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.7}):Play()
 		wait(2)
-		local pulseTween2 = TweenService:Create(toggleGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.85})
-		pulseTween2:Play()
+		TweenService:Create(toggleGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.85}):Play()
 		wait(2)
 	end
 end)
 
 autoFarmToggle.MouseEnter:Connect(function()
-	local hoverTween = TweenService:Create(autoFarmToggle, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-		Size = UDim2.new(1, -16, 0, 58)
-	})
-	hoverTween:Play()
-	
-	local strokeTween = TweenService:Create(toggleStroke, TweenInfo.new(0.3), {Transparency = 0, Thickness = 3})
-	strokeTween:Play()
-	
-	local glowTween = TweenService:Create(toggleGlow, TweenInfo.new(0.3), {ImageTransparency = 0.5})
-	glowTween:Play()
+	TweenService:Create(autoFarmToggle, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {Size = UDim2.new(1, -16, 0, 62)}):Play()
+	TweenService:Create(toggleStroke, TweenInfo.new(0.3), {Transparency = 0, Thickness = 3}):Play()
+	TweenService:Create(toggleGlow, TweenInfo.new(0.3), {ImageTransparency = 0.5}):Play()
 end)
 
 autoFarmToggle.MouseLeave:Connect(function()
-	local unhoverTween = TweenService:Create(autoFarmToggle, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-		Size = UDim2.new(1, -20, 0, 55)
-	})
-	unhoverTween:Play()
-	
-	local strokeTween = TweenService:Create(toggleStroke, TweenInfo.new(0.3), {Transparency = 0.3, Thickness = 2.5})
-	strokeTween:Play()
-	
-	local glowTween = TweenService:Create(toggleGlow, TweenInfo.new(0.3), {ImageTransparency = 0.85})
-	glowTween:Play()
+	TweenService:Create(autoFarmToggle, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {Size = UDim2.new(1, -20, 0, 58)}):Play()
+	TweenService:Create(toggleStroke, TweenInfo.new(0.3), {Transparency = 0.3, Thickness = 2.5}):Play()
+	TweenService:Create(toggleGlow, TweenInfo.new(0.3), {ImageTransparency = 0.85}):Play()
 end)
 
-local autoFarmActive = false
-local carStabilizationConnection = nil
+local div3 = Instance.new("Frame")
+div3.Size = UDim2.new(1, -24, 0, 1); div3.Position = UDim2.new(0, 12, 0, 226)
+div3.BackgroundColor3 = Color3.fromRGB(36, 36, 42); div3.BorderSizePixel = 0; div3.Parent = guiFrame
+
+local playerIcon = Instance.new("ImageLabel")
+playerIcon.Size = UDim2.new(0, 40, 0, 40)
+playerIcon.Position = UDim2.new(1, -52, 1, -52)
+playerIcon.BackgroundTransparency = 1
+playerIcon.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. player.UserId .. "&width=150&height=150&format=png"
+playerIcon.Parent = guiFrame
+
+local iconCorner = Instance.new("UICorner")
+iconCorner.CornerRadius = UDim.new(1, 0)
+iconCorner.Parent = playerIcon
+
+local iconStroke = Instance.new("UIStroke")
+iconStroke.Color = Color3.fromRGB(60, 60, 60)
+iconStroke.Thickness = 2
+iconStroke.Parent = playerIcon
+
+local usernameText = Instance.new("TextLabel")
+usernameText.Size = UDim2.new(1, -85, 0, 22)
+usernameText.Position = UDim2.new(0, 12, 1, -48)
+usernameText.BackgroundTransparency = 1
+usernameText.Text = "@" .. player.Name
+usernameText.TextColor3 = Color3.fromRGB(135, 135, 135)
+usernameText.TextSize = 15
+usernameText.Font = Enum.Font.GothamMedium
+usernameText.TextXAlignment = Enum.TextXAlignment.Left
+usernameText.Parent = guiFrame
+
+local premiumDiamond = Instance.new("ImageLabel")
+premiumDiamond.Size = UDim2.new(0, 16, 0, 16)
+premiumDiamond.Position = UDim2.new(0, -20, 0.5, -8)
+premiumDiamond.BackgroundTransparency = 1
+premiumDiamond.Image = "rbxassetid://14915516955"
+premiumDiamond.ImageColor3 = Color3.fromRGB(100, 200, 255)
+premiumDiamond.Visible = false
+premiumDiamond.Parent = usernameText
+
+local function updatePremiumUI()
+	if hasGamepass then
+		statusText.TextColor3 = Color3.fromRGB(100, 255, 150)
+		usernameText.TextColor3 = Color3.fromRGB(255, 255, 255)
+		premiumDiamond.Visible = true
+		iconStroke.Color = Color3.fromRGB(100, 200, 255)
+		premiumButton.Text = "Owned"
+		premiumButton.BackgroundColor3 = Color3.fromRGB(100, 255, 150)
+		premiumButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+		premiumStroke.Color = Color3.fromRGB(50, 200, 100)
+		premiumGradient.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 255, 170)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 220, 130))
+		}
+		if not usernameText:FindFirstChild("UIGradient") then
+			local ug = Instance.new("UIGradient")
+			ug.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 150, 255)),
+				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 200, 255)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 150, 255))
+			}
+			ug.Offset = Vector2.new(-1, 0)
+			ug.Parent = usernameText
+			spawn(function()
+				while usernameText.Parent and hasGamepass do
+					local t = TweenService:Create(ug, TweenInfo.new(1, Enum.EasingStyle.Circular, Enum.EasingDirection.Out), {Offset = Vector2.new(1, 0)})
+					t:Play(); t.Completed:Wait(); ug.Offset = Vector2.new(-1, 0)
+					t:Play(); t.Completed:Wait(); ug.Offset = Vector2.new(-1, 0); wait(2.5)
+				end
+			end)
+		end
+		spawn(function()
+			while premiumDiamond.Visible and premiumDiamond.Parent do
+				for i = 0, 360, 3 do
+					if not premiumDiamond.Visible or not premiumDiamond.Parent then break end
+					premiumDiamond.Rotation = i; wait(0.02)
+				end
+			end
+		end)
+	else
+		statusText.TextColor3 = Color3.fromRGB(175, 175, 175)
+		premiumDiamond.Visible = false
+		iconStroke.Color = Color3.fromRGB(60, 60, 60)
+	end
+end
+
+spawn(function()
+	wait(1)
+	checkPremiumStatus()
+	updatePremiumUI()
+	if hasGamepass then
+		premiumButton.Text = "Owned"
+		premiumButton.BackgroundColor3 = Color3.fromRGB(100, 255, 150)
+		premiumButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+		premiumStroke.Color = Color3.fromRGB(50, 200, 100)
+		premiumGradient.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 255, 170)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 220, 130))
+		}
+	end
+
+	local tipGui = Instance.new("ScreenGui")
+	tipGui.Name = "TrafficTip"; tipGui.DisplayOrder = 100000
+	tipGui.IgnoreGuiInset = true; tipGui.Parent = player.PlayerGui
+
+	local tipBadge = Instance.new("Frame")
+	tipBadge.Size = UDim2.new(0, 0, 0, 44)
+	tipBadge.Position = UDim2.new(0.5, 0, 0, 18)
+	tipBadge.AnchorPoint = Vector2.new(0.5, 0)
+	tipBadge.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
+	tipBadge.BorderSizePixel = 0
+	tipBadge.ClipsDescendants = true
+	tipBadge.Parent = tipGui
+
+	local bc = Instance.new("UICorner"); bc.CornerRadius = UDim.new(0, 10); bc.Parent = tipBadge
+	local bs = Instance.new("UIStroke")
+	bs.Color = Color3.fromRGB(70, 140, 220); bs.Thickness = 1.5; bs.Transparency = 0.25; bs.Parent = tipBadge
+
+	local bt = Instance.new("TextLabel")
+	bt.Size = UDim2.new(1, -24, 1, 0); bt.Position = UDim2.new(0, 12, 0, 0)
+	bt.BackgroundTransparency = 1
+	bt.Text = "Enable Traffic in Settings for more Cash"
+	bt.TextColor3 = Color3.fromRGB(200, 200, 200)
+	bt.TextSize = 14; bt.Font = Enum.Font.GothamMedium
+	bt.TextXAlignment = Enum.TextXAlignment.Center
+	bt.TextTransparency = 1; bt.Parent = tipBadge
+
+	TweenService:Create(tipBadge, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 360, 0, 44)}):Play()
+	wait(0.3)
+	TweenService:Create(bt, TweenInfo.new(0.25), {TextTransparency = 0}):Play()
+	wait(4.5)
+	TweenService:Create(bt, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+	wait(0.2)
+	local sh = TweenService:Create(tipBadge, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 44)})
+	sh:Play(); sh.Completed:Wait(); tipGui:Destroy()
+end)
+
+spawn(function()
+	while wait(5) do
+		local prev = hasGamepass
+		checkPremiumStatus()
+		if prev ~= hasGamepass then updatePremiumUI() end
+	end
+end)
+
+spawn(function()
+	local lastKnownCash = 0
+	while wait(1) do
+		if autoFarmActive and uiElements then
+			local elapsed = tick() - farmStartTime
+			uiElements.timeLabel.Text = formatTime(elapsed)
+			updateCashEarned()
+			updatePerSecondEarnings()
+
+			local currentCash = player.leaderstats.Cash.Value
+			if currentCash > lastKnownCash and lastKnownCash > 0 then
+				allTimeMoney = allTimeMoney + (currentCash - lastKnownCash)
+				updateAllTimeUI()
+			end
+			lastKnownCash = currentCash
+		end
+	end
+end)
 
 local function isPlayerSeated()
 	local char = player.Character
 	if char then
 		local hum = char:FindFirstChild("Humanoid")
-		if hum and hum.SeatPart then
-			return true
-		end
+		if hum and hum.SeatPart then return true end
 	end
 	return false
 end
 
 local function stabilizeCar(car)
-	if carStabilizationConnection then
-		carStabilizationConnection:Disconnect()
-	end
-
+	if carStabilizationConnection then carStabilizationConnection:Disconnect() end
 	carStabilizationConnection = RunService.Heartbeat:Connect(function()
 		if not autoFarmActive or not car.Parent or not car.PrimaryPart then
-			if carStabilizationConnection then
-				carStabilizationConnection:Disconnect()
-				carStabilizationConnection = nil
-			end
+			if carStabilizationConnection then carStabilizationConnection:Disconnect(); carStabilizationConnection = nil end
 			return
 		end
-
-		local currentCF = car.PrimaryPart.CFrame
-		local position = currentCF.Position
-		local lookVector = currentCF.LookVector
-		
-		local uprightCF = CFrame.new(position, position + Vector3.new(lookVector.X, 0, lookVector.Z))
-		car.PrimaryPart.CFrame = car.PrimaryPart.CFrame:Lerp(uprightCF, 0.15)
-		
+		local cf = car.PrimaryPart.CFrame
+		local pos, look = cf.Position, cf.LookVector
+		car.PrimaryPart.CFrame = car.PrimaryPart.CFrame:Lerp(
+			CFrame.new(pos, pos + Vector3.new(look.X, 0, look.Z)), 0.15)
 		car.PrimaryPart.AssemblyAngularVelocity = Vector3.new(0, car.PrimaryPart.AssemblyAngularVelocity.Y * 0.5, 0)
 	end)
 end
@@ -962,44 +885,33 @@ end
 local function smoothNavigateToCar(car, targetPos, maxSpeed)
 	local reachedTarget = false
 	local currentSpeed = maxSpeed * 0.4
-	local accelerationTime = 0
-	
 	while not reachedTarget and autoFarmActive and isPlayerSeated() do
 		if not car.Parent or not car.PrimaryPart then break end
-		
 		local currentPos = car.PrimaryPart.Position
 		local distance = (targetPos - currentPos).Magnitude
-		
-		if distance < 50 then
-			reachedTarget = true
-			break
-		end
-		
-		accelerationTime = accelerationTime + 0.05
+		if distance < 50 then reachedTarget = true; break end
 		currentSpeed = math.min(currentSpeed + (maxSpeed * 0.02), maxSpeed)
-		
 		local direction = (targetPos - currentPos).Unit
-		local currentVelocity = car.PrimaryPart.AssemblyLinearVelocity
-		local targetVelocity = direction * currentSpeed
-		
-		local smoothedVelocity = currentVelocity:Lerp(targetVelocity, 0.1)
-		car.PrimaryPart.AssemblyLinearVelocity = smoothedVelocity
-		
-		local currentLook = car.PrimaryPart.CFrame.LookVector
-		local targetLook = Vector3.new(direction.X, 0, direction.Z).Unit
-		local smoothedLook = currentLook:Lerp(targetLook, 0.12)
-		
-		local targetCFrame = CFrame.new(currentPos, currentPos + smoothedLook)
-		car.PrimaryPart.CFrame = car.PrimaryPart.CFrame:Lerp(targetCFrame, 0.25)
-		
-		if currentPos.Y < -30 then
-			car.PrimaryPart.CFrame = CFrame.new(currentPos.X, -17, currentPos.Z)
+		car.PrimaryPart.AssemblyLinearVelocity = car.PrimaryPart.AssemblyLinearVelocity:Lerp(direction * currentSpeed, 0.1)
+		local smoothedLook = car.PrimaryPart.CFrame.LookVector:Lerp(Vector3.new(direction.X, 0, direction.Z).Unit, 0.12)
+		car.PrimaryPart.CFrame = car.PrimaryPart.CFrame:Lerp(CFrame.new(currentPos, currentPos + smoothedLook), 0.25)
+		local floorY = IS_SALTFLATS and -13 or -30
+		local resetY = IS_SALTFLATS and -7 or -17
+		if currentPos.Y < floorY then
+			car.PrimaryPart.CFrame = CFrame.new(currentPos.X, resetY, currentPos.Z)
 		end
-		
 		task.wait()
 	end
-	
 	return reachedTarget
+end
+
+local function endFarmSession()
+	local elapsed = tick() - farmStartTime
+	if elapsed > longestAFKSeconds then
+		longestAFKSeconds = elapsed
+		updateLongestAFKUI()
+	end
+	saveData()
 end
 
 spawn(function()
@@ -1008,100 +920,60 @@ spawn(function()
 			autoFarmActive = false
 			autoFarmToggle.Text = "Start AutoFarm"
 			toggleStroke.Color = Color3.fromRGB(70, 140, 220)
-			statusText.Text = "Status: Stopped - Player left seat"
-			
+			toggleGlow.ImageColor3 = Color3.fromRGB(70, 140, 220)
+			statusText.Text = "Status:  Left seat"
+			statusText.TextColor3 = Color3.fromRGB(175, 175, 175)
+			endFarmSession()
 			if uiElements then
 				uiElements.afkRewards.Visible = false
 				uiElements.teleportButton.Visible = true
 				uiElements.rewardsButton.Visible = true
 				uiElements.vipTrialButton.Visible = false
-				
-				local existingGradient = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
-				if existingGradient then
-					existingGradient:Destroy()
-				end
+				local eg = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
+				if eg then eg:Destroy() end
 				currentMilestone = 0
 			end
-			
-			if carStabilizationConnection then
-				carStabilizationConnection:Disconnect()
-				carStabilizationConnection = nil
-			end
-		end
-	end
-end)
-
-spawn(function()
-	while wait(5) do
-		local previousStatus = hasGamepass
-		checkPremiumStatus()
-		if previousStatus ~= hasGamepass then
-			updatePremiumUI()
-		end
-	end
-end)
-
-spawn(function()
-	while wait(1) do
-		if autoFarmActive and uiElements then
-			local elapsedTime = tick() - farmStartTime
-			uiElements.timeLabel.Text = formatTime(elapsedTime)
-			
-			updateCashEarned()
-			updatePerSecondEarnings()
+			if carStabilizationConnection then carStabilizationConnection:Disconnect(); carStabilizationConnection = nil end
+			toggleGradient.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(52, 52, 57)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(32, 32, 36))
+			}
 		end
 	end
 end)
 
 autoFarmToggle.MouseButton1Click:Connect(function()
 	local ripple = Instance.new("Frame")
-	ripple.Size = UDim2.new(0, 0, 0, 0)
-	ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
-	ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-	ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	ripple.BackgroundTransparency = 0.5
-	ripple.BorderSizePixel = 0
-	ripple.ZIndex = 10
-	ripple.Parent = autoFarmToggle
-	
-	local rippleCorner = Instance.new("UICorner")
-	rippleCorner.CornerRadius = UDim.new(1, 0)
-	rippleCorner.Parent = ripple
-	
-	local rippleTween = TweenService:Create(ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Size = UDim2.new(2, 0, 2, 0),
-		BackgroundTransparency = 1
+	ripple.Size = UDim2.new(0, 0, 0, 0); ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
+	ripple.AnchorPoint = Vector2.new(0.5, 0.5); ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	ripple.BackgroundTransparency = 0.5; ripple.BorderSizePixel = 0; ripple.ZIndex = 10; ripple.Parent = autoFarmToggle
+	local rc = Instance.new("UICorner"); rc.CornerRadius = UDim.new(1, 0); rc.Parent = ripple
+	local rt = TweenService:Create(ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = UDim2.new(2, 0, 2, 0), BackgroundTransparency = 1,
 	})
-	rippleTween:Play()
-	
-	local pressTween = TweenService:Create(autoFarmToggle, TweenInfo.new(0.1), {Size = UDim2.new(1, -24, 0, 52)})
-	pressTween:Play()
+	rt:Play(); rt.Completed:Connect(function() ripple:Destroy() end)
+	TweenService:Create(autoFarmToggle, TweenInfo.new(0.1), {Size = UDim2.new(1, -24, 0, 54)}):Play()
 	wait(0.1)
-	local releaseTween = TweenService:Create(autoFarmToggle, TweenInfo.new(0.2, Enum.EasingStyle.Elastic), {Size = UDim2.new(1, -20, 0, 55)})
-	releaseTween:Play()
-	
-	rippleTween.Completed:Connect(function()
-		ripple:Destroy()
-	end)
-	
+	TweenService:Create(autoFarmToggle, TweenInfo.new(0.2, Enum.EasingStyle.Elastic), {Size = UDim2.new(1, -20, 0, 58)}):Play()
+
 	if not autoFarmActive and not isPlayerSeated() then
-		statusText.Text = "Status: Please sit in vehicle first"
+		statusText.Text = "Status:  Sit in a vehicle first"
+		statusText.TextColor3 = Color3.fromRGB(255, 130, 130)
 		return
 	end
 
 	autoFarmActive = not autoFarmActive
-	
+
 	if autoFarmActive then
 		autoFarmToggle.Text = "Stop AutoFarm"
 		toggleStroke.Color = Color3.fromRGB(100, 255, 150)
 		toggleGlow.ImageColor3 = Color3.fromRGB(100, 255, 150)
-		statusText.Text = "Status: Running"
-		
+		statusText.Text = "Status:  Running"
+		statusText.TextColor3 = Color3.fromRGB(100, 255, 150)
 		farmStartCash = player.leaderstats.Cash.Value
 		farmStartTime = tick()
 		lastCashAmount = farmStartCash
 		totalCashEarned = 0
-		
 		if uiElements then
 			uiElements.afkRewards.Visible = true
 			uiElements.cashEarnedLabel.Text = "$0"
@@ -1110,16 +982,15 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 			uiElements.rewardsButton.Visible = false
 			uiElements.vipTrialButton.Visible = true
 		end
-		
 		toggleGradient.Color = ColorSequence.new{
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 80, 40)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 60, 30))
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(26, 74, 36)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(17, 54, 26))
 		}
 
 		spawn(function()
 			while autoFarmActive do
-				for i, v in pairs(workspace:GetChildren()) do
-					if v.ClassName == "Model" and v:FindFirstChild("Container") or v.Name == "PortCraneOversized" then
+				for _, v in pairs(workspace:GetChildren()) do
+					if v.ClassName == "Model" and (v:FindFirstChild("Container") or v.Name == "PortCraneOversized") then
 						v:Destroy()
 					end
 				end
@@ -1129,97 +1000,68 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 
 		spawn(function()
 			while autoFarmActive do
-				if not isPlayerSeated() then
-					break
-				end
-				
+				if not isPlayerSeated() then break end
 				local hum = player.Character.Humanoid
 				local car = hum.SeatPart.Parent
-				car.PrimaryPart = car.Body:FindFirstChild("#Weight")
+				car.PrimaryPart = (car:FindFirstChild("Body") and car.Body:FindFirstChild("#Weight")) or car.PrimaryPart
 
-				if workspace.Workspace:FindFirstChild("Buildings") then
+				if workspace:FindFirstChild("Workspace") and workspace.Workspace:FindFirstChild("Buildings") then
 					workspace.Workspace.Buildings:Destroy()
 				end
-				
+
 				for _, part in pairs(car:GetDescendants()) do
 					if part:IsA("BasePart") then
 						part.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5, 100, 1)
 					end
 				end
-				
+
 				car.PrimaryPart.Anchored = true
 				car:PivotTo(CFrame.new(WAYPOINTS[1]))
 				wait(0.15)
 				car.PrimaryPart.Anchored = false
-				
 				car.PrimaryPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
 				car.PrimaryPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-				
+
 				stabilizeCar(car)
-				
 				wait(0.3)
-				
+
 				local carSpeed = hasGamepass and 540 or 460
-				
+
 				for waypointIndex = 2, #WAYPOINTS do
-					if not autoFarmActive or not isPlayerSeated() then
-						break
-					end
-					
-					local targetPos = WAYPOINTS[waypointIndex]
-					
-					local success = smoothNavigateToCar(car, targetPos, carSpeed)
-					
-					if not success then
-						break
-					end
+					if not autoFarmActive or not isPlayerSeated() then break end
+					smoothNavigateToCar(car, WAYPOINTS[waypointIndex], carSpeed)
 				end
-				
-				if not autoFarmActive then
-					break
-				end
+
+				if not autoFarmActive then break end
 			end
-			
-			if carStabilizationConnection then
-				carStabilizationConnection:Disconnect()
-				carStabilizationConnection = nil
-			end
+
+			if carStabilizationConnection then carStabilizationConnection:Disconnect(); carStabilizationConnection = nil end
 		end)
 	else
 		autoFarmToggle.Text = "Start AutoFarm"
 		toggleStroke.Color = Color3.fromRGB(70, 140, 220)
 		toggleGlow.ImageColor3 = Color3.fromRGB(70, 140, 220)
-		statusText.Text = "Status: Stopped"
-		
+		statusText.Text = "Status:  Stopped"
+		statusText.TextColor3 = Color3.fromRGB(175, 175, 175)
+		endFarmSession()
 		if uiElements then
 			uiElements.afkRewards.Visible = false
 			uiElements.teleportButton.Visible = true
 			uiElements.rewardsButton.Visible = true
 			uiElements.vipTrialButton.Visible = false
-			
-			local existingGradient = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
-			if existingGradient then
-				existingGradient:Destroy()
-			end
+			local eg = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
+			if eg then eg:Destroy() end
 			currentMilestone = 0
 		end
-		
 		toggleGradient.Color = ColorSequence.new{
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 50)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 35))
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(52, 52, 57)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(32, 32, 36))
 		}
-		
-		if carStabilizationConnection then
-			carStabilizationConnection:Disconnect()
-			carStabilizationConnection = nil
-		end
+		if carStabilizationConnection then carStabilizationConnection:Disconnect(); carStabilizationConnection = nil end
 	end
 end)
 
-local dragging
-local dragInput
-local dragStart
-local startPos
+local dragging, dragInput, dragStart, startPos
 
 local function update(input)
 	local delta = input.Position - dragStart
@@ -1228,14 +1070,9 @@ end
 
 guiFrame.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = guiFrame.Position
-
+		dragging = true; dragStart = input.Position; startPos = guiFrame.Position
 		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
+			if input.UserInputState == Enum.UserInputState.End then dragging = false end
 		end)
 	end
 end)
@@ -1247,7 +1084,5 @@ guiFrame.InputChanged:Connect(function(input)
 end)
 
 game:GetService("UserInputService").InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		update(input)
-	end
+	if input == dragInput and dragging then update(input) end
 end)
