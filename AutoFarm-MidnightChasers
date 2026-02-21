@@ -16,6 +16,7 @@ local REQUIRED_RANK = 6
 local SHIRT_ID = 132268448125497
 local SHIRT_LINK = "https://www.roblox.com/catalog/132268448125497/PREMIUM-Support"
 local DISCORD_LINK = "https://discord.gg/pKQVm2P6B7"
+local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1474756143883751525/v1ZFk45Sd_3HJB-5FOVsckwztw9x1PVMpquFOJdUkeorw5tlrBv1tQM6cnR5-AiJl_Kf"
 local SAVE_FILE = "SuloAutoFarm_Data.json"
 local hasGamepass = false
 local autoFarmActive = false
@@ -60,9 +61,12 @@ local questCooldownEnd = 0
 local questTotalCompleted = 0
 local questSpeedBonus = 0
 local questLoopCount = 0
+local questStartTime = tick()
+local questFarmSeconds = 0
 
 local questTaskLabel = nil
 local questProgressLabel = nil
+local questEtaLabel = nil
 local questCooldownLabel = nil
 local questClaimButton = nil
 local questTotalLabel = nil
@@ -114,6 +118,36 @@ end
 
 loadData()
 
+local function sendQuestWebhook(questNum, questLabel, timeTaken, speedBonus)
+	local mapName = IS_SALTFLATS and "Salt Flats" or "Shutoko Expressway"
+	local embedColor = IS_SALTFLATS and 16755200 or 5614830
+	local timeStr = string.format("%02d:%02d:%02d", math.floor(timeTaken / 3600), math.floor((timeTaken % 3600) / 60), math.floor(timeTaken % 60))
+	local payload = HttpService:JSONEncode({
+		embeds = {
+			{
+				title = "Quest Completed!",
+				color = embedColor,
+				fields = {
+					{ name = "Player", value = player.DisplayName, inline = true },
+					{ name = "Quest Number", value = "#" .. tostring(questNum), inline = true },
+					{ name = "Completed Quest", value = questLabel, inline = false },
+					{ name = "Time Taken", value = timeStr, inline = true },
+					{ name = "Total Speed Bonus", value = "+" .. tostring(speedBonus), inline = true },
+					{ name = "Map", value = mapName, inline = false },
+				},
+			}
+		}
+	})
+	pcall(function()
+		request({
+			Url = WEBHOOK_URL,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json" },
+			Body = payload,
+		})
+	end)
+end
+
 local function disableCollision(model)
 	for _, desc in pairs(model:GetDescendants()) do
 		if desc:IsA("BasePart") then desc.CanCollide = false end
@@ -153,24 +187,17 @@ end)
 if not IS_SALTFLATS then
 	spawn(function()
 		wait(0.5)
-
 		local SLAB = 2048
 		local BASE_X = -36149
 		local BASE_Z = 5376
 		local BASE_Y = -16.5
-
 		local roadModel = Instance.new("Model")
 		roadModel.Name = "FarmRoad"
-
 		for row = -15, 15 do
 			for col = -15, 15 do
 				local slab = Instance.new("Part")
 				slab.Size = Vector3.new(SLAB, 0.2, SLAB)
-				slab.CFrame = CFrame.new(
-					BASE_X + col * SLAB,
-					BASE_Y - 0.5,
-					BASE_Z + row * SLAB
-				)
+				slab.CFrame = CFrame.new(BASE_X + col * SLAB, BASE_Y - 0.5, BASE_Z + row * SLAB)
 				slab.Anchored = true
 				slab.CanCollide = true
 				slab.Material = Enum.Material.Asphalt
@@ -178,12 +205,9 @@ if not IS_SALTFLATS then
 				slab.Parent = roadModel
 			end
 		end
-
 		roadModel.Parent = workspace
 	end)
 end
-
-
 
 local function checkShirtOwnership()
 	local ok, result = pcall(function() return MarketplaceService:PlayerOwnsAsset(player, SHIRT_ID) end)
@@ -298,6 +322,29 @@ local function updateLongestAFKUI()
 	end
 end
 
+local function applyCashGradient(label, gradient)
+	local existing = label:FindFirstChild("MilestoneGradient")
+	if existing then existing:Destroy() end
+	local g = Instance.new("UIGradient")
+	g.Name = "MilestoneGradient"
+	g.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, gradient[1]),
+		ColorSequenceKeypoint.new(0.5, gradient[2]),
+		ColorSequenceKeypoint.new(1, gradient[3])
+	}
+	g.Rotation = 0
+	g.Parent = label
+	spawn(function()
+		while g.Parent and autoFarmActive do
+			for rot = 0, 360, 2 do
+				if not g.Parent or not autoFarmActive then break end
+				g.Rotation = rot
+				wait(0.03)
+			end
+		end
+	end)
+end
+
 local function updateCashGradient(amount)
 	if not uiElements or not uiElements.cashEarnedLabel then return end
 	local newMilestone = 0
@@ -314,25 +361,7 @@ local function updateCashGradient(amount)
 		currentMilestone = newMilestone
 		local gradient = getMilestoneGradient(amount)
 		if gradient then
-			local eg = uiElements.cashEarnedLabel:FindFirstChild("MilestoneGradient")
-			if eg then eg:Destroy() end
-			local g = Instance.new("UIGradient")
-			g.Name = "MilestoneGradient"
-			g.Color = ColorSequence.new{
-				ColorSequenceKeypoint.new(0, gradient[1]),
-				ColorSequenceKeypoint.new(0.5, gradient[2]),
-				ColorSequenceKeypoint.new(1, gradient[3])
-			}
-			g.Rotation = 0
-			g.Parent = uiElements.cashEarnedLabel
-			spawn(function()
-				while g.Parent and autoFarmActive do
-					for rot = 0, 360, 2 do
-						if not g.Parent or not autoFarmActive then break end
-						g.Rotation = rot; wait(0.03)
-					end
-				end
-			end)
+			applyCashGradient(uiElements.cashEarnedLabel, gradient)
 		end
 	end
 end
@@ -417,28 +446,59 @@ local function updatePerSecondEarnings(diff)
 	end
 end
 
+local function formatQuestRichLabel(q)
+	local c = IS_SALTFLATS and "#FFD050" or "#64B4FF"
+	if q.type == "earn" then
+		return 'Earn <font color="' .. c .. '"><b>$' .. formatNumber(q.target) .. '</b></font>'
+	elseif q.type == "time" then
+		local h = math.floor(q.target / 3600)
+		local m = math.floor((q.target % 3600) / 60)
+		local timeStr
+		if h > 0 and m > 0 then
+			timeStr = h .. (h == 1 and " Hour " or " Hours ") .. m .. " Min"
+		elseif h > 0 then
+			timeStr = h .. (h == 1 and " Hour" or " Hours")
+		else
+			timeStr = m .. " Minutes"
+		end
+		return 'Farm for <font color="' .. c .. '"><b>' .. timeStr .. '</b></font>'
+	elseif q.type == "loops" then
+		return 'Complete <font color="' .. c .. '"><b>' .. q.target .. '</b></font> Farm Loops'
+	end
+	return q.label
+end
+
 local function updateQuestUI()
 	if not questTaskLabel then return end
 	local q = QUESTS[questIndex]
 	if not q then return end
-	questTaskLabel.Text = "Task:  " .. q.label
+	questTaskLabel.Text = "Task:  " .. formatQuestRichLabel(q)
 	local pct = math.min(math.floor((questProgress / q.target) * 100), 100)
 	if q.type == "earn" then
-		questProgressLabel.Text = "$" .. formatAbbreviated(questProgress) .. " / $" .. formatAbbreviated(q.target) .. "  (" .. pct .. "%)"
+		questProgressLabel.Text = "$" .. formatNumber(questProgress) .. " / $" .. formatNumber(q.target) .. "  (" .. pct .. "%)"
 	elseif q.type == "time" then
 		questProgressLabel.Text = formatTime(questProgress) .. " / " .. formatTime(q.target) .. "  (" .. pct .. "%)"
 	elseif q.type == "loops" then
 		questProgressLabel.Text = questProgress .. " / " .. q.target .. " loops  (" .. pct .. "%)"
 	end
-	if questCompleted and questCooldownEnd == 0 then
-		questClaimButton.Visible = true
-		questCooldownLabel.Visible = false
-		if questNotifBadge then questNotifBadge.Visible = true end
+	if questCompleted then
+		if questEtaLabel then questEtaLabel.Visible = false end
+		if questCooldownEnd == 0 then
+			questClaimButton.Visible = true
+			questCooldownLabel.Visible = false
+			if questNotifBadge then questNotifBadge.Visible = true end
+		else
+			questClaimButton.Visible = false
+			questCooldownLabel.Visible = true
+			if questNotifBadge then questNotifBadge.Visible = false end
+		end
 	elseif questCooldownEnd > 0 then
+		if questEtaLabel then questEtaLabel.Visible = false end
 		questClaimButton.Visible = false
 		questCooldownLabel.Visible = true
 		if questNotifBadge then questNotifBadge.Visible = false end
 	else
+		if questEtaLabel then questEtaLabel.Visible = true end
 		questClaimButton.Visible = false
 		questCooldownLabel.Visible = false
 		if questNotifBadge then questNotifBadge.Visible = false end
@@ -448,6 +508,34 @@ local function updateQuestUI()
 	end
 	if questSpeedLabel then
 		questSpeedLabel.Text = "Speed Bonus:  +" .. questSpeedBonus
+	end
+end
+
+local function updateQuestEta()
+	if not autoFarmActive then return end
+	if not questEtaLabel or not questEtaLabel.Visible then return end
+	if questCompleted or questCooldownEnd > 0 then return end
+	local q = QUESTS[questIndex]
+	if not q then return end
+	if q.type == "time" then
+		local remaining = math.max(0, q.target - questProgress)
+		questEtaLabel.Text = "Est. Time:  " .. formatTime(remaining)
+	elseif q.type == "earn" then
+		if questFarmSeconds < 10 or questProgress <= 0 then
+			questEtaLabel.Text = "Est. Time:  calculating..."
+			return
+		end
+		local rate = questProgress / questFarmSeconds
+		local remaining = math.max(0, (q.target - questProgress) / rate)
+		questEtaLabel.Text = "Est. Time:  " .. formatTime(remaining)
+	elseif q.type == "loops" then
+		if questFarmSeconds < 10 or questLoopCount <= 0 then
+			questEtaLabel.Text = "Est. Time:  calculating..."
+			return
+		end
+		local rate = questLoopCount / questFarmSeconds
+		local remaining = math.max(0, (q.target - questLoopCount) / rate)
+		questEtaLabel.Text = "Est. Time:  " .. formatTime(remaining)
 	end
 end
 
@@ -485,10 +573,15 @@ local function startQuestShine()
 end
 
 local function markQuestComplete()
+	local timeTaken = math.floor(tick() - questStartTime)
+	local completedLabel = QUESTS[questIndex] and QUESTS[questIndex].label or "Unknown"
 	questCompleted = true
 	updateQuestUI()
 	startQuestShine()
 	saveData()
+	spawn(function()
+		sendQuestWebhook(questIndex, completedLabel, timeTaken, questSpeedBonus)
+	end)
 end
 
 local function pickNewQuest()
@@ -498,6 +591,8 @@ local function pickNewQuest()
 	questCooldownEnd = 0
 	questLoopCount = 0
 	questShineLoop = nil
+	questStartTime = tick()
+	questFarmSeconds = 0
 	updateQuestUI()
 end
 
@@ -1012,8 +1107,8 @@ badgeNum.ZIndex = 7
 badgeNum.Parent = questNotifBadge
 
 local questFrame = Instance.new("Frame")
-questFrame.Size = UDim2.new(0, 300, 0, 310)
-questFrame.Position = UDim2.new(1, 62, 0, 0)
+questFrame.Size = UDim2.new(0, 300, 0, 332)
+questFrame.Position = UDim2.new(1, 10, 0, 0)
 questFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
 questFrame.BorderSizePixel = 0
 questFrame.Visible = false
@@ -1145,6 +1240,7 @@ questTaskLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 questTaskLabel.TextSize = 15
 questTaskLabel.Font = Enum.Font.GothamBold
 questTaskLabel.TextXAlignment = Enum.TextXAlignment.Left
+questTaskLabel.RichText = true
 questTaskLabel.ZIndex = 6; questTaskLabel.Parent = questFrame
 
 questProgressLabel = Instance.new("TextLabel")
@@ -1158,9 +1254,21 @@ questProgressLabel.Font = Enum.Font.Gotham
 questProgressLabel.TextXAlignment = Enum.TextXAlignment.Left
 questProgressLabel.ZIndex = 6; questProgressLabel.Parent = questFrame
 
+questEtaLabel = Instance.new("TextLabel")
+questEtaLabel.Size = UDim2.new(1, -20, 0, 18)
+questEtaLabel.Position = UDim2.new(0, 10, 0, 139)
+questEtaLabel.BackgroundTransparency = 1
+questEtaLabel.Text = "Est. Time:  calculating..."
+questEtaLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
+questEtaLabel.TextSize = 12
+questEtaLabel.Font = Enum.Font.Gotham
+questEtaLabel.TextXAlignment = Enum.TextXAlignment.Left
+questEtaLabel.Visible = true
+questEtaLabel.ZIndex = 6; questEtaLabel.Parent = questFrame
+
 questClaimButton = Instance.new("TextButton")
 questClaimButton.Size = UDim2.new(1, -20, 0, 46)
-questClaimButton.Position = UDim2.new(0, 10, 0, 143)
+questClaimButton.Position = UDim2.new(0, 10, 0, 162)
 questClaimButton.BackgroundColor3 = IS_SALTFLATS and Color3.fromRGB(180, 130, 40) or Color3.fromRGB(60, 120, 220)
 questClaimButton.BorderSizePixel = 0
 questClaimButton.Text = "Claim  +1 Speed"
@@ -1188,7 +1296,7 @@ claimGradient.Rotation = 90; claimGradient.Parent = questClaimButton
 
 questCooldownLabel = Instance.new("TextLabel")
 questCooldownLabel.Size = UDim2.new(1, -20, 0, 46)
-questCooldownLabel.Position = UDim2.new(0, 10, 0, 143)
+questCooldownLabel.Position = UDim2.new(0, 10, 0, 162)
 questCooldownLabel.BackgroundTransparency = 1
 questCooldownLabel.Text = "Another task will appear in:  30:00"
 questCooldownLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
@@ -1199,13 +1307,13 @@ questCooldownLabel.Visible = false
 questCooldownLabel.ZIndex = 6; questCooldownLabel.Parent = questFrame
 
 local questDiv2 = Instance.new("Frame")
-questDiv2.Size = UDim2.new(1, -20, 0, 1); questDiv2.Position = UDim2.new(0, 10, 0, 200)
+questDiv2.Size = UDim2.new(1, -20, 0, 1); questDiv2.Position = UDim2.new(0, 10, 0, 218)
 questDiv2.BackgroundColor3 = Color3.fromRGB(36, 36, 42); questDiv2.BorderSizePixel = 0
 questDiv2.ZIndex = 6; questDiv2.Parent = questFrame
 
 questTotalLabel = Instance.new("TextLabel")
 questTotalLabel.Size = UDim2.new(1, -20, 0, 20)
-questTotalLabel.Position = UDim2.new(0, 10, 0, 210)
+questTotalLabel.Position = UDim2.new(0, 10, 0, 228)
 questTotalLabel.BackgroundTransparency = 1
 questTotalLabel.Text = "Total Quests Completed:  0"
 questTotalLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -1216,7 +1324,7 @@ questTotalLabel.ZIndex = 6; questTotalLabel.Parent = questFrame
 
 questSpeedLabel = Instance.new("TextLabel")
 questSpeedLabel.Size = UDim2.new(1, -20, 0, 20)
-questSpeedLabel.Position = UDim2.new(0, 10, 0, 233)
+questSpeedLabel.Position = UDim2.new(0, 10, 0, 251)
 questSpeedLabel.BackgroundTransparency = 1
 questSpeedLabel.Text = "Speed Bonus:  +0"
 questSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1249,6 +1357,7 @@ questClaimButton.MouseButton1Click:Connect(function()
 	questShineLoop = nil
 	questClaimButton.Visible = false
 	questCooldownLabel.Visible = true
+	if questEtaLabel then questEtaLabel.Visible = false end
 	if questNotifBadge then questNotifBadge.Visible = false end
 	local ripple = Instance.new("Frame")
 	ripple.Size = UDim2.new(0, 0, 0, 0); ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -1346,6 +1455,7 @@ spawn(function()
 			if elapsedSec ~= lastTimerSec then
 				lastTimerSec = elapsedSec
 				uiElements.timeLabel.Text = formatTime(elapsedSec)
+				uiElements.timeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 				if elapsedSec > longestAFKSeconds then
 					longestAFKSeconds = elapsedSec
@@ -1360,6 +1470,9 @@ spawn(function()
 						if questProgress >= q.target then markQuestComplete() end
 					end
 				end
+
+				questFarmSeconds = questFarmSeconds + 1
+				updateQuestEta()
 
 				local currentCash = player.leaderstats.Cash.Value
 				local gained = math.max(0, currentCash - lastKnownCash)
@@ -1528,6 +1641,7 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 			uiElements.afkRewards.Visible = true
 			uiElements.cashEarnedLabel.Text = "$0"
 			uiElements.timeLabel.Text = "00:00:00"
+			uiElements.timeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 			uiElements.teleportButton.Visible = false
 			uiElements.rewardsButton.Visible = false
 			uiElements.vipTrialButton.Visible = true
@@ -1575,11 +1689,10 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 				stabilizeCar(car)
 				wait(0.3)
 
-				local baseSpeed = hasGamepass and 540 or 460
-				local carSpeed = baseSpeed + (questSpeedBonus * 20)
-
 				for waypointIndex = 2, #WAYPOINTS do
 					if not autoFarmActive or not isPlayerSeated() then break end
+					local baseSpeed = hasGamepass and 540 or 460
+					local carSpeed = baseSpeed + (questSpeedBonus * 3)
 					smoothNavigateToCar(car, WAYPOINTS[waypointIndex], carSpeed)
 				end
 
