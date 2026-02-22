@@ -18,6 +18,20 @@ local SHIRT_LINK = "https://www.roblox.com/catalog/132268448125497/PREMIUM-Suppo
 local DISCORD_LINK = "https://discord.gg/pKQVm2P6B7"
 local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1474756143883751525/v1ZFk45Sd_3HJB-5FOVsckwztw9x1PVMpquFOJdUkeorw5tlrBv1tQM6cnR5-AiJl_Kf"
 local SAVE_FILE = "SuloAutoFarm_Data.json"
+
+local PAY2WIN_GAMEPASSES = {
+	{ id = 1723902214, price = 20 },
+	{ id = 1723898013, price = 25 },
+	{ id = 1724140111, price = 40 },
+	{ id = 1724136139, price = 50 },
+	{ id = 1723902226, price = 65 },
+	{ id = 1723886123, price = 75 },
+	{ id = 1724116218, price = 95 },
+	{ id = 1723996092, price = 120 },
+	{ id = 1724169893, price = 150 },
+	{ id = 1724183996, price = 200 },
+}
+
 local hasGamepass = false
 local autoFarmActive = false
 local carStabilizationConnection = nil
@@ -30,6 +44,10 @@ local totalCashEarned = 0
 local lastCashAmount = 0
 local allTimeMoney = 0
 local longestAFKSeconds = 0
+local pay2winBoosts = 0
+local pay2winBoostLabel = nil
+local pay2winPriceLabel = nil
+local boostSpeedButton = nil
 
 local QUESTS = {
 	{ type = "earn",  target = 500000,    label = "Earn $500,000" },
@@ -222,6 +240,24 @@ end
 local function checkPremiumStatus()
 	hasGamepass = checkGroupRank() or checkShirtOwnership()
 	return hasGamepass
+end
+
+local function checkPay2WinBoosts()
+	local count = 0
+	for _, gp in ipairs(PAY2WIN_GAMEPASSES) do
+		local ok, owns = pcall(function() return MarketplaceService:UserOwnsGamePassAsync(player.UserId, gp.id) end)
+		if ok and owns then count = count + 1 end
+	end
+	pay2winBoosts = count
+	return count
+end
+
+local function getNextUnownedBoost()
+	for _, gp in ipairs(PAY2WIN_GAMEPASSES) do
+		local ok, owns = pcall(function() return MarketplaceService:UserOwnsGamePassAsync(player.UserId, gp.id) end)
+		if ok and not owns then return gp end
+	end
+	return nil
 end
 
 local function formatNumber(num)
@@ -507,7 +543,7 @@ local function updateQuestUI()
 		questTotalLabel.Text = "Total Quests Completed:  " .. questTotalCompleted
 	end
 	if questSpeedLabel then
-		questSpeedLabel.Text = "Speed Bonus:  +" .. questSpeedBonus
+		questSpeedLabel.Text = "Speed Bonus:  +" .. (questSpeedBonus + pay2winBoosts)
 	end
 end
 
@@ -949,11 +985,13 @@ iconCorner.CornerRadius = UDim.new(1, 0); iconCorner.Parent = playerIcon
 local iconStroke = Instance.new("UIStroke")
 iconStroke.Color = Color3.fromRGB(60, 60, 60); iconStroke.Thickness = 2; iconStroke.Parent = playerIcon
 
+local isPremiumMember = player.MembershipType == Enum.MembershipType.Premium
+
 local usernameText = Instance.new("TextLabel")
 usernameText.Size = UDim2.new(1, -85, 0, 22)
 usernameText.Position = UDim2.new(0, 12, 1, -48)
 usernameText.BackgroundTransparency = 1
-usernameText.Text = "@" .. player.Name
+usernameText.Text = (isPremiumMember and " " or "") .. "@" .. player.Name
 usernameText.TextColor3 = Color3.fromRGB(135, 135, 135)
 usernameText.TextSize = 15
 usernameText.Font = Enum.Font.GothamMedium
@@ -1348,6 +1386,234 @@ spawn(function()
 	end
 end)
 
+local questBoostDiv = Instance.new("Frame")
+questBoostDiv.Size = UDim2.new(1, -20, 0, 1)
+questBoostDiv.Position = UDim2.new(0, 10, 0, 274)
+questBoostDiv.BackgroundColor3 = Color3.fromRGB(36, 36, 42)
+questBoostDiv.BorderSizePixel = 0
+questBoostDiv.ZIndex = 6
+questBoostDiv.Parent = questFrame
+
+local boostRowFrame = Instance.new("Frame")
+boostRowFrame.Size = UDim2.new(1, -20, 0, 28)
+boostRowFrame.Position = UDim2.new(0, 10, 0, 279)
+boostRowFrame.BackgroundTransparency = 1
+boostRowFrame.ZIndex = 6
+boostRowFrame.Parent = questFrame
+
+boostSpeedButton = Instance.new("TextButton")
+boostSpeedButton.Size = UDim2.new(0, 100, 0, 26)
+boostSpeedButton.Position = UDim2.new(0, 0, 0, 1)
+boostSpeedButton.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+boostSpeedButton.BorderSizePixel = 0
+boostSpeedButton.Text = "Boost Speed"
+boostSpeedButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+boostSpeedButton.TextSize = 12
+boostSpeedButton.Font = Enum.Font.GothamBold
+boostSpeedButton.ClipsDescendants = true
+boostSpeedButton.ZIndex = 6
+boostSpeedButton.Parent = boostRowFrame
+
+local bsCorner = Instance.new("UICorner")
+bsCorner.CornerRadius = UDim.new(0, 7)
+bsCorner.Parent = boostSpeedButton
+
+local bsStroke = Instance.new("UIStroke")
+bsStroke.Color = Color3.fromRGB(200, 170, 0)
+bsStroke.Thickness = 1.5
+bsStroke.Parent = boostSpeedButton
+
+local bsGradient = Instance.new("UIGradient")
+bsGradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 230, 50)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 200, 0))
+}
+bsGradient.Rotation = 90
+bsGradient.Parent = boostSpeedButton
+
+pay2winBoostLabel = Instance.new("TextLabel")
+pay2winBoostLabel.Size = UDim2.new(0, 164, 0, 28)
+pay2winBoostLabel.Position = UDim2.new(0, 106, 0, 0)
+pay2winBoostLabel.BackgroundTransparency = 1
+pay2winBoostLabel.Text = "PAY2WIN Boosts: 0"
+pay2winBoostLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+pay2winBoostLabel.TextSize = 16
+pay2winBoostLabel.Font = Enum.Font.GothamBold
+pay2winBoostLabel.TextXAlignment = Enum.TextXAlignment.Left
+pay2winBoostLabel.ZIndex = 6
+pay2winBoostLabel.Parent = boostRowFrame
+
+local pay2winGrad = Instance.new("UIGradient")
+pay2winGrad.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 65, 65)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 170, 50)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 65, 65))
+}
+pay2winGrad.Offset = Vector2.new(-1, 0)
+pay2winGrad.Parent = pay2winBoostLabel
+
+spawn(function()
+	while pay2winBoostLabel.Parent do
+		local t = TweenService:Create(pay2winGrad, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Offset = Vector2.new(1, 0) })
+		t:Play(); t.Completed:Wait(); pay2winGrad.Offset = Vector2.new(-1, 0); wait(0.3)
+	end
+end)
+
+pay2winPriceLabel = Instance.new("TextLabel")
+pay2winPriceLabel.Size = UDim2.new(1, -20, 0, 18)
+pay2winPriceLabel.Position = UDim2.new(0, 10, 0, 310)
+pay2winPriceLabel.BackgroundTransparency = 1
+pay2winPriceLabel.Text = "Price: -- "
+pay2winPriceLabel.TextColor3 = Color3.fromRGB(175, 175, 175)
+pay2winPriceLabel.TextSize = 13
+pay2winPriceLabel.Font = Enum.Font.GothamMedium
+pay2winPriceLabel.TextXAlignment = Enum.TextXAlignment.Left
+pay2winPriceLabel.ZIndex = 6
+pay2winPriceLabel.Parent = questFrame
+
+local function updatePay2WinUI()
+	if pay2winBoostLabel then
+		pay2winBoostLabel.Text = "PAY2WIN Boosts: " .. pay2winBoosts
+	end
+	local nextGp = getNextUnownedBoost()
+	if pay2winPriceLabel then
+		if nextGp then
+			pay2winPriceLabel.Text = "Price: " .. nextGp.price .. " "
+		else
+			pay2winPriceLabel.Text = "All Boosts Owned!"
+			pay2winPriceLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
+		end
+	end
+	if boostSpeedButton then
+		if not nextGp then
+			boostSpeedButton.Text = "All Owned"
+			boostSpeedButton.BackgroundColor3 = Color3.fromRGB(100, 255, 150)
+			bsStroke.Color = Color3.fromRGB(50, 200, 100)
+			bsGradient.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 255, 170)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 220, 130))
+			}
+		else
+			boostSpeedButton.Text = "Boost Speed"
+			boostSpeedButton.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+			bsStroke.Color = Color3.fromRGB(200, 170, 0)
+			bsGradient.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 230, 50)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 200, 0))
+			}
+		end
+	end
+	if questSpeedLabel then
+		questSpeedLabel.Text = "Speed Bonus:  +" .. (questSpeedBonus + pay2winBoosts)
+	end
+end
+
+boostSpeedButton.MouseEnter:Connect(function()
+	TweenService:Create(boostSpeedButton, TweenInfo.new(0.2), { Size = UDim2.new(0, 106, 0, 28) }):Play()
+end)
+
+boostSpeedButton.MouseLeave:Connect(function()
+	TweenService:Create(boostSpeedButton, TweenInfo.new(0.2), { Size = UDim2.new(0, 100, 0, 26) }):Play()
+end)
+
+boostSpeedButton.MouseButton1Down:Connect(function()
+	TweenService:Create(boostSpeedButton, TweenInfo.new(0.1), { Size = UDim2.new(0, 94, 0, 24) }):Play()
+end)
+
+boostSpeedButton.MouseButton1Up:Connect(function()
+	TweenService:Create(boostSpeedButton, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, 100, 0, 26) }):Play()
+end)
+
+boostSpeedButton.MouseButton1Click:Connect(function()
+	local nextGp = getNextUnownedBoost()
+	if nextGp then
+		local ripple = Instance.new("Frame")
+		ripple.Size = UDim2.new(0, 0, 0, 0); ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
+		ripple.AnchorPoint = Vector2.new(0.5, 0.5); ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ripple.BackgroundTransparency = 0.4; ripple.BorderSizePixel = 0; ripple.ZIndex = 10; ripple.Parent = boostSpeedButton
+		local rc = Instance.new("UICorner"); rc.CornerRadius = UDim.new(1, 0); rc.Parent = ripple
+		local rt = TweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = UDim2.new(3, 0, 3, 0), BackgroundTransparency = 1,
+		})
+		rt:Play(); rt.Completed:Connect(function() ripple:Destroy() end)
+
+		local gpLink = "https://www.roblox.com/game-pass/" .. nextGp.id
+		if setclipboard then setclipboard(gpLink) end
+
+		local notifGui = Instance.new("ScreenGui")
+		notifGui.Name = "BoostNotif"; notifGui.DisplayOrder = 100001; notifGui.IgnoreGuiInset = true; notifGui.Parent = player.PlayerGui
+
+		local notifFrame = Instance.new("Frame")
+		notifFrame.Size = UDim2.new(0, 0, 0, 0)
+		notifFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+		notifFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+		notifFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
+		notifFrame.BorderSizePixel = 0
+		notifFrame.Parent = notifGui
+
+		local nfc = Instance.new("UICorner"); nfc.CornerRadius = UDim.new(0, 14); nfc.Parent = notifFrame
+		local nfs = Instance.new("UIStroke"); nfs.Color = Color3.fromRGB(255, 215, 0); nfs.Thickness = 2; nfs.Parent = notifFrame
+
+		local nfg = Instance.new("UIGradient")
+		nfg.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 65, 65)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 170, 50)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 65, 65))
+		}
+		nfg.Rotation = 90; nfg.Parent = nfs
+
+		local nfTitle = Instance.new("TextLabel")
+		nfTitle.Size = UDim2.new(1, -30, 0, 30)
+		nfTitle.Position = UDim2.new(0, 15, 0, 12)
+		nfTitle.BackgroundTransparency = 1
+		nfTitle.Text = "Link Copied!"
+		nfTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+		nfTitle.TextSize = 20
+		nfTitle.Font = Enum.Font.GothamBold
+		nfTitle.TextXAlignment = Enum.TextXAlignment.Center
+		nfTitle.TextTransparency = 1
+		nfTitle.Parent = notifFrame
+
+		local nfBody = Instance.new("TextLabel")
+		nfBody.Size = UDim2.new(1, -30, 0, 40)
+		nfBody.Position = UDim2.new(0, 15, 0, 44)
+		nfBody.BackgroundTransparency = 1
+		nfBody.Text = "Paste in web browser / Safari\nto open the gamepass page"
+		nfBody.TextColor3 = Color3.fromRGB(210, 210, 210)
+		nfBody.TextSize = 15
+		nfBody.Font = Enum.Font.GothamMedium
+		nfBody.TextXAlignment = Enum.TextXAlignment.Center
+		nfBody.TextWrapped = true
+		nfBody.TextTransparency = 1
+		nfBody.Parent = notifFrame
+
+		local nfPrice = Instance.new("TextLabel")
+		nfPrice.Size = UDim2.new(1, -30, 0, 22)
+		nfPrice.Position = UDim2.new(0, 15, 0, 86)
+		nfPrice.BackgroundTransparency = 1
+		nfPrice.Text = "Price: " .. nextGp.price .. " "
+		nfPrice.TextColor3 = Color3.fromRGB(255, 215, 0)
+		nfPrice.TextSize = 14
+		nfPrice.Font = Enum.Font.GothamBold
+		nfPrice.TextXAlignment = Enum.TextXAlignment.Center
+		nfPrice.TextTransparency = 1
+		nfPrice.Parent = notifFrame
+
+		TweenService:Create(notifFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, 340, 0, 118) }):Play()
+		wait(0.3)
+		TweenService:Create(nfTitle, TweenInfo.new(0.2), { TextTransparency = 0 }):Play()
+		TweenService:Create(nfBody, TweenInfo.new(0.2), { TextTransparency = 0 }):Play()
+		TweenService:Create(nfPrice, TweenInfo.new(0.2), { TextTransparency = 0 }):Play()
+		wait(4)
+		TweenService:Create(nfTitle, TweenInfo.new(0.2), { TextTransparency = 1 }):Play()
+		TweenService:Create(nfBody, TweenInfo.new(0.2), { TextTransparency = 1 }):Play()
+		TweenService:Create(nfPrice, TweenInfo.new(0.2), { TextTransparency = 1 }):Play()
+		wait(0.2)
+		local closeAnim = TweenService:Create(notifFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 0) })
+		closeAnim:Play(); closeAnim.Completed:Wait(); notifGui:Destroy()
+	end
+end)
+
 questClaimButton.MouseButton1Click:Connect(function()
 	if not questCompleted then return end
 	questSpeedBonus = questSpeedBonus + 1
@@ -1389,6 +1655,8 @@ spawn(function()
 	wait(1)
 	checkPremiumStatus()
 	updatePremiumUI()
+	checkPay2WinBoosts()
+	updatePay2WinUI()
 	if hasGamepass then
 		premiumButton.Text = "Owned"
 		premiumButton.BackgroundColor3 = Color3.fromRGB(100, 255, 150)
@@ -1411,8 +1679,8 @@ spawn(function()
 	tipBadge.BorderSizePixel = 0; tipBadge.ClipsDescendants = true; tipBadge.Parent = tipGui
 
 	local bc = Instance.new("UICorner"); bc.CornerRadius = UDim.new(0, 10); bc.Parent = tipBadge
-	local bs = Instance.new("UIStroke")
-	bs.Color = Color3.fromRGB(70, 140, 220); bs.Thickness = 1.5; bs.Transparency = 0.25; bs.Parent = tipBadge
+	local bs2 = Instance.new("UIStroke")
+	bs2.Color = Color3.fromRGB(70, 140, 220); bs2.Thickness = 1.5; bs2.Transparency = 0.25; bs2.Parent = tipBadge
 
 	local bt = Instance.new("TextLabel")
 	bt.Size = UDim2.new(1, -24, 1, 0); bt.Position = UDim2.new(0, 12, 0, 0)
@@ -1438,6 +1706,16 @@ spawn(function()
 		local prev = hasGamepass
 		checkPremiumStatus()
 		if prev ~= hasGamepass then updatePremiumUI() end
+	end
+end)
+
+spawn(function()
+	while wait(30) do
+		local prevBoosts = pay2winBoosts
+		checkPay2WinBoosts()
+		if prevBoosts ~= pay2winBoosts then
+			updatePay2WinUI()
+		end
 	end
 end)
 
@@ -1692,7 +1970,7 @@ autoFarmToggle.MouseButton1Click:Connect(function()
 				for waypointIndex = 2, #WAYPOINTS do
 					if not autoFarmActive or not isPlayerSeated() then break end
 					local baseSpeed = hasGamepass and 540 or 460
-					local carSpeed = baseSpeed + (questSpeedBonus * 3)
+					local carSpeed = baseSpeed + ((questSpeedBonus + pay2winBoosts) * 3)
 					smoothNavigateToCar(car, WAYPOINTS[waypointIndex], carSpeed)
 				end
 
