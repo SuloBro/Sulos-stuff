@@ -1711,11 +1711,9 @@ end)
 
 spawn(function()
 	while wait(30) do
-		local prevBoosts = pay2winBoosts
 		checkPay2WinBoosts()
-		if prevBoosts ~= pay2winBoosts then
-			updatePay2WinUI()
-		end
+		updatePay2WinUI()
+		updateQuestUI()
 	end
 end)
 
