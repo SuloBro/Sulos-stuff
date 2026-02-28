@@ -182,17 +182,17 @@ local function sendQuestWebhook(questNum, questLabel, timeTaken, speedBonus)
 	local payload = HttpService:JSONEncode({
 		embeds = {
 			{
-				title = "Quest Completed!",
-				color = embedColor,
-				fields = {
-					{ name = "Player",           value = displayName,                                    inline = true  },
-					{ name = "Quest Number",     value = "#" .. tostring(questNum),                      inline = true  },
-					{ name = "Completed Quest",  value = ":cough:  " .. questLabel,                      inline = false },
-					{ name = "Time Taken",       value = timeStr,                                        inline = true  },
-					{ name = "Total Speed Bonus",value = ":man_face_2:  +" .. tostring(speedBonus),      inline = true  },
-					{ name = "Map",              value = mapName,                                        inline = false },
-				},
-			}
+    title = "Quest Completed!",
+    color = embedColor,
+    fields = {
+        { name = "Player",            value = displayName,                                                    inline = true  },
+        { name = "Quest Number",      value = "#" .. tostring(questNum),                                     inline = true  },
+        { name = "Completed Quest",   value = "<:cough:1477044227547594916>  " .. questLabel,                inline = false },
+        { name = "Time Taken",        value = timeStr,                                                       inline = true  },
+        { name = "Total Speed Bonus", value = "<:man_face_2:1477045175376285858>  +" .. tostring(speedBonus), inline = true  },
+        { name = "Map",               value = mapName,                                                       inline = false },
+    },
+}
 		}
 	})
 	pcall(function()
