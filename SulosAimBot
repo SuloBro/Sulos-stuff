@@ -1,6 +1,4 @@
---[[
-   Sulo's ULTRA SMOOTH Aimbot Project - WHITELIST VERSION
-]]
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -95,7 +93,7 @@ if not isAuthorized() then
     titleLabel.TextColor3 = Color3.fromRGB(255, 100, 150)
     titleLabel.TextScaled = true
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.Text = "🚫 ACCESS DENIED"
+    titleLabel.Text = "ACCESS DENIED"
     titleLabel.Parent = accessBox
     
     
