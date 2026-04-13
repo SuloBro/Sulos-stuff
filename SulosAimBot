@@ -8,7 +8,7 @@ local LocalPlayer = Players.LocalPlayer
 
 
 local authorizedUsers = {
-    "ongdied", 
+    "freeSulo", 
     "beybladegabe1", 
     "06UV",
     "Ayresxz",
